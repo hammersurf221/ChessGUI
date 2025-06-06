@@ -10,7 +10,7 @@
 #include <QDir>
 #include <QRandomGenerator>
 #include <QLabel>
-
+#include <QShortcut>
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -18,6 +18,24 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    // === Hotkeys ===
+    QShortcut* toggleAutoMove = new QShortcut(QKeySequence("Ctrl+M"), this);
+    connect(toggleAutoMove, &QShortcut::activated, this, [this]() {
+        ui->automoveCheck->setChecked(!ui->automoveCheck->isChecked());
+        statusBar()->showMessage(QString("Automove: %1").arg(ui->automoveCheck->isChecked() ? "ON" : "OFF"));
+    });
+
+    QShortcut* toggleStealth = new QShortcut(QKeySequence("Ctrl+S"), this);
+    connect(toggleStealth, &QShortcut::activated, this, [this]() {
+        ui->stealthCheck->setChecked(!ui->stealthCheck->isChecked());
+        statusBar()->showMessage(QString("Stealth Mode: %1").arg(ui->stealthCheck->isChecked() ? "ON" : "OFF"));
+    });
+
+    QShortcut* toggleAnalysis = new QShortcut(QKeySequence("Ctrl+A"), this);
+    connect(toggleAnalysis, &QShortcut::activated, this, [this]() {
+        on_toggleAnalysisButton_clicked();
+    });
+
     fenServer = new QProcess(this);
     board = new BoardWidget();
     QVBoxLayout* layout = new QVBoxLayout(ui->chessBoardFrame);
@@ -27,13 +45,22 @@ MainWindow::MainWindow(QWidget *parent)
     evalScoreLabel = new QLabel(ui->evalBar);
 
     evalScoreLabel->setObjectName("evalBarOverlay");
-    evalScoreLabel->setFixedSize(50, 20);
-    evalScoreLabel->setAlignment(Qt::AlignCenter);
     evalScoreLabel->setAttribute(Qt::WA_TransparentForMouseEvents);
 
-    evalScoreLabel->setFixedSize(50, 20);
+    evalScoreLabel->setFixedHeight(20);
+    evalScoreLabel->setMinimumWidth(40);
+    evalScoreLabel->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
     evalScoreLabel->setAlignment(Qt::AlignCenter);
-    evalScoreLabel->setStyleSheet("background-color: rgba(255,255,255,200); border: 1px solid black; border-radius: 3px;");
+    evalScoreLabel->setStyleSheet(R"(
+    background-color: #1e1e1e;
+    color: #f0f0f0;
+    font-weight: bold;
+    font-size: 11px;
+    padding: 2px 6px;
+    border: 1px solid #666;
+    border-radius: 4px;
+    )");
+
 
     evalScoreLabel->show();
     updateEvalLabel();
@@ -443,9 +470,8 @@ void MainWindow::evaluatePosition(const QString& fen) {
     QStringList commands = {
         "uci",
         QString("setoption name MultiPV value %1").arg(ui->stealthCheck->isChecked() ? 3 : 1),
-        "ucinewgame",
         "position fen " + fen,
-        "go depth 12"
+        "go depth 15"
     };
 
     multipvMoves.clear();
