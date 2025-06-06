@@ -264,31 +264,27 @@ void MainWindow::startStockfish() {
                 QString chosenMove = bestMove;
 
                 if (ui->stealthCheck->isChecked() && multipvMoves.size() > 1) {
-
-                    // 30% chance to pick a move other than the top choice
                     bool pickAlt = QRandomGenerator::global()->generateDouble() < 0.3;
                     if (pickAlt) {
                         QList<int> keys = multipvMoves.keys();
-                        keys.removeOne(1);  // exclude the best move from random pool
+                        keys.removeOne(1);  // exclude best
                         if (!keys.isEmpty()) {
                             int randIdx = QRandomGenerator::global()->bounded(keys.size());
                             selectedBestMoveRank = keys[randIdx];
                             chosenMove = multipvMoves.value(selectedBestMoveRank, bestMove);
                         } else {
                             selectedBestMoveRank = 1;
+                            chosenMove = bestMove;
                         }
                     } else {
                         selectedBestMoveRank = 1;
+                        chosenMove = bestMove;
                     }
-
-                    QList<int> keys = multipvMoves.keys();
-                    int randIdx = QRandomGenerator::global()->bounded(keys.size());
-                    selectedBestMoveRank = keys[randIdx];
-                    chosenMove = multipvMoves.value(selectedBestMoveRank, bestMove);
-
                 } else {
                     selectedBestMoveRank = 1;
+                    chosenMove = bestMove;
                 }
+
 
                 multipvMoves.clear();
 
@@ -296,7 +292,7 @@ void MainWindow::startStockfish() {
                     currentBestMove = chosenMove;
                     QString label = chosenMove;
                     if (selectedBestMoveRank > 1) {
-                        label += QString(" (%1th best move)").arg(selectedBestMoveRank);
+                        label += QString(" (Move: %1)").arg(selectedBestMoveRank);
                     }
                     ui->bestMoveDisplay->setText(label);
 
