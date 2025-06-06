@@ -25,9 +25,16 @@ MainWindow::MainWindow(QWidget *parent)
     layout->addWidget(board);
     board->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     evalScoreLabel = new QLabel(ui->evalBar);
+
+    evalScoreLabel->setObjectName("evalBarOverlay");
+    evalScoreLabel->setFixedSize(50, 20);
+    evalScoreLabel->setAlignment(Qt::AlignCenter);
+    evalScoreLabel->setAttribute(Qt::WA_TransparentForMouseEvents);
+
     evalScoreLabel->setFixedSize(50, 20);
     evalScoreLabel->setAlignment(Qt::AlignCenter);
     evalScoreLabel->setStyleSheet("background-color: rgba(255,255,255,200); border: 1px solid black; border-radius: 3px;");
+
     evalScoreLabel->show();
     updateEvalLabel();
     connect(ui->evalBar, &QProgressBar::valueChanged, this, &MainWindow::updateEvalLabel);
