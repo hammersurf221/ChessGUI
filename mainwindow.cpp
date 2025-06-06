@@ -8,6 +8,7 @@
 #include <QRegularExpression>
 #include <QDialog>
 #include <QDir>
+#include <QRandomGenerator>
 
 
 
@@ -245,21 +246,56 @@ void MainWindow::startStockfish() {
         QRegularExpression bestMovePattern("bestmove ([a-h][1-8][a-h][1-8])");
         QRegularExpression matePattern("score mate (-?\\d+)");
         QRegularExpression cpPattern("score cp (-?\\d+)");
+        QRegularExpression pvPattern("multipv\\s+(\\d+).*pv\\s+([a-h][1-8][a-h][1-8])");
 
         for (const QString& line : lines) {
             QString trimmed = line.trimmed();
 
+            QRegularExpressionMatch pvMatch = pvPattern.match(trimmed);
+            if (pvMatch.hasMatch()) {
+                int idx = pvMatch.captured(1).toInt();
+                QString mv = pvMatch.captured(2);
+                multipvMoves[idx] = mv;
+            }
+
             QRegularExpressionMatch bestMoveMatch = bestMovePattern.match(trimmed);
             if (bestMoveMatch.hasMatch()) {
                 QString bestMove = bestMoveMatch.captured(1);
+                QString chosenMove = bestMove;
+
+                if (ui->stealthCheck->isChecked() && multipvMoves.size() > 1) {
+                    // 30% chance to pick a move other than the top choice
+                    bool pickAlt = QRandomGenerator::global()->generateDouble() < 0.3;
+                    if (pickAlt) {
+                        QList<int> keys = multipvMoves.keys();
+                        keys.removeOne(1);  // exclude the best move from random pool
+                        if (!keys.isEmpty()) {
+                            int randIdx = QRandomGenerator::global()->bounded(keys.size());
+                            selectedBestMoveRank = keys[randIdx];
+                            chosenMove = multipvMoves.value(selectedBestMoveRank, bestMove);
+                        } else {
+                            selectedBestMoveRank = 1;
+                        }
+                    } else {
+                        selectedBestMoveRank = 1;
+                    }
+                } else {
+                    selectedBestMoveRank = 1;
+                }
+
+                multipvMoves.clear();
 
                 if (lastEvaluatedFen == lastFen) {  // ✅ Ensures best move matches current board
-                    currentBestMove = bestMove;
-                    ui->bestMoveDisplay->setText(bestMove);
+                    currentBestMove = chosenMove;
+                    QString label = chosenMove;
+                    if (selectedBestMoveRank > 1) {
+                        label += QString(" (%1th best move)").arg(selectedBestMoveRank);
+                    }
+                    ui->bestMoveDisplay->setText(label);
 
-                    if (bestMove.length() == 4) {
-                        QString from = bestMove.mid(0, 2);
-                        QString to = bestMove.mid(2, 2);
+                    if (chosenMove.length() == 4) {
+                        QString from = chosenMove.mid(0, 2);
+                        QString to = chosenMove.mid(2, 2);
                         board->setArrows({ qMakePair(from, to) });
 
                         if (isMyTurn && ui->automoveCheck->isChecked() && lastEvaluatedFen == lastFen) {
@@ -382,10 +418,14 @@ void MainWindow::evaluatePosition(const QString& fen) {
 
     QStringList commands = {
         "uci",
+        QString("setoption name MultiPV value %1").arg(ui->stealthCheck->isChecked() ? 3 : 1),
         "ucinewgame",
         "position fen " + fen,
         "go depth 12"
     };
+
+    multipvMoves.clear();
+    selectedBestMoveRank = 1;
 
     for (const QString& cmd : commands) {
         stockfishProcess->write((cmd + "\n").toUtf8());
