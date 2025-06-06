@@ -1,0 +1,107 @@
+/* === Global === */
+* {
+    font-family: "Inter";
+    font-size: 10.5pt;
+    color: white;
+}
+
+/* === Main App Background === */
+QMainWindow {
+    background-color: #1E1E1E;
+}
+
+/* === Labels & Text === */
+QLabel {
+    color: #E0E0E0;
+    padding: 2px 4px;
+}
+
+/* === Buttons === */
+QPushButton {
+    background-color: #2D2D2D;
+    border: 1px solid #444;
+    border-radius: 10px;
+    padding: 6px 14px;
+    color: #FFFFFF;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+
+QPushButton:hover {
+    background-color: #3A3A3A;
+}
+
+QPushButton:pressed {
+    background-color: #00E676;
+    color: black;
+}
+
+/* === Radio Buttons === */
+QRadioButton {
+    spacing: 6px;
+    color: #DDDDDD;
+}
+QRadioButton::indicator {
+    width: 16px;
+    height: 16px;
+    border-radius: 8px;
+    background: #555;
+    border: 2px solid #888;
+}
+QRadioButton::indicator:checked {
+    background-color: #00E676;
+    border: 2px solid #00E676;
+}
+
+/* === Plain Text Areas (like FEN display) === */
+QPlainTextEdit {
+    background-color: #2A2A2A;
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 10px;
+    font-family: "Courier New", monospace;
+    font-size: 9.5pt;
+    color: #00E676;
+}
+
+/* === Best Move Display === */
+QLineEdit, QLabel#bestMoveDisplay {
+    background-color: #2A2A2A;
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 8px;
+    font-weight: bold;
+    font-size: 11pt;
+    color: #00E676;
+}
+
+/* === Eval Bar (QProgressBar) === */
+QProgressBar {
+    background-color: #2A2A2A;
+    border: 1px solid #444;
+    border-radius: 10px;
+    text-align: center;
+    min-height: 20px;
+}
+
+QProgressBar::chunk {
+    border-radius: 10px;
+    background-color: #FFFFFF
+}
+
+/* === Status Bar === */
+QStatusBar {
+    background-color: #121212;
+    border-top: 1px solid #333;
+    color: #888;
+    padding-left: 10px;
+}
+
+/* === Tooltips === */
+QToolTip {
+    background-color: #333;
+    color: white;
+    border: 1px solid #00E676;
+    padding: 4px;
+    border-radius: 6px;
+}
