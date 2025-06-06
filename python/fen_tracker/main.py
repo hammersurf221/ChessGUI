@@ -7,6 +7,7 @@ from torchvision import transforms
 from PIL import Image
 from ccn_model import CCN
 from core.game_state_tracker import GameStateTracker
+from core.turn_detector import detect_turn_from_images
 from utils.board_utils import flip_fen_pov
 from skimage.metrics import structural_similarity as ssim
 import numpy as np
@@ -33,6 +34,7 @@ last_ssim = 0.0
 current_ssim = 0.0
 last_emitted_fen = None
 SSIM_THRESHOLD = 0.99
+prev_board_matrix = None
 
 def main():
     import sys
@@ -64,7 +66,7 @@ def main():
             image = Image.open(path).convert("RGB")
             image_array = np.array(image)
 
-            global last_image_array, last_emitted_fen, last_ssim, current_ssim
+            global last_image_array, last_emitted_fen, last_ssim, current_ssim, prev_board_matrix
 
             if last_image_array is None:
                 # Initialize on the first frame
@@ -82,8 +84,28 @@ def main():
             if last_ssim < SSIM_THRESHOLD and current_ssim >= SSIM_THRESHOLD:
                 tensor = transform(image)
                 board = predict_board(model, tensor)
-                tracker.update(board)
-                fen = tracker.generate_fen(board)
+
+                # Detect turn using image difference
+                mover_color = None
+                if last_image_array is not None and prev_board_matrix is not None:
+                    try:
+                        mover_color = detect_turn_from_images(
+                            Image.fromarray(last_image_array),
+                            image,
+                            prev_board_matrix
+                        )
+                    except Exception as e:
+                        print(f"[warn] Turn detection failed: {e}", flush=True)
+
+                # Update game state tracker normally
+                fen = tracker.update(board)
+
+                # Override turn based on image detection
+                if mover_color:
+                    correct_turn = 'b' if mover_color == 'w' else 'w'
+                    parts = fen.split()
+                    parts[1] = correct_turn
+                    fen = ' '.join(parts)
 
                 if my_color == 'b':
                     fen = flip_fen_pov(fen)
@@ -93,6 +115,10 @@ def main():
                     last_emitted_fen = fen
                 else:
                     print("[skip] FEN unchanged — skipping output", flush=True)
+
+                # Update previous board state for next round
+                prev_board_matrix = board.copy()
+
             else:
                 print("[skip] Board not stable yet", flush=True)
 
