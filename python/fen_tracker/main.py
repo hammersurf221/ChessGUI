@@ -10,8 +10,6 @@ from core.game_state_tracker import GameStateTracker
 from utils.board_utils import flip_fen_pov
 from skimage.metrics import structural_similarity as ssim
 import numpy as np
-from collections import deque
-
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--color", choices=["w", "b"], default="w")
@@ -36,7 +34,6 @@ SSIM_THRESHOLD = 0.98
 
 def main():
     import sys
-    from collections import deque
 
     model = CCN()
 
