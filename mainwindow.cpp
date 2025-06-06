@@ -9,6 +9,7 @@
 #include <QDialog>
 #include <QDir>
 #include <QRandomGenerator>
+#include <QLabel>
 
 
 
@@ -23,6 +24,13 @@ MainWindow::MainWindow(QWidget *parent)
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(board);
     board->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    evalScoreLabel = new QLabel(ui->evalBar);
+    evalScoreLabel->setFixedSize(50, 20);
+    evalScoreLabel->setAlignment(Qt::AlignCenter);
+    evalScoreLabel->setStyleSheet("background-color: rgba(255,255,255,200); border: 1px solid black; border-radius: 3px;");
+    evalScoreLabel->show();
+    updateEvalLabel();
+    connect(ui->evalBar, &QProgressBar::valueChanged, this, &MainWindow::updateEvalLabel);
     ui->fenDisplay->setPlainText("Waiting for FEN...");
     screenshotTimer = new QTimer(this);
     connect(screenshotTimer, &QTimer::timeout, this, &MainWindow::captureScreenshot);
@@ -34,12 +42,14 @@ MainWindow::MainWindow(QWidget *parent)
         if (checked) {
             myColor = "w";
             ui->evalBar->setInvertedAppearance(false);  // white on bottom
+            updateEvalLabel();
         }
     });
     connect(ui->blackRadioButton, &QRadioButton::toggled, this, [=](bool checked) {
         if (checked) {
             myColor = "b";
             ui->evalBar->setInvertedAppearance(true);  // black on bottom
+            updateEvalLabel();
         }
     });
 
@@ -338,6 +348,10 @@ void MainWindow::startStockfish() {
                         if (getMyColor() == "b") score = -score;
                         ui->evalBar->setValue(score);
                     }
+                    if (evalScoreLabel) {
+                        evalScoreLabel->setText(eval);
+                        updateEvalLabel();
+                    }
                 }
             }
         }
@@ -526,5 +540,26 @@ void MainWindow::playBestMove() {
         moveProcess->deleteLater();
     }
 }
+
+void MainWindow::updateEvalLabel() {
+    if (!evalScoreLabel || !ui->evalBar) return;
+
+    int value = ui->evalBar->value();
+    int min = ui->evalBar->minimum();
+    int max = ui->evalBar->maximum();
+    if (max == min) return;
+
+    double ratio = double(value - min) / double(max - min);
+    int barHeight = ui->evalBar->height();
+    bool inverted = ui->evalBar->invertedAppearance();
+
+    int y = inverted ? ratio * barHeight : barHeight - ratio * barHeight;
+    y -= evalScoreLabel->height() / 2;
+    y = qBound(0, y, barHeight - evalScoreLabel->height());
+    int x = (ui->evalBar->width() - evalScoreLabel->width()) / 2;
+
+    evalScoreLabel->move(x, y);
+}
+
 
 
