@@ -8,6 +8,7 @@
 #include <QRect>
 #include <QProcess>
 #include <QQueue>
+#include <QMap>
 
 
 QT_BEGIN_NAMESPACE
@@ -56,6 +57,8 @@ private:
     QQueue<QString> recentBestMoves;
     QString lastPlayedFen;
     bool automoveInProgress = false;
+    QMap<int, QString> multipvMoves;
+    int selectedBestMoveRank = 1;
 
 
 
