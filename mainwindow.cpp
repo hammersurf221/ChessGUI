@@ -264,6 +264,7 @@ void MainWindow::startStockfish() {
                 QString chosenMove = bestMove;
 
                 if (ui->stealthCheck->isChecked() && multipvMoves.size() > 1) {
+
                     // 30% chance to pick a move other than the top choice
                     bool pickAlt = QRandomGenerator::global()->generateDouble() < 0.3;
                     if (pickAlt) {
@@ -279,6 +280,12 @@ void MainWindow::startStockfish() {
                     } else {
                         selectedBestMoveRank = 1;
                     }
+
+                    QList<int> keys = multipvMoves.keys();
+                    int randIdx = QRandomGenerator::global()->bounded(keys.size());
+                    selectedBestMoveRank = keys[randIdx];
+                    chosenMove = multipvMoves.value(selectedBestMoveRank, bestMove);
+
                 } else {
                     selectedBestMoveRank = 1;
                 }
