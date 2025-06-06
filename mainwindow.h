@@ -3,6 +3,7 @@
 #include "regionselector.h"
 #include "chessboard_detector.h"
 #include "boardwidget.h"
+#include <QLabel>
 #include <QMainWindow>
 #include <QTimer>
 #include <QRect>
@@ -50,6 +51,8 @@ private:
     BoardWidget* board = nullptr;
     void setStatusLight(const QString& color);
     void startFenServer();
+    QLabel* evalScoreLabel = nullptr;
+    void updateEvalLabel();
     QString currentBestMove;
     void playBestMove();
     bool isMyTurn = false;
