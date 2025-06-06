@@ -29,10 +29,10 @@ def predict_board(model, image_tensor):
     return pred.squeeze(0).cpu().numpy()
 
 last_image_array = None
-stable_ssim_count = 0
+last_ssim = 0.0
+current_ssim = 0.0
 last_emitted_fen = None
 SSIM_THRESHOLD = 0.98
-REQUIRED_STABLE_FRAMES = 2
 
 def main():
     import sys
@@ -64,44 +64,40 @@ def main():
             image = Image.open(path).convert("RGB")
             image_array = np.array(image)
 
-            global last_image_array, last_emitted_fen, stable_ssim_count
+            global last_image_array, last_emitted_fen, last_ssim, current_ssim
 
-            if last_image_array is not None:
-                similarity = ssim(last_image_array, image_array, channel_axis=2)
-                print(f"[debug] SSIM: {similarity}", flush=True)
+            if last_image_array is None:
+                # Initialize on the first frame
+                last_image_array = np.copy(image_array)
+                last_ssim = 0.0
+                current_ssim = 1.0
+                print("[debug] First frame — initializing SSIM", flush=True)
+                continue
 
-                if similarity >= SSIM_THRESHOLD:
-                    stable_ssim_count += 1
-                    print(f"[debug] SSIM stable {stable_ssim_count}/{REQUIRED_STABLE_FRAMES}", flush=True)
-                    if stable_ssim_count < REQUIRED_STABLE_FRAMES:
-                        print("[skip] Not enough stable frames yet — waiting", flush=True)
-                        continue
+            similarity = ssim(last_image_array, image_array, channel_axis=2)
+            print(f"[debug] SSIM: {similarity}", flush=True)
+
+            last_ssim, current_ssim = current_ssim, similarity
+
+            if last_ssim < SSIM_THRESHOLD and current_ssim >= SSIM_THRESHOLD:
+                tensor = transform(image)
+                board = predict_board(model, tensor)
+                tracker.update(board)
+                fen = tracker.generate_fen(board)
+
+                if my_color == 'b':
+                    fen = flip_fen_pov(fen)
+
+                if fen != last_emitted_fen:
+                    print(f"[FEN] {fen}", flush=True)
+                    last_emitted_fen = fen
                 else:
-                    print("[debug] SSIM unstable — resetting counter", flush=True)
-                    stable_ssim_count = 0
-                    continue
+                    print("[skip] FEN unchanged — skipping output", flush=True)
             else:
-                print("[debug] First frame — no SSIM comparison", flush=True)
-                stable_ssim_count = 1
+                print("[skip] Board not stable yet", flush=True)
 
-            # 🔐 Important: store a **copy** of the array after comparison
+            # store the current frame for next comparison
             last_image_array = np.copy(image_array)
-
-
-            # At this point, we have N stable frames — run prediction
-            tensor = transform(image)
-            board = predict_board(model, tensor)
-            tracker.update(board)
-            fen = tracker.generate_fen(board)
-
-            if my_color == 'b':
-                fen = flip_fen_pov(fen)
-
-            if fen != last_emitted_fen:
-                print(f"[FEN] {fen}", flush=True)
-                last_emitted_fen = fen
-            else:
-                print("[skip] FEN unchanged — skipping output", flush=True)
 
         except Exception as e:
             print(f"[error] {e}", flush=True)
