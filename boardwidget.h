@@ -1,7 +1,6 @@
 #ifndef BOARDWIDGET_H
 #define BOARDWIDGET_H
 
-#include <QLabel>
 #include <QMap>
 #include <QWidget>
 #include <QPixmap>
@@ -23,7 +22,9 @@ protected:
 private:
 
   ArrowOverlay *arrowOverlay = nullptr;
-  QMap<QString, QLabel *> pieceLabels; // key = square like "e4"
+  QMap<QString, QChar> boardPieces;    // key = square like "e4", value = piece char
+  QMap<QString, QPixmap> piecePixmaps; // cached piece images
+  int cachedPieceSize = -1;
   QString currentFen;
   bool currentFlipped = false;
   QColor lightSquare = QColor(240, 217, 181);
@@ -31,8 +32,8 @@ private:
 
   QString squareToKey(int rank, int file) const;
   QPoint squareToPosition(const QString &square, bool flipped) const;
-  void updatePieces(const QString &fen, bool flipped);
-  void clearAllPieces();
+  void parseFen(const QString &fen);
+  void preparePiecePixmaps(int size);
   QSize sizeHint() const override;
 
 };
