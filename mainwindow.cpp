@@ -11,6 +11,7 @@
 #include <QRandomGenerator>
 #include <QLabel>
 #include <QShortcut>
+#include "globalhotkeymanager.h"
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -19,6 +20,27 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     // === Hotkeys ===
+#ifdef Q_OS_WIN
+    hotkeyManager = new GlobalHotkeyManager(this);
+    hotkeyManager->registerHotkey(1, QKeySequence("Ctrl+M"));
+    hotkeyManager->registerHotkey(2, QKeySequence("Ctrl+S"));
+    hotkeyManager->registerHotkey(3, QKeySequence("Ctrl+A"));
+    connect(hotkeyManager, &GlobalHotkeyManager::activated, this, [this](int id) {
+        switch (id) {
+        case 1:
+            ui->automoveCheck->setChecked(!ui->automoveCheck->isChecked());
+            statusBar()->showMessage(QString("Automove: %1").arg(ui->automoveCheck->isChecked() ? "ON" : "OFF"));
+            break;
+        case 2:
+            ui->stealthCheck->setChecked(!ui->stealthCheck->isChecked());
+            statusBar()->showMessage(QString("Stealth Mode: %1").arg(ui->stealthCheck->isChecked() ? "ON" : "OFF"));
+            break;
+        case 3:
+            on_toggleAnalysisButton_clicked();
+            break;
+        }
+    });
+#else
     QShortcut* toggleAutoMove = new QShortcut(QKeySequence("Ctrl+M"), this);
     connect(toggleAutoMove, &QShortcut::activated, this, [this]() {
         ui->automoveCheck->setChecked(!ui->automoveCheck->isChecked());
@@ -35,6 +57,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(toggleAnalysis, &QShortcut::activated, this, [this]() {
         on_toggleAnalysisButton_clicked();
     });
+#endif
 
     fenServer = new QProcess(this);
     board = new BoardWidget();
