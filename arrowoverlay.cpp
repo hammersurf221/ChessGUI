@@ -37,8 +37,25 @@ QPoint ArrowOverlay::squareToPosition(const QString &square) const {
   qreal tileHeight = static_cast<qreal>(height()) / 8.0;
   int x = qRound(file * tileWidth);
   int y = qRound(rank * tileHeight);
-  return QPoint(x, y);
 
+  return QPoint(x, y);
+}
+
+QPoint ArrowOverlay::squareCenter(const QString &square) const {
+  int file = square[0].unicode() - 'a';
+  int rank = 8 - square[1].digitValue();
+
+  if (flipped) {
+    file = 7 - file;
+    rank = 7 - rank;
+  }
+
+  qreal tileWidth = static_cast<qreal>(width()) / 8.0;
+  qreal tileHeight = static_cast<qreal>(height()) / 8.0;
+  int x = qRound((file + 0.5) * tileWidth);
+  int y = qRound((rank + 0.5) * tileHeight);
+
+  return QPoint(x, y);
 }
 
 void ArrowOverlay::paintEvent(QPaintEvent *) {
@@ -71,12 +88,8 @@ void ArrowOverlay::paintEvent(QPaintEvent *) {
   drawHighlight(highlightTo);
 
   for (const auto &arrow : arrows) {
-    QPoint from = squareToPosition(arrow.first);
-    QPoint to = squareToPosition(arrow.second);
-    QPoint fromCenter =
-        from + QPoint(qRound(tileWidth / 2.0), qRound(tileHeight / 2.0));
-    QPoint toCenter =
-        to + QPoint(qRound(tileWidth / 2.0), qRound(tileHeight / 2.0));
+    QPoint fromCenter = squareCenter(arrow.first);
+    QPoint toCenter = squareCenter(arrow.second);
 
     QPen pen(QColor("#66cc88")); // Teal color
     pen.setWidth(8);             // Thicker line
@@ -97,7 +110,6 @@ void ArrowOverlay::paintEvent(QPaintEvent *) {
     painter.setBrush(QColor("#66cc88"));
     painter.drawPolygon(head);
   }
-  qDebug() << "Drawing arrows, count =" << arrows.size();
-  qDebug() << "[Overlay] Size =" << size();
+
 
 }
