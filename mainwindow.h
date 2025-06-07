@@ -12,6 +12,12 @@
 #include <QMap>
 #include <QElapsedTimer>
 #include "globalhotkeymanager.h"
+#include <QtCharts/QChartView>
+#include <QtCharts/QChart>
+#include <QtCharts/QBarSet>
+#include <QtCharts/QBarSeries>
+#include <QtCharts/QBarCategoryAxis>
+#include <QtCharts/QValueAxis>
 
 
 QT_BEGIN_NAMESPACE
@@ -55,6 +61,7 @@ private:
     void startFenServer();
     QLabel* evalScoreLabel = nullptr;
     void updateEvalLabel();
+    void updateMoveRankChart();
     QString currentBestMove;
     void playBestMove();
     bool isMyTurn = false;
@@ -68,6 +75,11 @@ private:
     QElapsedTimer fenElapsed;
     QElapsedTimer evalElapsed;
     GlobalHotkeyManager* hotkeyManager = nullptr;
+
+    QtCharts::QChartView* moveRankChartView = nullptr;
+    QtCharts::QChart* moveRankChart = nullptr;
+    QtCharts::QBarSet* moveRankBarSet = nullptr;
+    QVector<int> stealthMoveRankCounts = QVector<int>(4, 0);
 
 
 

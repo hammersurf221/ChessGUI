@@ -12,6 +12,12 @@
 #include <QLabel>
 #include <QShortcut>
 #include "globalhotkeymanager.h"
+#include <QtCharts/QChartView>
+#include <QtCharts/QChart>
+#include <QtCharts/QBarSet>
+#include <QtCharts/QBarSeries>
+#include <QtCharts/QBarCategoryAxis>
+#include <QtCharts/QValueAxis>
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -89,6 +95,27 @@ MainWindow::MainWindow(QWidget *parent)
     updateEvalLabel();
     connect(ui->evalBar, &QProgressBar::valueChanged, this, &MainWindow::updateEvalLabel);
     ui->fenDisplay->setPlainText("Waiting for FEN...");
+
+    moveRankChartView = ui->moveRankChartView;
+    moveRankChart = new QtCharts::QChart();
+    moveRankBarSet = new QtCharts::QBarSet("Choices");
+    *moveRankBarSet << 0 << 0 << 0 << 0;
+    QtCharts::QBarSeries* series = new QtCharts::QBarSeries();
+    series->append(moveRankBarSet);
+    moveRankChart->addSeries(series);
+    QStringList categories{ "1st", "2nd", "3rd", "4th" };
+    QtCharts::QBarCategoryAxis* axisX = new QtCharts::QBarCategoryAxis();
+    axisX->append(categories);
+    moveRankChart->addAxis(axisX, Qt::AlignBottom);
+    series->attachAxis(axisX);
+    QtCharts::QValueAxis* axisY = new QtCharts::QValueAxis();
+    axisY->setRange(0, 1);
+    moveRankChart->addAxis(axisY, Qt::AlignLeft);
+    series->attachAxis(axisY);
+    moveRankChart->legend()->hide();
+    moveRankChartView->setChart(moveRankChart);
+    moveRankChartView->setRenderHint(QPainter::Antialiasing);
+
     screenshotTimer = new QTimer(this);
     connect(screenshotTimer, &QTimer::timeout, this, &MainWindow::captureScreenshot);
 
@@ -375,6 +402,13 @@ void MainWindow::startStockfish() {
                     }
                     ui->bestMoveDisplay->setText(label);
 
+                    if (ui->stealthCheck->isChecked()) {
+                        int rank = qBound(1, selectedBestMoveRank, 4);
+                        if (stealthMoveRankCounts.size() < 4) stealthMoveRankCounts.resize(4);
+                        stealthMoveRankCounts[rank - 1]++;
+                        updateMoveRankChart();
+                    }
+
                     if (chosenMove.length() == 4) {
                         QString from = chosenMove.mid(0, 2);
                         QString to = chosenMove.mid(2, 2);
@@ -510,7 +544,7 @@ void MainWindow::evaluatePosition(const QString& fen) {
 
     QStringList commands = {
         "uci",
-        QString("setoption name MultiPV value %1").arg(ui->stealthCheck->isChecked() ? 3 : 1),
+        QString("setoption name MultiPV value %1").arg(ui->stealthCheck->isChecked() ? 4 : 1),
         "position fen " + fen,
         "go depth 15"
     };
@@ -633,6 +667,22 @@ void MainWindow::updateEvalLabel() {
     int x = (ui->evalBar->width() - evalScoreLabel->width()) / 2;
 
     evalScoreLabel->move(x, y);
+}
+
+void MainWindow::updateMoveRankChart() {
+    if (!moveRankBarSet || !moveRankChart) return;
+
+    for (int i = 0; i < 4 && i < stealthMoveRankCounts.size(); ++i) {
+        moveRankBarSet->replace(i, stealthMoveRankCounts[i]);
+    }
+
+    int maxVal = 1;
+    for (int val : stealthMoveRankCounts) {
+        if (val > maxVal) maxVal = val;
+    }
+
+    auto axisY = qobject_cast<QtCharts::QValueAxis*>(moveRankChart->axisY());
+    if (axisY) axisY->setRange(0, maxVal);
 }
 
 
