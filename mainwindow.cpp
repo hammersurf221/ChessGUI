@@ -312,7 +312,6 @@ void MainWindow::captureScreenshot() {
     QImage image = resized.toImage().convertToFormat(QImage::Format_RGB888);
 
     statusBar()->showMessage("Board changed → ready to analyze");
-    updateStatusLabel("Board changed → ready to analyze");
     QString imagePath = "last_screenshot.png";
     image.save("last_screenshot.png");
     qDebug() << "[timing] Screenshot capture:" << screenshotElapsed.elapsed() << "ms";
