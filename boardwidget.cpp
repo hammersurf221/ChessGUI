@@ -1,13 +1,9 @@
 #include "boardwidget.h"
 #include <QBrush>
-#include <QDebug>
 #include <QDir>
-#include <QFile>
 #include <QPainter>
-#include <QPen>
 #include <QPixmap>
 #include <QSvgRenderer>
-#include <QVector>
 #include <QResizeEvent>
 
 QPixmap BoardWidget::generateBoardPixmap(int width, int height) const {
@@ -38,28 +34,19 @@ BoardWidget::BoardWidget(QWidget *parent) : QWidget(parent) {
 
   // Load static board image
   boardBackground = new QLabel(this);
-  setMinimumSize(512, 512);  // or lower if you prefer
+  setFixedSize(512, 512);
   boardBackground->move(0, 0);
   boardBackground->lower();
 
 
   QString boardPath = "assets/board.png";
-  QPixmap boardPixmap;
+  QPixmap boardPixmap = generateBoardPixmap(512, 512);
+  QDir().mkpath("assets");
+  boardPixmap.save(boardPath);
 
-  if (QFile::exists(boardPath)) {
-    boardPixmap.load(boardPath);
-  } else {
-    // Generate the board image
-    boardPixmap = generateBoardPixmap(512, 512);
+  originalBoardPixmap = boardPixmap; // Store original unscaled image
 
-    // Save it for future use
-    QDir().mkpath("assets");
-    boardPixmap.save(boardPath);
-  }
-
-  originalBoardPixmap = boardPixmap; // ✅ Store original unscaled image
-
-  boardBackground->resize(size());
+  boardBackground->setFixedSize(512, 512);
   boardBackground->setPixmap(originalBoardPixmap);
 }
 
@@ -183,16 +170,13 @@ QSize BoardWidget::sizeHint() const {
   return QSize(512, 512);
 }
 
-void BoardWidget::resizeEvent(QResizeEvent* event) {
+void BoardWidget::resizeEvent(QResizeEvent *event) {
     QWidget::resizeEvent(event);
-    QSize newSize = event->size();
-    boardBackground->resize(newSize);
+    boardBackground->setFixedSize(size());
     if (arrowOverlay) {
         arrowOverlay->setGeometry(rect());
         arrowOverlay->raise();
     }
-    originalBoardPixmap = generateBoardPixmap(newSize.width(), newSize.height());
-    boardBackground->setPixmap(originalBoardPixmap);
     updatePieces(currentFen, currentFlipped);
 }
 
