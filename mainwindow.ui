@@ -155,8 +155,8 @@ border: 1px solid #444;
          </property>
          <property name="minimumSize">
           <size>
-           <width>516</width>
-           <height>516</height>
+           <width>512</width>
+           <height>512</height>
           </size>
          </property>
          <property name="frameShape">
