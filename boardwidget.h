@@ -35,6 +35,8 @@ private:
     QString highlightFrom;
     QString highlightTo;
     QSize sizeHint() const override;
+    QPixmap originalBoardPixmap;
+
 
 };
 

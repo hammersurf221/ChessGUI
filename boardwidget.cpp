@@ -60,8 +60,13 @@ BoardWidget::BoardWidget(QWidget *parent)
         boardPixmap.save(boardPath);
     }
 
-    boardBackground->setPixmap(boardPixmap);
-    boardBackground->setScaledContents(true);
+    originalBoardPixmap = boardPixmap;  // ✅ Store original unscaled image
+
+    // 🚫 Don't use event->size() in constructor
+    boardBackground->setPixmap(originalBoardPixmap.scaled(size(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
+
+
+
 
 }
 
@@ -70,19 +75,20 @@ QString BoardWidget::squareToKey(int rank, int file) const {
 }
 
 QPoint BoardWidget::squareToPosition(const QString &square, bool flipped) const {
-    int file = square[0].unicode() - 'a'; // a–h → 0–7
-    int rank = 8 - square[1].digitValue(); // 1–8 → 7–0
-
-    qreal tileWidth = static_cast<qreal>(width()) / 8.0;
-    qreal tileHeight = static_cast<qreal>(height()) / 8.0;
+    int file = square[0].unicode() - 'a';  // 0–7
+    int rank = 8 - square[1].digitValue(); // 0–7
 
     if (flipped) {
         file = 7 - file;
         rank = 7 - rank;
     }
 
-    int x = qRound(file * tileWidth);
-    int y = qRound(rank * tileHeight);
+    int tileW = width() / 8;
+    int tileH = height() / 8;
+
+    int x = file * tileW;
+    int y = rank * tileH;
+
     return QPoint(x, y);
 }
 
@@ -205,10 +211,12 @@ void BoardWidget::updatePieces(const QString &fen, bool flipped) {
 
         pieceLabel->setPixmap(pixmap);
         pieceLabel->setFixedSize(pieceSize, pieceSize);
-        QPoint topLeft = squareToPosition(key, flipped);
-        topLeft.rx() += (tileWidth - pieceSize) / 2;
-        topLeft.ry() += (tileHeight - pieceSize) / 2;
-        pieceLabel->move(topLeft);
+        int tileW = width() / 8;
+        int tileH = height() / 8;
+        QPoint squarePos = squareToPosition(key, flipped);
+        int centeredX = squarePos.x() + (tileW - pieceSize) / 2;
+        int centeredY = squarePos.y() + (tileH - pieceSize) / 2;
+        pieceLabel->move(centeredX, centeredY);
         pieceLabel->show();
 
         pieceLabels.insert(key, pieceLabel);
@@ -283,11 +291,15 @@ void BoardWidget::setArrows(const QList<QPair<QString, QString>>& newArrows) {
 
 void BoardWidget::resizeEvent(QResizeEvent* event) {
     boardBackground->resize(event->size());
+    boardBackground->setPixmap(originalBoardPixmap.scaled(event->size(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
+
     if (arrowOverlay)
         arrowOverlay->resize(event->size());
+
     updatePieces(currentFen, currentFlipped);
     QWidget::resizeEvent(event);
 }
+
 
 QSize BoardWidget::sizeHint() const {
     int side = qMin(width(), height());
