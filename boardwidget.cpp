@@ -105,6 +105,11 @@ void BoardWidget::setPositionFromFen(const QString &fen, bool flipped) {
   currentFen = fen;
   currentFlipped = flipped;
   updatePieces(fen, flipped);
+  if (arrowOverlay) {
+    arrowOverlay->setArrows(currentArrows, currentFlipped);
+    arrowOverlay->setHighlights(highlightFrom, highlightTo);
+    arrowOverlay->raise();
+  }
   update();
 }
 
@@ -173,7 +178,19 @@ void BoardWidget::paintEvent(QPaintEvent *event) {
 
 void BoardWidget::setArrows(const QList<QPair<QString, QString>> &newArrows) {
   if (arrowOverlay) {
-    arrowOverlay->setArrows(newArrows, currentFlipped);
+    currentArrows = newArrows;
+    arrowOverlay->setArrows(currentArrows, currentFlipped);
+    arrowOverlay->setHighlights(highlightFrom, highlightTo);
+    arrowOverlay->raise();
+  }
+}
+
+void BoardWidget::setHighlights(const QString &from, const QString &to) {
+  highlightFrom = from;
+  highlightTo = to;
+  if (arrowOverlay) {
+    arrowOverlay->setArrows(currentArrows, currentFlipped);
+    arrowOverlay->setHighlights(highlightFrom, highlightTo);
     arrowOverlay->raise();
   }
 }
