@@ -7,6 +7,7 @@
 #include <QPainter>
 #include <QPen>
 #include <QBrush>
+#include <QVector>
 
 
 
@@ -95,9 +96,52 @@ void BoardWidget::setPositionFromFen(const QString &fen, bool flipped) {
     if (fen == currentFen && flipped == currentFlipped)
         return;
 
+    QString prevFen = currentFen;
     currentFen = fen;
     currentFlipped = flipped;
     updatePieces(fen, flipped);
+
+    highlightFrom.clear();
+    highlightTo.clear();
+    if (!prevFen.isEmpty()) {
+        auto parseBoard = [](const QString& layout) {
+            QVector<QVector<QChar>> board(8, QVector<QChar>(8, '.'));
+            QStringList ranks = layout.split('/');
+            for (int r = 0; r < qMin(8, ranks.size()); ++r) {
+                int c = 0;
+                for (QChar ch : ranks[r]) {
+                    if (ch.isDigit()) {
+                        c += ch.digitValue();
+                    } else {
+                        if (c < 8) board[r][c] = ch;
+                        ++c;
+                    }
+                }
+            }
+            return board;
+        };
+
+        auto prevBoard = parseBoard(prevFen);
+        auto currBoard = parseBoard(fen);
+
+        for (int r = 0; r < 8; ++r) {
+            for (int c = 0; c < 8; ++c) {
+                if (prevBoard[r][c] != currBoard[r][c]) {
+                    if (prevBoard[r][c] != '.' && currBoard[r][c] == '.') {
+                        highlightFrom = QString(QChar('a' + c)) + QString::number(8 - r);
+                    } else if (prevBoard[r][c] == '.' && currBoard[r][c] != '.') {
+                        highlightTo = QString(QChar('a' + c)) + QString::number(8 - r);
+                    } else if (prevBoard[r][c] != currBoard[r][c] && currBoard[r][c] != '.') {
+                        highlightTo = QString(QChar('a' + c)) + QString::number(8 - r);
+                        if (highlightFrom.isEmpty())
+                            highlightFrom = QString(QChar('a' + c)) + QString::number(8 - r);
+                    }
+                }
+            }
+        }
+    }
+
+    update();
 
     if (arrowOverlay)
         arrowOverlay->raise();  // 🟢 Ensure overlay is always on top after updates
@@ -158,10 +202,23 @@ void BoardWidget::updatePieces(const QString &fen, bool flipped) {
 void BoardWidget::paintEvent(QPaintEvent* event) {
     QWidget::paintEvent(event);  // draw base
 
-    if (arrows.isEmpty()) return;
-
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
+
+    int tileSize = width() / 8;
+
+    auto drawHighlight = [&](const QString& square) {
+        if (square.isEmpty()) return;
+        QPoint pos = squareToPosition(square, currentFlipped);
+        QRect rect(pos, QSize(tileSize, tileSize));
+        painter.fillRect(rect, QColor(255, 215, 0, 120));
+    };
+
+    drawHighlight(highlightFrom);
+    drawHighlight(highlightTo);
+
+    if (arrows.isEmpty())
+        return;
 
     for (const auto& arrow : arrows) {
         QString fromSquare = arrow.first;
