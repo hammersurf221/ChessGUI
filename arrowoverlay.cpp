@@ -6,7 +6,6 @@ ArrowOverlay::ArrowOverlay(QWidget* parent) : QWidget(parent) {
     setAttribute(Qt::WA_TransparentForMouseEvents);
     setAttribute(Qt::WA_NoSystemBackground);
     setAttribute(Qt::WA_TranslucentBackground);
-    setFixedSize(512, 512);  // Match board size
 }
 
 void ArrowOverlay::setArrows(const QList<QPair<QString, QString>>& newArrows, bool flip) {
@@ -30,21 +29,25 @@ QPoint ArrowOverlay::squareToPosition(const QString& square) const {
         rank = 7 - rank;
     }
 
-    int tileSize = width() / 8;
-    return QPoint(file * tileSize, rank * tileSize);
+    qreal tileWidth = static_cast<qreal>(width()) / 8.0;
+    qreal tileHeight = static_cast<qreal>(height()) / 8.0;
+    int x = qRound(file * tileWidth);
+    int y = qRound(rank * tileHeight);
+    return QPoint(x, y);
 }
 
 void ArrowOverlay::paintEvent(QPaintEvent*) {
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
 
-    int tileSize = width() / 8;
+    qreal tileWidth = static_cast<qreal>(width()) / 8.0;
+    qreal tileHeight = static_cast<qreal>(height()) / 8.0;
 
     auto drawHighlight = [&](const QString& square) {
         if (square.isEmpty())
             return;
         QPoint pos = squareToPosition(square);
-        QRect rect(pos, QSize(tileSize, tileSize));
+        QRect rect(pos, QSize(qRound(tileWidth), qRound(tileHeight)));
         painter.fillRect(rect, QColor(255, 215, 0, 120));
     };
 
@@ -54,8 +57,8 @@ void ArrowOverlay::paintEvent(QPaintEvent*) {
     for (const auto& arrow : arrows) {
         QPoint from = squareToPosition(arrow.first);
         QPoint to = squareToPosition(arrow.second);
-        QPoint fromCenter = from + QPoint(tileSize / 2, tileSize / 2);
-        QPoint toCenter = to + QPoint(tileSize / 2, tileSize / 2);
+        QPoint fromCenter = from + QPoint(qRound(tileWidth / 2.0), qRound(tileHeight / 2.0));
+        QPoint toCenter = to + QPoint(qRound(tileWidth / 2.0), qRound(tileHeight / 2.0));
 
         QPen pen(QColor("#66cc88"));  // Teal color
         pen.setWidth(8);              // Thicker line
