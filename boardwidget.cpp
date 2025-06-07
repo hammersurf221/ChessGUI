@@ -62,8 +62,10 @@ BoardWidget::BoardWidget(QWidget *parent)
 
     originalBoardPixmap = boardPixmap;  // ✅ Store original unscaled image
 
-    // 🚫 Don't use event->size() in constructor
-    boardBackground->setPixmap(originalBoardPixmap.scaled(size(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
+    // Initial geometry
+    QRect rect = boardRect();
+    boardBackground->setGeometry(rect);
+    boardBackground->setPixmap(originalBoardPixmap.scaled(rect.size(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
 
 
 
@@ -72,6 +74,13 @@ BoardWidget::BoardWidget(QWidget *parent)
 
 QString BoardWidget::squareToKey(int rank, int file) const {
     return QString("%1%2").arg(QChar('a' + file)).arg(8 - rank);
+}
+
+QRect BoardWidget::boardRect() const {
+    int side = qMin(width(), height());
+    int offsetX = (width() - side) / 2;
+    int offsetY = (height() - side) / 2;
+    return QRect(offsetX, offsetY, side, side);
 }
 
 QPoint BoardWidget::squareToPosition(const QString &square, bool flipped) const {
@@ -83,11 +92,12 @@ QPoint BoardWidget::squareToPosition(const QString &square, bool flipped) const 
         rank = 7 - rank;
     }
 
-    qreal tileW = static_cast<qreal>(width()) / 8.0;
-    qreal tileH = static_cast<qreal>(height()) / 8.0;
+    QRect rect = boardRect();
+    qreal tileW = static_cast<qreal>(rect.width()) / 8.0;
+    qreal tileH = static_cast<qreal>(rect.height()) / 8.0;
 
-    int x = qRound(file * tileW);
-    int y = qRound(rank * tileH);
+    int x = rect.x() + qRound(file * tileW);
+    int y = rect.y() + qRound(rank * tileH);
 
     return QPoint(x, y);
 }
@@ -200,8 +210,9 @@ void BoardWidget::updatePieces(const QString &fen, bool flipped) {
 
         QLabel* pieceLabel = new QLabel(this);
         QSvgRenderer renderer(piecePath);
-        qreal tileWidth = static_cast<qreal>(width()) / 8.0;
-        qreal tileHeight = static_cast<qreal>(height()) / 8.0;
+        QRect rect = boardRect();
+        qreal tileWidth = static_cast<qreal>(rect.width()) / 8.0;
+        qreal tileHeight = static_cast<qreal>(rect.height()) / 8.0;
         int pieceSize = qRound(qMin(tileWidth, tileHeight));
         QPixmap pixmap(pieceSize, pieceSize);
         pixmap.fill(Qt::transparent);
@@ -212,12 +223,8 @@ void BoardWidget::updatePieces(const QString &fen, bool flipped) {
         pieceLabel->setPixmap(pixmap);
         pieceLabel->setFixedSize(pieceSize, pieceSize);
 
-        qreal tileW = static_cast<qreal>(width()) / 8.0;
-        qreal tileH = static_cast<qreal>(height()) / 8.0;
         QPoint squarePos = squareToPosition(key, flipped);
-        int centeredX = qRound(squarePos.x() + tileW / 2.0 - pieceSize / 2.0);
-        int centeredY = qRound(squarePos.y() + tileH / 2.0 - pieceSize / 2.0);
-        pieceLabel->move(centeredX, centeredY);
+        pieceLabel->move(squarePos);
         pieceLabel->show();
 
         pieceLabels.insert(key, pieceLabel);
@@ -236,8 +243,9 @@ void BoardWidget::paintEvent(QPaintEvent* event) {
 
 
 
-    qreal tileWidth = static_cast<qreal>(width()) / 8.0;
-    qreal tileHeight = static_cast<qreal>(height()) / 8.0;
+    QRect rect = boardRect();
+    qreal tileWidth = static_cast<qreal>(rect.width()) / 8.0;
+    qreal tileHeight = static_cast<qreal>(rect.height()) / 8.0;
 
     auto drawHighlight = [&](const QString& square) {
         if (square.isEmpty()) return;
@@ -247,12 +255,12 @@ void BoardWidget::paintEvent(QPaintEvent* event) {
             file = 7 - file;
             rank = 7 - rank;
         }
-        int left = qRound(file * tileWidth);
-        int top = qRound(rank * tileHeight);
-        int right = qRound((file + 1) * tileWidth);
-        int bottom = qRound((rank + 1) * tileHeight);
-        QRect rect(QPoint(left, top), QPoint(right, bottom));
-        painter.fillRect(rect, QColor(255, 215, 0, 120));
+        int left = rect.x() + qRound(file * tileWidth);
+        int top = rect.y() + qRound(rank * tileHeight);
+        int right = rect.x() + qRound((file + 1) * tileWidth);
+        int bottom = rect.y() + qRound((rank + 1) * tileHeight);
+        QRect r(QPoint(left, top), QPoint(right, bottom));
+        painter.fillRect(r, QColor(255, 215, 0, 120));
     };
 
     drawHighlight(highlightFrom);
@@ -300,8 +308,12 @@ void BoardWidget::setArrows(const QList<QPair<QString, QString>>& newArrows) {
 }
 
 void BoardWidget::resizeEvent(QResizeEvent* event) {
-    boardBackground->resize(event->size());
-    boardBackground->setPixmap(originalBoardPixmap.scaled(event->size(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
+    int side = qMin(event->size().width(), event->size().height());
+    int offsetX = (event->size().width() - side) / 2;
+    int offsetY = (event->size().height() - side) / 2;
+    QRect rect(offsetX, offsetY, side, side);
+    boardBackground->setGeometry(rect);
+    boardBackground->setPixmap(originalBoardPixmap.scaled(rect.size(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
 
     if (arrowOverlay)
         arrowOverlay->resize(event->size());
@@ -314,6 +326,14 @@ void BoardWidget::resizeEvent(QResizeEvent* event) {
 QSize BoardWidget::sizeHint() const {
     int side = qMin(width(), height());
     return QSize(side, side);
+}
+
+bool BoardWidget::hasHeightForWidth() const {
+    return true;
+}
+
+int BoardWidget::heightForWidth(int w) const {
+    return w;
 }
 
 

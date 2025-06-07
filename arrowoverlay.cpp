@@ -20,6 +20,13 @@ void ArrowOverlay::setHighlights(const QString& from, const QString& to) {
     update();
 }
 
+QRect ArrowOverlay::boardRect() const {
+    int side = qMin(width(), height());
+    int offsetX = (width() - side) / 2;
+    int offsetY = (height() - side) / 2;
+    return QRect(offsetX, offsetY, side, side);
+}
+
 QPoint ArrowOverlay::squareToPosition(const QString& square) const {
     int file = square[0].unicode() - 'a';
     int rank = 8 - square[1].digitValue();
@@ -29,10 +36,11 @@ QPoint ArrowOverlay::squareToPosition(const QString& square) const {
         rank = 7 - rank;
     }
 
-    qreal tileWidth = static_cast<qreal>(width()) / 8.0;
-    qreal tileHeight = static_cast<qreal>(height()) / 8.0;
-    int x = qRound(file * tileWidth);
-    int y = qRound(rank * tileHeight);
+    QRect rect = boardRect();
+    qreal tileWidth = static_cast<qreal>(rect.width()) / 8.0;
+    qreal tileHeight = static_cast<qreal>(rect.height()) / 8.0;
+    int x = rect.x() + qRound(file * tileWidth);
+    int y = rect.y() + qRound(rank * tileHeight);
     return QPoint(x, y);
 }
 
@@ -40,8 +48,9 @@ void ArrowOverlay::paintEvent(QPaintEvent*) {
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
 
-    qreal tileWidth = static_cast<qreal>(width()) / 8.0;
-    qreal tileHeight = static_cast<qreal>(height()) / 8.0;
+    QRect rect = boardRect();
+    qreal tileWidth = static_cast<qreal>(rect.width()) / 8.0;
+    qreal tileHeight = static_cast<qreal>(rect.height()) / 8.0;
 
     auto drawHighlight = [&](const QString& square) {
         if (square.isEmpty())
@@ -52,12 +61,12 @@ void ArrowOverlay::paintEvent(QPaintEvent*) {
             file = 7 - file;
             rank = 7 - rank;
         }
-        int left = qRound(file * tileWidth);
-        int top = qRound(rank * tileHeight);
-        int right = qRound((file + 1) * tileWidth);
-        int bottom = qRound((rank + 1) * tileHeight);
-        QRect rect(QPoint(left, top), QPoint(right, bottom));
-        painter.fillRect(rect, QColor(255, 215, 0, 120));
+        int left = rect.x() + qRound(file * tileWidth);
+        int top = rect.y() + qRound(rank * tileHeight);
+        int right = rect.x() + qRound((file + 1) * tileWidth);
+        int bottom = rect.y() + qRound((rank + 1) * tileHeight);
+        QRect r(QPoint(left, top), QPoint(right, bottom));
+        painter.fillRect(r, QColor(255, 215, 0, 120));
     };
 
     drawHighlight(highlightFrom);

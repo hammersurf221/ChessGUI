@@ -19,6 +19,9 @@ public:
     void paintEvent(QPaintEvent* event) override;
     void resizeEvent(QResizeEvent* event) override;
 
+    bool hasHeightForWidth() const override;
+    int heightForWidth(int w) const override;
+
 private:
     QLabel* boardBackground;
     QMap<QString, QLabel*> pieceLabels; // key = square like "e4"
@@ -29,6 +32,7 @@ private:
     QPoint squareToPosition(const QString &square, bool flipped) const;
     void updatePieces(const QString &fen, bool flipped);
     void clearAllPieces();
+    QRect boardRect() const;
     QList<QPair<QString, QString>> arrows;
 
     ArrowOverlay* arrowOverlay;
