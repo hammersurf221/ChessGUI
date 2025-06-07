@@ -10,6 +10,7 @@
 #include <QDir>
 #include <QRandomGenerator>
 #include <QLabel>
+#include <QDebug>
 #include <QShortcut>
 #include <QScrollBar>
 #include <QStatusBar>

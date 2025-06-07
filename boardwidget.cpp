@@ -8,6 +8,26 @@
 #include <QPixmap>
 #include <QSvgRenderer>
 #include <QVector>
+#include <QResizeEvent>
+
+QPixmap BoardWidget::generateBoardPixmap(int width, int height) const {
+  QPixmap pixmap(width, height);
+  pixmap.fill(Qt::transparent);
+  QPainter p(&pixmap);
+  QColor light(234, 202, 155);
+  QColor dark(181, 136, 99);
+  int tileW = width / 8;
+  int tileH = height / 8;
+  for (int row = 0; row < 8; ++row) {
+    for (int col = 0; col < 8; ++col) {
+      QRect square(col * tileW, row * tileH, tileW, tileH);
+      bool isLight = (row + col) % 2 == 0;
+      p.fillRect(square, isLight ? light : dark);
+    }
+  }
+  p.end();
+  return pixmap;
+}
 
 BoardWidget::BoardWidget(QWidget *parent) : QWidget(parent) {
 
@@ -27,24 +47,7 @@ BoardWidget::BoardWidget(QWidget *parent) : QWidget(parent) {
     boardPixmap.load(boardPath);
   } else {
     // Generate the board image
-    boardPixmap = QPixmap(512, 512);
-    boardPixmap.fill(Qt::transparent);
-
-    QPainter p(&boardPixmap);
-
-    QColor light(234, 202, 155); // light wood
-    QColor dark(181, 136, 99);   // dark wood
-
-    for (int row = 0; row < 8; ++row) {
-      for (int col = 0; col < 8; ++col) {
-        QRect square(col * 64, row * 64, 64, 64);
-        bool isLight = (row + col) % 2 == 0;
-        p.fillRect(square, isLight ? light : dark);
-      }
-    }
-
-    p.end();
-
+    boardPixmap = generateBoardPixmap(512, 512);
 
     // Save it for future use
     QDir().mkpath("assets");
@@ -54,9 +57,7 @@ BoardWidget::BoardWidget(QWidget *parent) : QWidget(parent) {
   originalBoardPixmap = boardPixmap; // ✅ Store original unscaled image
 
   boardBackground->setFixedSize(512, 512);
-  boardBackground->setPixmap(
-      originalBoardPixmap.scaled(boardBackground->size(), Qt::KeepAspectRatio,
-                                 Qt::SmoothTransformation));
+  boardBackground->setPixmap(originalBoardPixmap);
 }
 
 QString BoardWidget::squareToKey(int rank, int file) const {
@@ -178,9 +179,9 @@ QSize BoardWidget::sizeHint() const {
 
 void BoardWidget::resizeEvent(QResizeEvent* event) {
     QWidget::resizeEvent(event);
-    boardBackground->setFixedSize(event->size());
-    boardBackground->setPixmap(
-        originalBoardPixmap.scaled(boardBackground->size(), Qt::KeepAspectRatio,
-                                   Qt::SmoothTransformation));
+    QSize newSize = event->size();
+    boardBackground->setFixedSize(newSize);
+    originalBoardPixmap = generateBoardPixmap(newSize.width(), newSize.height());
+    boardBackground->setPixmap(originalBoardPixmap);
     updatePieces(currentFen, currentFlipped);
 }
