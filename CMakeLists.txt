@@ -32,7 +32,6 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         regionselector.h regionselector.cpp
         chessboard_detector.h chessboard_detector.cpp
         boardwidget.h boardwidget.cpp
-        arrowoverlay.h arrowoverlay.cpp
         globalhotkeymanager.h globalhotkeymanager.cpp
     )
 # Define target properties for Android with Qt 6 as:

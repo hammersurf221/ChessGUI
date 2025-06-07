@@ -11,11 +11,7 @@
 
 BoardWidget::BoardWidget(QWidget *parent) : QWidget(parent) {
 
-  arrowOverlay = new ArrowOverlay(this);
   setMinimumSize(512, 512);
-  arrowOverlay->setGeometry(rect());
-  arrowOverlay->raise();
-  arrowOverlay->show();
 
   // Load static board image
   boardBackground = new QLabel(this);
@@ -100,68 +96,10 @@ void BoardWidget::setPositionFromFen(const QString &fen, bool flipped) {
   if (fen == currentFen && flipped == currentFlipped)
     return;
 
-  QString prevFen = currentFen;
   currentFen = fen;
   currentFlipped = flipped;
   updatePieces(fen, flipped);
-
-  QString highlightFrom;
-  QString highlightTo;
-
-  highlightFrom.clear();
-  highlightTo.clear();
-
-  if (!prevFen.isEmpty()) {
-    auto parseBoard = [](const QString &layout) {
-      QVector<QVector<QChar>> board(8, QVector<QChar>(8, '.'));
-      QStringList ranks = layout.split('/');
-      for (int r = 0; r < qMin(8, ranks.size()); ++r) {
-        int c = 0;
-        for (QChar ch : ranks[r]) {
-          if (ch.isDigit()) {
-            c += ch.digitValue();
-          } else {
-            if (c < 8)
-              board[r][c] = ch;
-            ++c;
-          }
-        }
-      }
-      return board;
-    };
-
-    auto prevBoard = parseBoard(prevFen);
-    auto currBoard = parseBoard(fen);
-
-    for (int r = 0; r < 8; ++r) {
-      for (int c = 0; c < 8; ++c) {
-        if (prevBoard[r][c] != currBoard[r][c]) {
-          if (prevBoard[r][c] != '.' && currBoard[r][c] == '.') {
-            highlightFrom = QString(QChar('a' + c)) + QString::number(8 - r);
-          } else if (prevBoard[r][c] == '.' && currBoard[r][c] != '.') {
-            highlightTo = QString(QChar('a' + c)) + QString::number(8 - r);
-          } else if (prevBoard[r][c] != currBoard[r][c] &&
-                     currBoard[r][c] != '.') {
-            highlightTo = QString(QChar('a' + c)) + QString::number(8 - r);
-            if (highlightFrom.isEmpty())
-              highlightFrom = QString(QChar('a' + c)) + QString::number(8 - r);
-          }
-        }
-      }
-    }
-  }
-
-  if (arrowOverlay) {
-    arrowOverlay->setHighlights(highlightFrom, highlightTo);
-    arrowOverlay->raise();
-  }
-
   update();
-
-  update();
-
-  if (arrowOverlay)
-    arrowOverlay->raise(); // 🟢 Ensure overlay is always on top after updates
 }
 
 void BoardWidget::updatePieces(const QString &fen, bool flipped) {
@@ -224,71 +162,11 @@ void BoardWidget::updatePieces(const QString &fen, bool flipped) {
 }
 
 void BoardWidget::paintEvent(QPaintEvent *event) {
-  QWidget::paintEvent(event); // draw base
-
-  QPainter painter(this);
-  painter.setRenderHint(QPainter::Antialiasing);
-
-  qreal tileWidth = static_cast<qreal>(width()) / 8.0;
-  qreal tileHeight = static_cast<qreal>(height()) / 8.0;
-
-  auto drawHighlight = [&](const QString &square) {
-    if (square.isEmpty())
-      return;
-    int file = square[0].unicode() - 'a';
-    int rank = 8 - square[1].digitValue();
-    if (currentFlipped) {
-      file = 7 - file;
-      rank = 7 - rank;
-    }
-    int left = qRound(file * tileWidth);
-    int top = qRound(rank * tileHeight);
-    int right = qRound((file + 1) * tileWidth);
-    int bottom = qRound((rank + 1) * tileHeight);
-    QRect rect(QPoint(left, top), QPoint(right, bottom));
-    painter.fillRect(rect, QColor(255, 215, 0, 120));
-  };
-
-  drawHighlight(highlightFrom);
-  drawHighlight(highlightTo);
-
-  if (arrows.isEmpty())
-    return;
-
-  for (const auto &arrow : arrows) {
-    QString fromSquare = arrow.first;
-    QString toSquare = arrow.second;
-
-    QPoint fromPos = squareToPosition(fromSquare, currentFlipped);
-    QPoint toPos = squareToPosition(toSquare, currentFlipped);
-
-    // Draw arrow line
-    QPen pen(QColor(255, 0, 0, 200)); // semi-transparent red
-    pen.setWidth(4);
-    painter.setPen(pen);
-    painter.drawLine(fromPos, toPos);
-
-    // Draw arrowhead
-    double angle = std::atan2(toPos.y() - fromPos.y(),
-                              toPos.x() - fromPos.x());
-    QPointF arrowP1 = toPos - QPointF(15 * std::cos(angle - M_PI / 6),
-                                         15 * std::sin(angle - M_PI / 6));
-    QPointF arrowP2 = toPos - QPointF(15 * std::cos(angle + M_PI / 6),
-                                         15 * std::sin(angle + M_PI / 6));
-
-    QPolygonF arrowHead;
-    arrowHead << toPos << arrowP1 << arrowP2;
-    painter.setBrush(QColor(255, 0, 0, 200));
-    painter.drawPolygon(arrowHead);
-
-    qDebug() << "[Board] Widget size =" << size();
-
-  }
+  QWidget::paintEvent(event);
 }
 
 void BoardWidget::setArrows(const QList<QPair<QString, QString>> &newArrows) {
-  if (arrowOverlay)
-    arrowOverlay->setArrows(newArrows, currentFlipped);
+  Q_UNUSED(newArrows);
 }
 
 
@@ -298,6 +176,4 @@ QSize BoardWidget::sizeHint() const {
 
 void BoardWidget::resizeEvent(QResizeEvent* event) {
     QWidget::resizeEvent(event);
-    if (arrowOverlay)
-        arrowOverlay->setGeometry(rect());
 }
