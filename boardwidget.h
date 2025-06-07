@@ -14,6 +14,7 @@ public:
   explicit BoardWidget(QWidget *parent = nullptr);
   void setPositionFromFen(const QString &fen, bool flipped);
   void setArrows(const QList<QPair<QString, QString>> &newArrows);
+  void setHighlights(const QString &from, const QString &to);
   void paintEvent(QPaintEvent *event) override;
 
 protected:
@@ -26,6 +27,9 @@ private:
   QMap<QString, QLabel *> pieceLabels; // key = square like "e4"
   QString currentFen;
   bool currentFlipped = false;
+  QList<QPair<QString, QString>> currentArrows;
+  QString highlightFrom;
+  QString highlightTo;
 
   QString squareToKey(int rank, int file) const;
   QPoint squareToPosition(const QString &square, bool flipped) const;
