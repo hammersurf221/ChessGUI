@@ -52,6 +52,7 @@ private:
     QDialog* autoOverlay = nullptr;
     BoardWidget* board = nullptr;
     void setStatusLight(const QString& color);
+    void updateStatusLabel(const QString& text);
     void startFenServer();
     QLabel* evalScoreLabel = nullptr;
     void updateEvalLabel();

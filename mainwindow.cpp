@@ -20,6 +20,8 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    updateStatusLabel("Idle");
+    setStatusLight("gray");
     // === Hotkeys ===
 #ifdef Q_OS_WIN
     hotkeyManager = new GlobalHotkeyManager(this);
@@ -31,10 +33,12 @@ MainWindow::MainWindow(QWidget *parent)
         case 1:
             ui->automoveCheck->setChecked(!ui->automoveCheck->isChecked());
             statusBar()->showMessage(QString("Automove: %1").arg(ui->automoveCheck->isChecked() ? "ON" : "OFF"));
+            updateStatusLabel(QString("Automove: %1").arg(ui->automoveCheck->isChecked() ? "ON" : "OFF"));
             break;
         case 2:
             ui->stealthCheck->setChecked(!ui->stealthCheck->isChecked());
             statusBar()->showMessage(QString("Stealth Mode: %1").arg(ui->stealthCheck->isChecked() ? "ON" : "OFF"));
+            updateStatusLabel(QString("Stealth Mode: %1").arg(ui->stealthCheck->isChecked() ? "ON" : "OFF"));
             break;
         case 3:
             on_toggleAnalysisButton_clicked();
@@ -188,9 +192,11 @@ MainWindow::MainWindow(QWidget *parent)
                 if (isMyTurn) {
                     evaluatePosition(fen);
                     statusBar()->showMessage("My turn — analyzing...");
+                    updateStatusLabel("My turn — analyzing...");
                     setStatusLight("green");
                 } else {
                     statusBar()->showMessage("Opponent's turn — waiting...");
+                    updateStatusLabel("Opponent's turn — waiting...");
                     setStatusLight("red");
                     // Do NOT clear bestMoveDisplay here
                 }
@@ -275,6 +281,7 @@ void MainWindow::on_setRegionButton_clicked() {
         connect(selector, &RegionSelector::regionSelected, this, [=](const QRect& region) {
             captureRegion = region;
             statusBar()->showMessage("Manual region set.");
+            updateStatusLabel("Manual region set.");
         });
         selector->show();
     }
@@ -305,6 +312,7 @@ void MainWindow::captureScreenshot() {
     QImage image = resized.toImage().convertToFormat(QImage::Format_RGB888);
 
     statusBar()->showMessage("Board changed → ready to analyze");
+    updateStatusLabel("Board changed → ready to analyze");
     QString imagePath = "last_screenshot.png";
     image.save("last_screenshot.png");
     qDebug() << "[timing] Screenshot capture:" << screenshotElapsed.elapsed() << "ms";
@@ -410,6 +418,7 @@ void MainWindow::startStockfish() {
 
             if (!eval.isEmpty()) {
                 statusBar()->showMessage("Eval: " + eval);
+                updateStatusLabel("Eval: " + eval);
 
                 if (ui->evalBar) {
                     if (mateMatch.hasMatch()) {
@@ -478,6 +487,7 @@ void MainWindow::on_toggleAnalysisButton_clicked() {
         setStatusLight("yellow"); // 🟡 Indicate analysis has started
         if (captureRegion.isNull()) {
             statusBar()->showMessage("No region set!");
+            updateStatusLabel("No region set!");
             return;
         }
 
@@ -486,10 +496,12 @@ void MainWindow::on_toggleAnalysisButton_clicked() {
         screenshotTimer->start(1000);  // 1000ms = 1 second
         ui->toggleAnalysisButton->setText("Stop Analysis");
         statusBar()->showMessage("Analysis started");
+        updateStatusLabel("Analysis started");
     } else {
         screenshotTimer->stop();
         ui->toggleAnalysisButton->setText("Start Analysis");
         statusBar()->showMessage("Analysis stopped");
+        updateStatusLabel("Analysis stopped");
         setStatusLight("gray");
     }
 
@@ -545,17 +557,20 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
             autoOverlay->deleteLater();
             autoOverlay = nullptr;
             statusBar()->showMessage("Auto-detected region set.");
+            updateStatusLabel("Auto-detected region set.");
             return true;
         } else if (keyEvent->key() == Qt::Key_Escape) {
             autoOverlay->close();
             autoOverlay->deleteLater();
             autoOverlay = nullptr;
             statusBar()->showMessage("Cancelled — using manual selector.");
+            updateStatusLabel("Cancelled — using manual selector.");
 
             RegionSelector* selector = new RegionSelector();
             connect(selector, &RegionSelector::regionSelected, this, [=](const QRect& region) {
                 captureRegion = region;
                 statusBar()->showMessage("Manual region set.");
+                updateStatusLabel("Manual region set.");
             });
             selector->show();
 
@@ -576,6 +591,10 @@ void MainWindow::setStatusLight(const QString& color) {
 
     ui->statusLightLabel->setStyleSheet(QString(
                                             "border-radius: 10px; background-color: %1;").arg(hex));
+}
+
+void MainWindow::updateStatusLabel(const QString& text) {
+    ui->statusLabelEdit->setText(text);
 }
 
 void MainWindow::playBestMove() {
