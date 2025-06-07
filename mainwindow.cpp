@@ -8,7 +8,10 @@
 #include <QRegularExpression>
 #include <QDialog>
 #include <QDir>
-
+#include <QRandomGenerator>
+#include <QLabel>
+#include <QShortcut>
+#include "globalhotkeymanager.h"
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -16,12 +19,75 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    // === Hotkeys ===
+#ifdef Q_OS_WIN
+    hotkeyManager = new GlobalHotkeyManager(this);
+    hotkeyManager->registerHotkey(1, QKeySequence("Ctrl+M"));
+    hotkeyManager->registerHotkey(2, QKeySequence("Ctrl+S"));
+    hotkeyManager->registerHotkey(3, QKeySequence("Ctrl+A"));
+    connect(hotkeyManager, &GlobalHotkeyManager::activated, this, [this](int id) {
+        switch (id) {
+        case 1:
+            ui->automoveCheck->setChecked(!ui->automoveCheck->isChecked());
+            statusBar()->showMessage(QString("Automove: %1").arg(ui->automoveCheck->isChecked() ? "ON" : "OFF"));
+            break;
+        case 2:
+            ui->stealthCheck->setChecked(!ui->stealthCheck->isChecked());
+            statusBar()->showMessage(QString("Stealth Mode: %1").arg(ui->stealthCheck->isChecked() ? "ON" : "OFF"));
+            break;
+        case 3:
+            on_toggleAnalysisButton_clicked();
+            break;
+        }
+    });
+#else
+    QShortcut* toggleAutoMove = new QShortcut(QKeySequence("Ctrl+M"), this);
+    connect(toggleAutoMove, &QShortcut::activated, this, [this]() {
+        ui->automoveCheck->setChecked(!ui->automoveCheck->isChecked());
+        statusBar()->showMessage(QString("Automove: %1").arg(ui->automoveCheck->isChecked() ? "ON" : "OFF"));
+    });
+
+    QShortcut* toggleStealth = new QShortcut(QKeySequence("Ctrl+S"), this);
+    connect(toggleStealth, &QShortcut::activated, this, [this]() {
+        ui->stealthCheck->setChecked(!ui->stealthCheck->isChecked());
+        statusBar()->showMessage(QString("Stealth Mode: %1").arg(ui->stealthCheck->isChecked() ? "ON" : "OFF"));
+    });
+
+    QShortcut* toggleAnalysis = new QShortcut(QKeySequence("Ctrl+A"), this);
+    connect(toggleAnalysis, &QShortcut::activated, this, [this]() {
+        on_toggleAnalysisButton_clicked();
+    });
+#endif
+
     fenServer = new QProcess(this);
     board = new BoardWidget();
     QVBoxLayout* layout = new QVBoxLayout(ui->chessBoardFrame);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(board);
     board->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    evalScoreLabel = new QLabel(ui->evalBar);
+
+    evalScoreLabel->setObjectName("evalBarOverlay");
+    evalScoreLabel->setAttribute(Qt::WA_TransparentForMouseEvents);
+
+    evalScoreLabel->setFixedHeight(20);
+    evalScoreLabel->setMinimumWidth(40);
+    evalScoreLabel->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+    evalScoreLabel->setAlignment(Qt::AlignCenter);
+    evalScoreLabel->setStyleSheet(R"(
+    background-color: #1e1e1e;
+    color: #f0f0f0;
+    font-weight: bold;
+    font-size: 11px;
+    padding: 2px 6px;
+    border: 1px solid #666;
+    border-radius: 4px;
+    )");
+
+
+    evalScoreLabel->show();
+    updateEvalLabel();
+    connect(ui->evalBar, &QProgressBar::valueChanged, this, &MainWindow::updateEvalLabel);
     ui->fenDisplay->setPlainText("Waiting for FEN...");
     screenshotTimer = new QTimer(this);
     connect(screenshotTimer, &QTimer::timeout, this, &MainWindow::captureScreenshot);
@@ -33,15 +99,24 @@ MainWindow::MainWindow(QWidget *parent)
         if (checked) {
             myColor = "w";
             ui->evalBar->setInvertedAppearance(false);  // white on bottom
+            updateEvalLabel();
+
+            if (fenServer && fenServer->state() == QProcess::Running) {
+                fenServer->write("[color] w\n");
+            }
         }
     });
     connect(ui->blackRadioButton, &QRadioButton::toggled, this, [=](bool checked) {
         if (checked) {
             myColor = "b";
-            ui->evalBar->setInvertedAppearance(true);  // black on bottom
+            ui->evalBar->setInvertedAppearance(true);
+            updateEvalLabel();
+
+            if (fenServer && fenServer->state() == QProcess::Running) {
+                fenServer->write("[color] b\n");
+            }
         }
     });
-
 
 
     connect(fenServer, &QProcess::readyReadStandardOutput, this, [=]() {
@@ -83,9 +158,16 @@ MainWindow::MainWindow(QWidget *parent)
                 QString fen = output.mid(6);  // Skip "[FEN] "
                 QString pieceLayout = fen.section(" ", 0, 0);
                 QString turnColor = fen.section(" ", 1, 1);
+                qDebug() << "[timing] FEN processing:" << fenElapsed.elapsed() << "ms";
 
                 isMyTurn = (getMyColor() == turnColor);
                 bool fenChanged = (lastFen != fen);
+
+                if (!lastFen.isEmpty() && fenChanged) {
+                    QString uci = detectUciMove(lastFen, fen);
+                    bool whiteMoved = lastFen.section(' ', 1, 1) == "w";
+                    addMoveToHistory(uci, whiteMoved);
+                }
 
                 qDebug() << "[gui] Received FEN:" << fen;
                 qDebug() << "[gui] Piece layout:" << pieceLayout;
@@ -210,6 +292,8 @@ void MainWindow::captureScreenshot() {
     QScreen* screen = QGuiApplication::primaryScreen();
     if (!screen) return;
 
+    screenshotElapsed.restart();
+
     QPixmap fullShot = screen->grabWindow(0,
                                           captureRegion.x(),
                                           captureRegion.y(),
@@ -222,6 +306,7 @@ void MainWindow::captureScreenshot() {
     statusBar()->showMessage("Board changed → ready to analyze");
     QString imagePath = "last_screenshot.png";
     image.save("last_screenshot.png");
+    qDebug() << "[timing] Screenshot capture:" << screenshotElapsed.elapsed() << "ms";
     runFenPrediction("last_screenshot.png");
     qDebug() << "[runFenPrediction] Sending image path:" << imagePath;
 
@@ -245,21 +330,60 @@ void MainWindow::startStockfish() {
         QRegularExpression bestMovePattern("bestmove ([a-h][1-8][a-h][1-8])");
         QRegularExpression matePattern("score mate (-?\\d+)");
         QRegularExpression cpPattern("score cp (-?\\d+)");
+        QRegularExpression pvPattern("multipv\\s+(\\d+).*pv\\s+([a-h][1-8][a-h][1-8])");
 
         for (const QString& line : lines) {
             QString trimmed = line.trimmed();
 
+            QRegularExpressionMatch pvMatch = pvPattern.match(trimmed);
+            if (pvMatch.hasMatch()) {
+                int idx = pvMatch.captured(1).toInt();
+                QString mv = pvMatch.captured(2);
+                multipvMoves[idx] = mv;
+            }
+
             QRegularExpressionMatch bestMoveMatch = bestMovePattern.match(trimmed);
             if (bestMoveMatch.hasMatch()) {
                 QString bestMove = bestMoveMatch.captured(1);
+                QString chosenMove = bestMove;
+                qDebug() << "[timing] Stockfish evaluation:" << evalElapsed.elapsed() << "ms";
+
+                if (ui->stealthCheck->isChecked() && multipvMoves.size() > 1) {
+                    bool pickAlt = QRandomGenerator::global()->generateDouble() < 0.3;
+                    if (pickAlt) {
+                        QList<int> keys = multipvMoves.keys();
+                        keys.removeOne(1);  // exclude best
+                        if (!keys.isEmpty()) {
+                            int randIdx = QRandomGenerator::global()->bounded(keys.size());
+                            selectedBestMoveRank = keys[randIdx];
+                            chosenMove = multipvMoves.value(selectedBestMoveRank, bestMove);
+                        } else {
+                            selectedBestMoveRank = 1;
+                            chosenMove = bestMove;
+                        }
+                    } else {
+                        selectedBestMoveRank = 1;
+                        chosenMove = bestMove;
+                    }
+                } else {
+                    selectedBestMoveRank = 1;
+                    chosenMove = bestMove;
+                }
+
+
+                multipvMoves.clear();
 
                 if (lastEvaluatedFen == lastFen) {  // ✅ Ensures best move matches current board
-                    currentBestMove = bestMove;
-                    ui->bestMoveDisplay->setText(bestMove);
+                    currentBestMove = chosenMove;
+                    QString label = chosenMove;
+                    if (selectedBestMoveRank > 1) {
+                        label += QString(" (Move: %1)").arg(selectedBestMoveRank);
+                    }
+                    ui->bestMoveDisplay->setText(label);
 
-                    if (bestMove.length() == 4) {
-                        QString from = bestMove.mid(0, 2);
-                        QString to = bestMove.mid(2, 2);
+                    if (chosenMove.length() == 4) {
+                        QString from = chosenMove.mid(0, 2);
+                        QString to = chosenMove.mid(2, 2);
                         board->setArrows({ qMakePair(from, to) });
 
                         if (isMyTurn && ui->automoveCheck->isChecked() && lastEvaluatedFen == lastFen) {
@@ -299,6 +423,10 @@ void MainWindow::startStockfish() {
                         if (getMyColor() == "b") score = -score;
                         ui->evalBar->setValue(score);
                     }
+                    if (evalScoreLabel) {
+                        evalScoreLabel->setText(eval);
+                        updateEvalLabel();
+                    }
                 }
             }
         }
@@ -308,12 +436,8 @@ void MainWindow::startStockfish() {
 }
 
 void MainWindow::startFenServer() {
-
-    // Set the working directory to where your Python script resides (if needed)
     QString scriptPath = QCoreApplication::applicationDirPath() + "/python/fen_tracker/main.py";
-
-    // Get the selected player color
-    QString color = getMyColor();  // This must return "w" or "b"
+    QString color = getMyColor();  // This returns "w" or "b"
     QStringList arguments;
     arguments << scriptPath << "--color" << color;
 
@@ -321,12 +445,19 @@ void MainWindow::startFenServer() {
 
     fenServer->start("python", arguments);
 
+    if (!fenServer->waitForStarted()) {
+        qDebug() << "[fenServer] Failed to start";
+        return;
+    }
+
+    // ✅ Immediately send the color again in case user toggled it early
+    fenServer->write(QString("[color] %1\n").arg(color).toUtf8());
+
     connect(fenServer, &QProcess::readyReadStandardOutput, this, [=]() {
         QStringList lines = QString::fromUtf8(fenServer->readAllStandardOutput()).split("\n", Qt::SkipEmptyParts);
         for (const QString& rawLine : lines) {
             QString output = rawLine.trimmed();
             qDebug() << "[fenServer stdout]" << output;
-            // You can replicate your existing parsing logic here if desired
         }
     });
 
@@ -334,8 +465,8 @@ void MainWindow::startFenServer() {
         QString error = QString::fromUtf8(fenServer->readAllStandardError());
         qDebug() << "[fenServer stderr]" << error;
     });
-
 }
+
 
 
 
@@ -370,6 +501,7 @@ void MainWindow::runFenPrediction(const QString& imagePath) {
         return;
     }
 
+    fenElapsed.restart();
     QString toSend = imagePath + "\n";
     fenServer->write(toSend.toUtf8());
 }
@@ -380,12 +512,17 @@ void MainWindow::evaluatePosition(const QString& fen) {
     if (!stockfishProcess || stockfishProcess->state() != QProcess::Running)
         return;
 
+    evalElapsed.restart();
+
     QStringList commands = {
         "uci",
-        "ucinewgame",
+        QString("setoption name MultiPV value %1").arg(ui->stealthCheck->isChecked() ? 3 : 1),
         "position fen " + fen,
-        "go depth 12"
+        "go depth 15"
     };
+
+    multipvMoves.clear();
+    selectedBestMoveRank = 1;
 
     for (const QString& cmd : commands) {
         stockfishProcess->write((cmd + "\n").toUtf8());
@@ -483,5 +620,84 @@ void MainWindow::playBestMove() {
         moveProcess->deleteLater();
     }
 }
+
+void MainWindow::updateEvalLabel() {
+    if (!evalScoreLabel || !ui->evalBar) return;
+
+    int value = ui->evalBar->value();
+    int min = ui->evalBar->minimum();
+    int max = ui->evalBar->maximum();
+    if (max == min) return;
+
+    double ratio = double(value - min) / double(max - min);
+    int barHeight = ui->evalBar->height();
+    bool inverted = ui->evalBar->invertedAppearance();
+
+    int y = inverted ? ratio * barHeight : barHeight - ratio * barHeight;
+    y -= evalScoreLabel->height() / 2;
+    y = qBound(0, y, barHeight - evalScoreLabel->height());
+    int x = (ui->evalBar->width() - evalScoreLabel->width()) / 2;
+
+    evalScoreLabel->move(x, y);
+}
+
+QString MainWindow::detectUciMove(const QString& prevFen, const QString& currFen) const {
+    auto parseBoard = [](const QString& layout) {
+        QVector<QVector<QChar>> board(8, QVector<QChar>(8, '.'));
+        QStringList ranks = layout.split('/');
+        for (int r = 0; r < qMin(8, ranks.size()); ++r) {
+            int c = 0;
+            for (QChar ch : ranks[r]) {
+                if (ch.isDigit()) {
+                    c += ch.digitValue();
+                } else {
+                    if (c < 8) board[r][c] = ch;
+                    ++c;
+                }
+            }
+        }
+        return board;
+    };
+
+    QString prevLayout = prevFen.section(' ', 0, 0);
+    QString currLayout = currFen.section(' ', 0, 0);
+    auto prevBoard = parseBoard(prevLayout);
+    auto currBoard = parseBoard(currLayout);
+
+    QString from, to;
+    for (int r = 0; r < 8; ++r) {
+        for (int c = 0; c < 8; ++c) {
+            if (prevBoard[r][c] != currBoard[r][c]) {
+                if (prevBoard[r][c] != '.' && currBoard[r][c] == '.') {
+                    from = QString(QChar('a' + c)) + QString::number(8 - r);
+                } else if (prevBoard[r][c] == '.' && currBoard[r][c] != '.') {
+                    to = QString(QChar('a' + c)) + QString::number(8 - r);
+                } else if (prevBoard[r][c] != currBoard[r][c] && currBoard[r][c] != '.') {
+                    to = QString(QChar('a' + c)) + QString::number(8 - r);
+                    if (from.isEmpty())
+                        from = QString(QChar('a' + c)) + QString::number(8 - r);
+                }
+            }
+        }
+    }
+
+    if (!from.isEmpty() && !to.isEmpty())
+        return from + to;
+    return {};
+}
+
+void MainWindow::addMoveToHistory(const QString& moveUci, bool whiteMove) {
+    if (moveUci.isEmpty()) return;
+
+    if (whiteMove || moveHistoryLines.isEmpty()) {
+        moveHistoryLines.append(QString::number(moveHistoryLines.size() + 1) + ". " + moveUci);
+    } else {
+        moveHistoryLines.last().append(" " + moveUci);
+    }
+
+    ui->pgnDisplay->setPlainText(moveHistoryLines.join("\n"));
+    ui->pgnDisplay->verticalScrollBar()->setValue(ui->pgnDisplay->verticalScrollBar()->maximum());
+}
+
 
 

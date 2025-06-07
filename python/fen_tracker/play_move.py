@@ -19,8 +19,9 @@ def human_like_drag(start, end, steps=20):
 
 def main():
     if len(sys.argv) < 7:
-        print("Usage: play_move.py from_sq to_sq originX originY tileSize flipped [stealth]")
-        return
+        print("Usage: play_move.py from_sq to_sq originX originY tileSize flipped [stealth]", file=sys.stderr)
+        sys.exit(2)  # <-- Explicit exit code
+
 
     from_sq = sys.argv[1]
     to_sq = sys.argv[2]

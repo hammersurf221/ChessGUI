@@ -1,7 +1,6 @@
 # core/game_state_tracker.py
 
-import numpy as np
-from utils.board_utils import matrix_to_fen, square_name, PIECE_TO_IDX
+from utils.board_utils import matrix_to_fen, square_name, PIECE_TO_IDX, IDX_TO_PIECE
 from core.move_detector import detect_move
 
 class GameStateTracker:
@@ -39,6 +38,17 @@ class GameStateTracker:
             return square_name(2, fc)
         return '-'
 
+    def detect_moved_color(self, prev, from_sq, to_sq):
+        if from_sq:
+            piece_idx = prev[from_sq[0]][from_sq[1]]
+            piece = IDX_TO_PIECE[piece_idx]
+            return 'w' if piece.isupper() else 'b'
+        if to_sq:
+            piece_idx = prev[to_sq[0]][to_sq[1]]
+            piece = IDX_TO_PIECE[piece_idx]
+            return 'w' if piece.isupper() else 'b'
+        return None
+
     def update(self, curr_board):
         if self.prev_board is None:
             self.prev_board = curr_board.copy()
@@ -48,8 +58,10 @@ class GameStateTracker:
         self.update_castling_rights(self.prev_board, curr_board)
         self.en_passant = self.detect_en_passant(self.prev_board, from_sq, to_sq)
 
-        if from_sq and to_sq:
-            self.turn = 'b' if self.turn == 'w' else 'w'
+        if from_sq or to_sq:
+            moved_color = self.detect_moved_color(self.prev_board, from_sq, to_sq)
+            if moved_color:
+                self.turn = 'b' if moved_color == 'w' else 'w'
         self.prev_board = curr_board.copy()
         return self.generate_fen(curr_board)
 

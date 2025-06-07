@@ -7,6 +7,7 @@ from torchvision import transforms
 from PIL import Image
 from ccn_model import CCN
 from core.game_state_tracker import GameStateTracker
+from core.turn_detector import detect_turn_from_images
 from utils.board_utils import flip_fen_pov
 from skimage.metrics import structural_similarity as ssim
 import numpy as np
@@ -32,7 +33,10 @@ last_image_array = None
 last_ssim = 0.0
 current_ssim = 0.0
 last_emitted_fen = None
-SSIM_THRESHOLD = 0.98
+
+SSIM_THRESHOLD = 0.99
+prev_board_matrix = None
+
 
 def main():
     import sys
@@ -57,12 +61,81 @@ def main():
     sys.stdout.flush()
 
     for line in sys.stdin:
-        path = os.path.abspath(line.strip())
+        line = line.strip()
+        if line.startswith("[color]"):
+            new_color = line.split("]")[-1].strip()
+            if new_color in ("w", "b"):
+                my_color = new_color
+                print(f"[update] my_color updated to: {my_color}", flush=True)
+            continue
+
+        path = os.path.abspath(line)
         print(f"[python received] {path}", flush=True)
 
         try:
             image = Image.open(path).convert("RGB")
             image_array = np.array(image)
+
+
+            global last_image_array, last_emitted_fen, last_ssim, current_ssim, prev_board_matrix
+
+            if last_image_array is None:
+                # Initialize on the first frame
+                last_image_array = np.copy(image_array)
+                last_ssim = 0.0
+                current_ssim = 1.0
+                print("[debug] First frame — initializing SSIM", flush=True)
+                continue
+
+            similarity = ssim(last_image_array, image_array, channel_axis=2)
+            print(f"[debug] SSIM: {similarity}", flush=True)
+
+            last_ssim, current_ssim = current_ssim, similarity
+
+            if last_ssim < SSIM_THRESHOLD and current_ssim >= SSIM_THRESHOLD:
+                tensor = transform(image)
+                board = predict_board(model, tensor)
+
+                # Detect turn using image difference
+                mover_color = None
+                if last_image_array is not None and prev_board_matrix is not None:
+                    try:
+                        mover_color = detect_turn_from_images(
+                            Image.fromarray(last_image_array),
+                            image,
+                            prev_board_matrix
+                        )
+                    except Exception as e:
+                        print(f"[warn] Turn detection failed: {e}", flush=True)
+
+                # Update game state tracker normally
+                fen = tracker.update(board)
+
+                # Override turn based on image detection
+                if mover_color:
+                    correct_turn = 'b' if mover_color == 'w' else 'w'
+                    parts = fen.split()
+                    parts[1] = correct_turn
+                    fen = ' '.join(parts)
+
+                if my_color == 'b':
+                    fen = flip_fen_pov(fen)
+
+                if fen != last_emitted_fen:
+                    print(f"[FEN] {fen}", flush=True)
+                    last_emitted_fen = fen
+                else:
+                    print("[skip] FEN unchanged — skipping output", flush=True)
+
+                # Update previous board state for next round
+                prev_board_matrix = board.copy()
+
+            else:
+                print("[skip] Board not stable yet", flush=True)
+
+            # store the current frame for next comparison
+            last_image_array = np.copy(image_array)
+
 
             global last_image_array, last_emitted_fen, last_ssim, current_ssim
 
@@ -98,6 +171,7 @@ def main():
 
             # store the current frame for next comparison
             last_image_array = np.copy(image_array)
+
 
         except Exception as e:
             print(f"[error] {e}", flush=True)

@@ -3,11 +3,15 @@
 #include "regionselector.h"
 #include "chessboard_detector.h"
 #include "boardwidget.h"
+#include <QLabel>
 #include <QMainWindow>
 #include <QTimer>
 #include <QRect>
 #include <QProcess>
 #include <QQueue>
+#include <QMap>
+#include <QElapsedTimer>
+#include "globalhotkeymanager.h"
 
 
 QT_BEGIN_NAMESPACE
@@ -49,6 +53,8 @@ private:
     BoardWidget* board = nullptr;
     void setStatusLight(const QString& color);
     void startFenServer();
+    QLabel* evalScoreLabel = nullptr;
+    void updateEvalLabel();
     QString currentBestMove;
     void playBestMove();
     bool isMyTurn = false;
@@ -56,6 +62,16 @@ private:
     QQueue<QString> recentBestMoves;
     QString lastPlayedFen;
     bool automoveInProgress = false;
+    QMap<int, QString> multipvMoves;
+    int selectedBestMoveRank = 1;
+    QElapsedTimer screenshotElapsed;
+    QElapsedTimer fenElapsed;
+    QElapsedTimer evalElapsed;
+    GlobalHotkeyManager* hotkeyManager = nullptr;
+
+    QStringList moveHistoryLines;
+    QString detectUciMove(const QString& prevFen, const QString& currFen) const;
+    void addMoveToHistory(const QString& moveUci, bool whiteMove);
 
 
 
