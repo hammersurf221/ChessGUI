@@ -34,9 +34,9 @@ BoardWidget::BoardWidget(QWidget *parent) : QWidget(parent) {
 
   // Load static board image
   boardBackground = new QLabel(this);
-  setFixedSize(512, 512);
   boardBackground->move(0, 0);
   boardBackground->lower();
+  boardBackground->setScaledContents(false);
 
 
   QString boardPath = "assets/board.png";
@@ -46,8 +46,7 @@ BoardWidget::BoardWidget(QWidget *parent) : QWidget(parent) {
 
   originalBoardPixmap = boardPixmap; // Store original unscaled image
 
-  boardBackground->setFixedSize(512, 512);
-  boardBackground->setPixmap(originalBoardPixmap);
+  boardBackground->setPixmap(originalBoardPixmap.scaled(sizeHint(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
 }
 
 QString BoardWidget::squareToKey(int rank, int file) const {
@@ -173,6 +172,7 @@ QSize BoardWidget::sizeHint() const {
 void BoardWidget::resizeEvent(QResizeEvent *event) {
     QWidget::resizeEvent(event);
     boardBackground->setFixedSize(size());
+    boardBackground->setPixmap(originalBoardPixmap.scaled(size(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
     if (arrowOverlay) {
         arrowOverlay->setGeometry(rect());
         arrowOverlay->raise();
