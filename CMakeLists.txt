@@ -78,6 +78,7 @@ if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(ChessGUI)
 endif()
 
+# Copy python folder to build directory
 add_custom_command(
     TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
@@ -85,13 +86,29 @@ add_custom_command(
             "$<TARGET_FILE_DIR:${PROJECT_NAME}>/python"
     COMMENT "Copying Python folder to build output..."
 )
+
 file(COPY ${CMAKE_SOURCE_DIR}/stockfish.exe DESTINATION ${CMAKE_BINARY_DIR})
 
-# Tell CMake where OpenCV is installed
-set(OpenCV_DIR "C:/opencv/build")
+# Copy assets folder to build directory
+add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_SOURCE_DIR}/assets"
+            "$<TARGET_FILE_DIR:${PROJECT_NAME}>/assets"
+    COMMENT "Copying assets folder to build output..."
+)
 
-# Find OpenCV
-find_package(OpenCV REQUIRED)
+# Find OpenCV - assumes OpenCV_DIR is passed at configure time
+find_package(OpenCV REQUIRED CONFIG)
+
+if(OpenCV_FOUND)
+    message(STATUS "OpenCV found: ${OpenCV_INCLUDE_DIRS}")
+    include_directories(${OpenCV_INCLUDE_DIRS})
+    target_link_libraries(ChessGUI PRIVATE ${OpenCV_LIBS})
+else()
+    message(FATAL_ERROR "OpenCV not found. Set OpenCV_DIR to the folder containing OpenCVConfig.cmake")
+endif()
+
 
 # Include OpenCV headers
 include_directories(${OpenCV_INCLUDE_DIRS})
