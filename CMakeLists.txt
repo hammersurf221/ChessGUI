@@ -23,6 +23,8 @@ set(PROJECT_SOURCES
         mainwindow.ui
         boardwidget.h
         boardwidget.cpp
+        arrowoverlay.h
+        arrowoverlay.cpp
         regionselector.h
         regionselector.cpp
         chessboard_detector.h

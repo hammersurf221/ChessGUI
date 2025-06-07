@@ -20,4 +20,5 @@ private:
   QString highlightFrom;
   QString highlightTo;
   QPoint squareToPosition(const QString &square) const;
+  QPoint squareCenter(const QString &square) const;
 };
