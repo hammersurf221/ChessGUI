@@ -69,6 +69,10 @@ private:
     QElapsedTimer evalElapsed;
     GlobalHotkeyManager* hotkeyManager = nullptr;
 
+    QStringList moveHistoryLines;
+    QString detectUciMove(const QString& prevFen, const QString& currFen) const;
+    void addMoveToHistory(const QString& moveUci, bool whiteMove);
+
 
 
 protected:
