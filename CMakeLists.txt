@@ -21,6 +21,12 @@ set(PROJECT_SOURCES
         mainwindow.cpp
         mainwindow.h
         mainwindow.ui
+        boardwidget.h
+        boardwidget.cpp
+        regionselector.h
+        regionselector.cpp
+        chessboard_detector.h
+        chessboard_detector.cpp
         globalhotkeymanager.h
         globalhotkeymanager.cpp
 )
@@ -29,10 +35,6 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(ChessGUI
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
-        regionselector.h regionselector.cpp
-        chessboard_detector.h chessboard_detector.cpp
-        boardwidget.h boardwidget.cpp
-        globalhotkeymanager.h globalhotkeymanager.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET ChessGUI APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
