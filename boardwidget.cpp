@@ -31,14 +31,12 @@ QPixmap BoardWidget::generateBoardPixmap(int width, int height) const {
 
 BoardWidget::BoardWidget(QWidget *parent) : QWidget(parent) {
 
-  setMinimumSize(512, 512);
-
   // Load static board image
   boardBackground = new QLabel(this);
-  setMinimumSize(512, 512);
-  setMaximumSize(512, 512);
+  setMinimumSize(512, 512);  // or lower if you prefer
   boardBackground->move(0, 0);
-  boardBackground->lower(); // stays behind all pieces
+  boardBackground->lower();
+
 
   QString boardPath = "assets/board.png";
   QPixmap boardPixmap;
@@ -47,7 +45,7 @@ BoardWidget::BoardWidget(QWidget *parent) : QWidget(parent) {
     boardPixmap.load(boardPath);
   } else {
     // Generate the board image
-    boardPixmap = generateBoardPixmap(512, 512);
+    boardPixmap = generateBoardPixmap(600, 600);
 
     // Save it for future use
     QDir().mkpath("assets");
@@ -56,7 +54,7 @@ BoardWidget::BoardWidget(QWidget *parent) : QWidget(parent) {
 
   originalBoardPixmap = boardPixmap; // ✅ Store original unscaled image
 
-  boardBackground->setFixedSize(512, 512);
+  boardBackground->resize(size());
   boardBackground->setPixmap(originalBoardPixmap);
 }
 
@@ -180,8 +178,9 @@ QSize BoardWidget::sizeHint() const {
 void BoardWidget::resizeEvent(QResizeEvent* event) {
     QWidget::resizeEvent(event);
     QSize newSize = event->size();
-    boardBackground->setFixedSize(newSize);
+    boardBackground->resize(newSize);
     originalBoardPixmap = generateBoardPixmap(newSize.width(), newSize.height());
     boardBackground->setPixmap(originalBoardPixmap);
     updatePieces(currentFen, currentFlipped);
 }
+
