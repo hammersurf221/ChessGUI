@@ -26,7 +26,7 @@ signals:
 
 #ifdef Q_OS_WIN
 protected:
-    bool nativeEventFilter(const QByteArray &eventType, void *message, long *result) override;
+    bool nativeEventFilter(const QByteArray &eventType, void *message, qintptr *result) override;
 
 private:
     QMap<int, QPair<UINT, UINT>> registrations;

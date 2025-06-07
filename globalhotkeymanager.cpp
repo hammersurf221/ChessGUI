@@ -29,9 +29,9 @@ void GlobalHotkeyManager::registerHotkey(int id, const QKeySequence &sequence)
 {
     if (sequence.count() == 0)
         return;
-    int keyInt = sequence[0];
-    Qt::KeyboardModifiers mods = Qt::KeyboardModifiers(keyInt & Qt::KeyboardModifierMask);
-    Qt::Key key = Qt::Key(keyInt & ~Qt::KeyboardModifierMask);
+    QKeyCombination combo = sequence[0];
+    Qt::KeyboardModifiers mods = combo.keyboardModifiers();
+    Qt::Key key = combo.key();
 
     UINT nativeMods = 0;
     if (mods & Qt::ShiftModifier)
@@ -51,7 +51,7 @@ void GlobalHotkeyManager::registerHotkey(int id, const QKeySequence &sequence)
     registrations[id] = qMakePair(nativeMods, vk);
 }
 
-bool GlobalHotkeyManager::nativeEventFilter(const QByteArray &eventType, void *message, long *result)
+bool GlobalHotkeyManager::nativeEventFilter(const QByteArray &eventType, void *message, qintptr *result)
 {
     Q_UNUSED(eventType)
     MSG *msg = static_cast<MSG *>(message);
