@@ -49,6 +49,7 @@ BoardWidget::BoardWidget(QWidget *parent) : QWidget(parent) {
 
     p.end();
 
+
     // Save it for future use
     QDir().mkpath("assets");
     boardPixmap.save(boardPath);
@@ -64,21 +65,25 @@ QString BoardWidget::squareToKey(int rank, int file) const {
   return QString("%1%2").arg(QChar('a' + file)).arg(8 - rank);
 }
 
+
 QPoint BoardWidget::squareToPosition(const QString &square,
                                      bool flipped) const {
   int file = square[0].unicode() - 'a';  // 0–7
   int rank = 8 - square[1].digitValue(); // 0–7
+
 
   if (flipped) {
     file = 7 - file;
     rank = 7 - rank;
   }
 
+
   int tileW = width() / 8;
   int tileH = height() / 8;
 
   int x = file * tileW;
   int y = rank * tileH;
+
 
   return QPoint(x, y);
 }
@@ -168,12 +173,14 @@ void BoardWidget::updatePieces(const QString &fen, bool flipped) {
 
   QString board = parts[0];
 
+
   int rank = 0, file = 0;
   for (QChar c : board) {
     if (c == '/') {
       rank++;
       file = 0;
       continue;
+
     }
 
     if (c.isDigit()) {
@@ -187,6 +194,7 @@ void BoardWidget::updatePieces(const QString &fen, bool flipped) {
 
     QString piecePath = QString("assets/pieces/%1.svg").arg(pieceCode);
 
+
     QLabel *pieceLabel = new QLabel(this);
     QSvgRenderer renderer(piecePath);
     qreal tileWidth = static_cast<qreal>(width()) / 8.0;
@@ -197,6 +205,7 @@ void BoardWidget::updatePieces(const QString &fen, bool flipped) {
 
     QPainter painter(&pixmap);
     renderer.render(&painter, QRectF(0, 0, pieceSize, pieceSize));
+
 
     pieceLabel->setPixmap(pixmap);
     pieceLabel->setFixedSize(pieceSize, pieceSize);
@@ -285,10 +294,12 @@ void BoardWidget::setArrows(const QList<QPair<QString, QString>> &newArrows) {
     arrowOverlay->setArrows(newArrows, currentFlipped);
 }
 
+
 void BoardWidget::resizeEvent(QResizeEvent *event) {
   boardBackground->resize(event->size());
   boardBackground->setPixmap(originalBoardPixmap.scaled(
       event->size(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
+
 
   if (arrowOverlay)
     arrowOverlay->resize(event->size());

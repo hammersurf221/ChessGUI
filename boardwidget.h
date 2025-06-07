@@ -17,7 +17,11 @@ public:
   void paintEvent(QPaintEvent *event) override;
   void resizeEvent(QResizeEvent *event) override;
 
+    bool hasHeightForWidth() const override;
+    int heightForWidth(int w) const override;
+
 private:
+
   QLabel *boardBackground;
   QMap<QString, QLabel *> pieceLabels; // key = square like "e4"
   QString currentFen;
@@ -34,6 +38,7 @@ private:
   QString highlightTo;
   QSize sizeHint() const override;
   QPixmap originalBoardPixmap;
+
 };
 
 #endif // BOARDWIDGET_H

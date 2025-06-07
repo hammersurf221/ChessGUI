@@ -25,21 +25,26 @@ QPoint ArrowOverlay::squareToPosition(const QString &square) const {
   int file = square[0].unicode() - 'a';
   int rank = 8 - square[1].digitValue();
 
+
+
   if (flipped) {
     file = 7 - file;
     rank = 7 - rank;
   }
+
 
   qreal tileWidth = static_cast<qreal>(width()) / 8.0;
   qreal tileHeight = static_cast<qreal>(height()) / 8.0;
   int x = qRound(file * tileWidth);
   int y = qRound(rank * tileHeight);
   return QPoint(x, y);
+
 }
 
 void ArrowOverlay::paintEvent(QPaintEvent *) {
   QPainter painter(this);
   painter.setRenderHint(QPainter::Antialiasing);
+
 
   qreal tileWidth = static_cast<qreal>(width()) / 8.0;
   qreal tileHeight = static_cast<qreal>(height()) / 8.0;
@@ -60,6 +65,7 @@ void ArrowOverlay::paintEvent(QPaintEvent *) {
     QRect rect(QPoint(left, top), QPoint(right, bottom));
     painter.fillRect(rect, QColor(255, 215, 0, 120));
   };
+
 
   drawHighlight(highlightFrom);
   drawHighlight(highlightTo);
