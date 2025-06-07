@@ -19,5 +19,6 @@ private:
     bool flipped = false;
     QString highlightFrom;
     QString highlightTo;
+    QRect boardRect() const;
     QPoint squareToPosition(const QString& square) const;
 };
