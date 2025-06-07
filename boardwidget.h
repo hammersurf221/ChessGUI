@@ -4,6 +4,7 @@
 #include <QLabel>
 #include <QMap>
 #include <QWidget>
+#include <QPixmap>
 
 class BoardWidget : public QWidget {
   Q_OBJECT
@@ -30,6 +31,7 @@ private:
   void clearAllPieces();
   QSize sizeHint() const override;
   QPixmap originalBoardPixmap;
+  QPixmap generateBoardPixmap(int width, int height) const;
 
 };
 

@@ -1,6 +1,7 @@
 #include "regionselector.h"
 #include <QWindow>
 #include <QScreen>
+#include <QGuiApplication>
 
 RegionSelector::RegionSelector(QWidget* parent) : QWidget(parent) {
     setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::Tool);
