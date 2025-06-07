@@ -73,15 +73,16 @@ QPoint BoardWidget::squareToPosition(const QString &square, bool flipped) const 
     int file = square[0].unicode() - 'a'; // a–h → 0–7
     int rank = 8 - square[1].digitValue(); // 1–8 → 7–0
 
-    int tileSize = width() / 8;
+    qreal tileWidth = static_cast<qreal>(width()) / 8.0;
+    qreal tileHeight = static_cast<qreal>(height()) / 8.0;
 
     if (flipped) {
         file = 7 - file;
         rank = 7 - rank;
     }
 
-    int x = file * tileSize;
-    int y = rank * tileSize;
+    int x = qRound(file * tileWidth);
+    int y = qRound(rank * tileHeight);
     return QPoint(x, y);
 }
 
@@ -193,15 +194,17 @@ void BoardWidget::updatePieces(const QString &fen, bool flipped) {
 
         QLabel* pieceLabel = new QLabel(this);
         QSvgRenderer renderer(piecePath);
-        int tileSize = width() / 8;
-        QPixmap pixmap(tileSize, tileSize);
+        qreal tileWidth = static_cast<qreal>(width()) / 8.0;
+        qreal tileHeight = static_cast<qreal>(height()) / 8.0;
+        int pieceSize = qRound(qMin(tileWidth, tileHeight));
+        QPixmap pixmap(pieceSize, pieceSize);
         pixmap.fill(Qt::transparent);
 
         QPainter painter(&pixmap);
-        renderer.render(&painter, QRectF(0, 0, tileSize, tileSize));
+        renderer.render(&painter, QRectF(0, 0, pieceSize, pieceSize));
 
         pieceLabel->setPixmap(pixmap);
-        pieceLabel->setFixedSize(tileSize, tileSize);
+        pieceLabel->setFixedSize(pieceSize, pieceSize);
         pieceLabel->move(squareToPosition(key, flipped));  // ← render visually flipped
         pieceLabel->show();
 
@@ -221,12 +224,13 @@ void BoardWidget::paintEvent(QPaintEvent* event) {
 
 
 
-    int tileSize = width() / 8;
+    qreal tileWidth = static_cast<qreal>(width()) / 8.0;
+    qreal tileHeight = static_cast<qreal>(height()) / 8.0;
 
     auto drawHighlight = [&](const QString& square) {
         if (square.isEmpty()) return;
         QPoint pos = squareToPosition(square, currentFlipped);
-        QRect rect(pos, QSize(tileSize, tileSize));
+        QRect rect(pos, QSize(qRound(tileWidth), qRound(tileHeight)));
         painter.fillRect(rect, QColor(255, 215, 0, 120));
     };
 
@@ -245,9 +249,8 @@ void BoardWidget::paintEvent(QPaintEvent* event) {
         QPoint toPos = squareToPosition(toSquare, currentFlipped);
 
         // Offset to center of squares
-        QSize squareSize(width() / 8, height() / 8);
-        QPoint fromCenter = fromPos + QPoint(squareSize.width() / 2, squareSize.height() / 2);
-        QPoint toCenter = toPos + QPoint(squareSize.width() / 2, squareSize.height() / 2);
+        QPoint fromCenter = fromPos + QPoint(qRound(tileWidth / 2.0), qRound(tileHeight / 2.0));
+        QPoint toCenter = toPos + QPoint(qRound(tileWidth / 2.0), qRound(tileHeight / 2.0));
 
         // Draw arrow line
         QPen pen(QColor(255, 0, 0, 200));  // semi-transparent red
