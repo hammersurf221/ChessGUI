@@ -15,6 +15,9 @@ public:
   void setArrows(const QList<QPair<QString, QString>> &newArrows);
   void paintEvent(QPaintEvent *event) override;
 
+protected:
+  void resizeEvent(QResizeEvent *event) override;
+
 private:
 
   QLabel *boardBackground;

@@ -12,8 +12,8 @@
 BoardWidget::BoardWidget(QWidget *parent) : QWidget(parent) {
 
   arrowOverlay = new ArrowOverlay(this);
-  setFixedSize(512, 512);
-  arrowOverlay->setFixedSize(512, 512);
+  setMinimumSize(512, 512);
+  arrowOverlay->setGeometry(rect());
   arrowOverlay->raise();
   arrowOverlay->show();
 
@@ -262,30 +262,27 @@ void BoardWidget::paintEvent(QPaintEvent *event) {
     QPoint fromPos = squareToPosition(fromSquare, currentFlipped);
     QPoint toPos = squareToPosition(toSquare, currentFlipped);
 
-    // Offset to center of squares
-    QPoint fromCenter =
-        fromPos + QPoint(qRound(tileWidth / 2.0), qRound(tileHeight / 2.0));
-    QPoint toCenter =
-        toPos + QPoint(qRound(tileWidth / 2.0), qRound(tileHeight / 2.0));
-
     // Draw arrow line
     QPen pen(QColor(255, 0, 0, 200)); // semi-transparent red
     pen.setWidth(4);
     painter.setPen(pen);
-    painter.drawLine(fromCenter, toCenter);
+    painter.drawLine(fromPos, toPos);
 
     // Draw arrowhead
-    double angle = std::atan2(toCenter.y() - fromCenter.y(),
-                              toCenter.x() - fromCenter.x());
-    QPointF arrowP1 = toCenter - QPointF(15 * std::cos(angle - M_PI / 6),
+    double angle = std::atan2(toPos.y() - fromPos.y(),
+                              toPos.x() - fromPos.x());
+    QPointF arrowP1 = toPos - QPointF(15 * std::cos(angle - M_PI / 6),
                                          15 * std::sin(angle - M_PI / 6));
-    QPointF arrowP2 = toCenter - QPointF(15 * std::cos(angle + M_PI / 6),
+    QPointF arrowP2 = toPos - QPointF(15 * std::cos(angle + M_PI / 6),
                                          15 * std::sin(angle + M_PI / 6));
 
     QPolygonF arrowHead;
-    arrowHead << toCenter << arrowP1 << arrowP2;
+    arrowHead << toPos << arrowP1 << arrowP2;
     painter.setBrush(QColor(255, 0, 0, 200));
     painter.drawPolygon(arrowHead);
+
+    qDebug() << "[Board] Widget size =" << size();
+
   }
 }
 
@@ -297,4 +294,10 @@ void BoardWidget::setArrows(const QList<QPair<QString, QString>> &newArrows) {
 
 QSize BoardWidget::sizeHint() const {
   return QSize(512, 512);
+}
+
+void BoardWidget::resizeEvent(QResizeEvent* event) {
+    QWidget::resizeEvent(event);
+    if (arrowOverlay)
+        arrowOverlay->setGeometry(rect());
 }

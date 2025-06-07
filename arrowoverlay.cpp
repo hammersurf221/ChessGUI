@@ -6,7 +6,6 @@ ArrowOverlay::ArrowOverlay(QWidget *parent) : QWidget(parent) {
   setAttribute(Qt::WA_TransparentForMouseEvents);
   setAttribute(Qt::WA_NoSystemBackground);
   setAttribute(Qt::WA_TranslucentBackground);
-  setFixedSize(512, 512);
 }
 
 void ArrowOverlay::setArrows(const QList<QPair<QString, QString>> &newArrows,
@@ -99,4 +98,6 @@ void ArrowOverlay::paintEvent(QPaintEvent *) {
     painter.drawPolygon(head);
   }
   qDebug() << "Drawing arrows, count =" << arrows.size();
+  qDebug() << "[Overlay] Size =" << size();
+
 }

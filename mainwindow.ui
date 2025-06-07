@@ -160,10 +160,16 @@ border: 1px solid #444;
        </item>
        <item>
         <widget class="QFrame" name="chessBoardFrame">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="minimumSize">
           <size>
-           <width>512</width>
-           <height>512</height>
+           <width>600</width>
+           <height>600</height>
           </size>
          </property>
          <property name="frameShape">
