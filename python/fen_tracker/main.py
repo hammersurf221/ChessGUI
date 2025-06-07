@@ -33,8 +33,10 @@ last_image_array = None
 last_ssim = 0.0
 current_ssim = 0.0
 last_emitted_fen = None
+
 SSIM_THRESHOLD = 0.99
 prev_board_matrix = None
+
 
 def main():
     import sys
@@ -73,6 +75,7 @@ def main():
         try:
             image = Image.open(path).convert("RGB")
             image_array = np.array(image)
+
 
             global last_image_array, last_emitted_fen, last_ssim, current_ssim, prev_board_matrix
 
@@ -132,6 +135,43 @@ def main():
 
             # store the current frame for next comparison
             last_image_array = np.copy(image_array)
+
+
+            global last_image_array, last_emitted_fen, last_ssim, current_ssim
+
+            if last_image_array is None:
+                # Initialize on the first frame
+                last_image_array = np.copy(image_array)
+                last_ssim = 0.0
+                current_ssim = 1.0
+                print("[debug] First frame — initializing SSIM", flush=True)
+                continue
+
+            similarity = ssim(last_image_array, image_array, channel_axis=2)
+            print(f"[debug] SSIM: {similarity}", flush=True)
+
+            last_ssim, current_ssim = current_ssim, similarity
+
+            if last_ssim < SSIM_THRESHOLD and current_ssim >= SSIM_THRESHOLD:
+                tensor = transform(image)
+                board = predict_board(model, tensor)
+                tracker.update(board)
+                fen = tracker.generate_fen(board)
+
+                if my_color == 'b':
+                    fen = flip_fen_pov(fen)
+
+                if fen != last_emitted_fen:
+                    print(f"[FEN] {fen}", flush=True)
+                    last_emitted_fen = fen
+                else:
+                    print("[skip] FEN unchanged — skipping output", flush=True)
+            else:
+                print("[skip] Board not stable yet", flush=True)
+
+            # store the current frame for next comparison
+            last_image_array = np.copy(image_array)
+
 
         except Exception as e:
             print(f"[error] {e}", flush=True)
