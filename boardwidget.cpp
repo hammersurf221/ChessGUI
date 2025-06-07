@@ -31,6 +31,11 @@ QPixmap BoardWidget::generateBoardPixmap(int width, int height) const {
 
 BoardWidget::BoardWidget(QWidget *parent) : QWidget(parent) {
 
+  arrowOverlay = new ArrowOverlay(this);
+  arrowOverlay->setGeometry(rect());
+  arrowOverlay->raise();
+  arrowOverlay->show();
+
   // Load static board image
   boardBackground = new QLabel(this);
   setMinimumSize(512, 512);  // or lower if you prefer
@@ -167,7 +172,10 @@ void BoardWidget::paintEvent(QPaintEvent *event) {
 }
 
 void BoardWidget::setArrows(const QList<QPair<QString, QString>> &newArrows) {
-  Q_UNUSED(newArrows);
+  if (arrowOverlay) {
+    arrowOverlay->setArrows(newArrows, currentFlipped);
+    arrowOverlay->raise();
+  }
 }
 
 
@@ -179,6 +187,10 @@ void BoardWidget::resizeEvent(QResizeEvent* event) {
     QWidget::resizeEvent(event);
     QSize newSize = event->size();
     boardBackground->resize(newSize);
+    if (arrowOverlay) {
+        arrowOverlay->setGeometry(rect());
+        arrowOverlay->raise();
+    }
     originalBoardPixmap = generateBoardPixmap(newSize.width(), newSize.height());
     boardBackground->setPixmap(originalBoardPixmap);
     updatePieces(currentFen, currentFlipped);
