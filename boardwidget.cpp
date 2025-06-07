@@ -6,21 +6,21 @@
 #include <QPainter>
 #include <QPen>
 #include <QPixmap>
-#include <QResizeEvent>
 #include <QSvgRenderer>
 #include <QVector>
 
 BoardWidget::BoardWidget(QWidget *parent) : QWidget(parent) {
 
   arrowOverlay = new ArrowOverlay(this);
-  arrowOverlay->resize(this->size());
-  arrowOverlay->raise(); // Ensure it is on top
+  setFixedSize(512, 512);
+  arrowOverlay->setFixedSize(512, 512);
+  arrowOverlay->raise();
   arrowOverlay->show();
 
   // Load static board image
   boardBackground = new QLabel(this);
   setMinimumSize(512, 512);
-  setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  setMaximumSize(512, 512);
   boardBackground->move(0, 0);
   boardBackground->lower(); // stays behind all pieces
 
@@ -57,8 +57,8 @@ BoardWidget::BoardWidget(QWidget *parent) : QWidget(parent) {
 
   originalBoardPixmap = boardPixmap; // ✅ Store original unscaled image
 
-  boardBackground->setPixmap(originalBoardPixmap.scaled(
-      size(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
+  boardBackground->setFixedSize(512, 512);
+  boardBackground->setPixmap(originalBoardPixmap);
 }
 
 QString BoardWidget::squareToKey(int rank, int file) const {
@@ -295,20 +295,6 @@ void BoardWidget::setArrows(const QList<QPair<QString, QString>> &newArrows) {
 }
 
 
-void BoardWidget::resizeEvent(QResizeEvent *event) {
-  boardBackground->resize(event->size());
-  boardBackground->setPixmap(originalBoardPixmap.scaled(
-      event->size(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
-
-
-  if (arrowOverlay)
-    arrowOverlay->resize(event->size());
-
-  updatePieces(currentFen, currentFlipped);
-  QWidget::resizeEvent(event);
-}
-
 QSize BoardWidget::sizeHint() const {
-  int side = qMin(width(), height());
-  return QSize(side, side);
+  return QSize(512, 512);
 }

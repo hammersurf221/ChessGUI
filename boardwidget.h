@@ -4,7 +4,6 @@
 #include "arrowoverlay.h"
 #include <QLabel>
 #include <QMap>
-#include <QResizeEvent>
 #include <QWidget>
 
 class BoardWidget : public QWidget {
@@ -15,10 +14,6 @@ public:
   void setPositionFromFen(const QString &fen, bool flipped);
   void setArrows(const QList<QPair<QString, QString>> &newArrows);
   void paintEvent(QPaintEvent *event) override;
-  void resizeEvent(QResizeEvent *event) override;
-
-    bool hasHeightForWidth() const override;
-    int heightForWidth(int w) const override;
 
 private:
 

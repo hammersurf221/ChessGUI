@@ -70,7 +70,7 @@ MainWindow::MainWindow(QWidget *parent)
     QVBoxLayout* layout = new QVBoxLayout(ui->chessBoardFrame);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(board);
-    board->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    board->setFixedSize(512, 512);
     evalScoreLabel = new QLabel(ui->evalBar);
 
     evalScoreLabel->setObjectName("evalBarOverlay");
