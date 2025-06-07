@@ -1,29 +1,8 @@
 #include "boardwidget.h"
-#include <QBrush>
-#include <QDir>
 #include <QPainter>
 #include <QPixmap>
 #include <QSvgRenderer>
 #include <QResizeEvent>
-
-QPixmap BoardWidget::generateBoardPixmap(int width, int height) const {
-  QPixmap pixmap(width, height);
-  pixmap.fill(Qt::transparent);
-  QPainter p(&pixmap);
-  QColor light(234, 202, 155);
-  QColor dark(181, 136, 99);
-  int tileW = width / 8;
-  int tileH = height / 8;
-  for (int row = 0; row < 8; ++row) {
-    for (int col = 0; col < 8; ++col) {
-      QRect square(col * tileW, row * tileH, tileW, tileH);
-      bool isLight = (row + col) % 2 == 0;
-      p.fillRect(square, isLight ? light : dark);
-    }
-  }
-  p.end();
-  return pixmap;
-}
 
 BoardWidget::BoardWidget(QWidget *parent) : QWidget(parent) {
 
@@ -32,21 +11,7 @@ BoardWidget::BoardWidget(QWidget *parent) : QWidget(parent) {
   arrowOverlay->raise();
   arrowOverlay->show();
 
-  // Load static board image
-  boardBackground = new QLabel(this);
-  boardBackground->move(0, 0);
-  boardBackground->lower();
-  boardBackground->setScaledContents(false);
-
-
-  QString boardPath = "assets/board.png";
-  QPixmap boardPixmap = generateBoardPixmap(512, 512);
-  QDir().mkpath("assets");
-  boardPixmap.save(boardPath);
-
-  originalBoardPixmap = boardPixmap; // Store original unscaled image
-
-  boardBackground->setPixmap(originalBoardPixmap.scaled(sizeHint(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
+  setAttribute(Qt::WA_OpaquePaintEvent);
 }
 
 QString BoardWidget::squareToKey(int rank, int file) const {
@@ -154,7 +119,19 @@ void BoardWidget::updatePieces(const QString &fen, bool flipped) {
 }
 
 void BoardWidget::paintEvent(QPaintEvent *event) {
-  QWidget::paintEvent(event);
+    QWidget::paintEvent(event);
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing, false);
+
+    int tileW = width() / 8;
+    int tileH = height() / 8;
+    for (int row = 0; row < 8; ++row) {
+        for (int col = 0; col < 8; ++col) {
+            QRect square(col * tileW, row * tileH, tileW, tileH);
+            bool light = (row + col) % 2 == 0;
+            painter.fillRect(square, light ? lightSquare : darkSquare);
+        }
+    }
 }
 
 void BoardWidget::setArrows(const QList<QPair<QString, QString>> &newArrows) {
@@ -171,8 +148,6 @@ QSize BoardWidget::sizeHint() const {
 
 void BoardWidget::resizeEvent(QResizeEvent *event) {
     QWidget::resizeEvent(event);
-    boardBackground->setFixedSize(size());
-    boardBackground->setPixmap(originalBoardPixmap.scaled(size(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
     if (arrowOverlay) {
         arrowOverlay->setGeometry(rect());
         arrowOverlay->raise();

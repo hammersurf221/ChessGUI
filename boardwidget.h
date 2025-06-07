@@ -5,6 +5,7 @@
 #include <QMap>
 #include <QWidget>
 #include <QPixmap>
+#include <QColor>
 #include "arrowoverlay.h"
 
 class BoardWidget : public QWidget {
@@ -21,19 +22,18 @@ protected:
 
 private:
 
-  QLabel *boardBackground;
   ArrowOverlay *arrowOverlay = nullptr;
   QMap<QString, QLabel *> pieceLabels; // key = square like "e4"
   QString currentFen;
   bool currentFlipped = false;
+  QColor lightSquare = QColor(240, 217, 181);
+  QColor darkSquare = QColor(181, 136, 99);
 
   QString squareToKey(int rank, int file) const;
   QPoint squareToPosition(const QString &square, bool flipped) const;
   void updatePieces(const QString &fen, bool flipped);
   void clearAllPieces();
   QSize sizeHint() const override;
-  QPixmap originalBoardPixmap;
-  QPixmap generateBoardPixmap(int width, int height) const;
 
 };
 
