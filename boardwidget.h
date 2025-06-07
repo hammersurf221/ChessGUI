@@ -16,6 +16,7 @@ public:
     void setPositionFromFen(const QString &fen, bool flipped);
     void setArrows(const QList<QPair<QString, QString>>& newArrows);
     void paintEvent(QPaintEvent* event) override;
+    void resizeEvent(QResizeEvent* event) override;
 
 private:
     QLabel* boardBackground;

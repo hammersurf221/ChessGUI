@@ -274,6 +274,14 @@ void BoardWidget::setArrows(const QList<QPair<QString, QString>>& newArrows) {
         arrowOverlay->setArrows(newArrows, currentFlipped);
 }
 
+void BoardWidget::resizeEvent(QResizeEvent* event) {
+    boardBackground->resize(event->size());
+    if (arrowOverlay)
+        arrowOverlay->resize(event->size());
+    updatePieces(currentFen, currentFlipped);
+    QWidget::resizeEvent(event);
+}
+
 QSize BoardWidget::sizeHint() const {
     int side = qMin(width(), height());
     return QSize(side, side);
