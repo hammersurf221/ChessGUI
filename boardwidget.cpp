@@ -54,7 +54,9 @@ BoardWidget::BoardWidget(QWidget *parent) : QWidget(parent) {
   originalBoardPixmap = boardPixmap; // ✅ Store original unscaled image
 
   boardBackground->setFixedSize(512, 512);
-  boardBackground->setPixmap(originalBoardPixmap);
+  boardBackground->setPixmap(
+      originalBoardPixmap.scaled(boardBackground->size(), Qt::KeepAspectRatio,
+                                 Qt::SmoothTransformation));
 }
 
 QString BoardWidget::squareToKey(int rank, int file) const {
@@ -176,4 +178,9 @@ QSize BoardWidget::sizeHint() const {
 
 void BoardWidget::resizeEvent(QResizeEvent* event) {
     QWidget::resizeEvent(event);
+    boardBackground->setFixedSize(event->size());
+    boardBackground->setPixmap(
+        originalBoardPixmap.scaled(boardBackground->size(), Qt::KeepAspectRatio,
+                                   Qt::SmoothTransformation));
+    updatePieces(currentFen, currentFlipped);
 }
