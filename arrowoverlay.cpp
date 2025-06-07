@@ -46,8 +46,17 @@ void ArrowOverlay::paintEvent(QPaintEvent*) {
     auto drawHighlight = [&](const QString& square) {
         if (square.isEmpty())
             return;
-        QPoint pos = squareToPosition(square);
-        QRect rect(pos, QSize(qRound(tileWidth), qRound(tileHeight)));
+        int file = square[0].unicode() - 'a';
+        int rank = 8 - square[1].digitValue();
+        if (flipped) {
+            file = 7 - file;
+            rank = 7 - rank;
+        }
+        int left = qRound(file * tileWidth);
+        int top = qRound(rank * tileHeight);
+        int right = qRound((file + 1) * tileWidth);
+        int bottom = qRound((rank + 1) * tileHeight);
+        QRect rect(QPoint(left, top), QPoint(right, bottom));
         painter.fillRect(rect, QColor(255, 215, 0, 120));
     };
 

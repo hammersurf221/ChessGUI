@@ -83,11 +83,11 @@ QPoint BoardWidget::squareToPosition(const QString &square, bool flipped) const 
         rank = 7 - rank;
     }
 
-    int tileW = width() / 8;
-    int tileH = height() / 8;
+    qreal tileW = static_cast<qreal>(width()) / 8.0;
+    qreal tileH = static_cast<qreal>(height()) / 8.0;
 
-    int x = file * tileW;
-    int y = rank * tileH;
+    int x = qRound(file * tileW);
+    int y = qRound(rank * tileH);
 
     return QPoint(x, y);
 }
@@ -211,11 +211,12 @@ void BoardWidget::updatePieces(const QString &fen, bool flipped) {
 
         pieceLabel->setPixmap(pixmap);
         pieceLabel->setFixedSize(pieceSize, pieceSize);
-        int tileW = width() / 8;
-        int tileH = height() / 8;
+
+        qreal tileW = static_cast<qreal>(width()) / 8.0;
+        qreal tileH = static_cast<qreal>(height()) / 8.0;
         QPoint squarePos = squareToPosition(key, flipped);
-        int centeredX = squarePos.x() + (tileW - pieceSize) / 2;
-        int centeredY = squarePos.y() + (tileH - pieceSize) / 2;
+        int centeredX = qRound(squarePos.x() + tileW / 2.0 - pieceSize / 2.0);
+        int centeredY = qRound(squarePos.y() + tileH / 2.0 - pieceSize / 2.0);
         pieceLabel->move(centeredX, centeredY);
         pieceLabel->show();
 
@@ -240,8 +241,17 @@ void BoardWidget::paintEvent(QPaintEvent* event) {
 
     auto drawHighlight = [&](const QString& square) {
         if (square.isEmpty()) return;
-        QPoint pos = squareToPosition(square, currentFlipped);
-        QRect rect(pos, QSize(qRound(tileWidth), qRound(tileHeight)));
+        int file = square[0].unicode() - 'a';
+        int rank = 8 - square[1].digitValue();
+        if (currentFlipped) {
+            file = 7 - file;
+            rank = 7 - rank;
+        }
+        int left = qRound(file * tileWidth);
+        int top = qRound(rank * tileHeight);
+        int right = qRound((file + 1) * tileWidth);
+        int bottom = qRound((rank + 1) * tileHeight);
+        QRect rect(QPoint(left, top), QPoint(right, bottom));
         painter.fillRect(rect, QColor(255, 215, 0, 120));
     };
 
