@@ -8,6 +8,7 @@
 #include <QPixmap>
 #include <QSvgRenderer>
 #include <QVector>
+#include <QResizeEvent>
 
 BoardWidget::BoardWidget(QWidget *parent) : QWidget(parent) {
 
