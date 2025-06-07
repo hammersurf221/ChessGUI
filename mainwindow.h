@@ -10,6 +10,7 @@
 #include <QProcess>
 #include <QQueue>
 #include <QMap>
+#include <QElapsedTimer>
 
 
 QT_BEGIN_NAMESPACE
@@ -62,6 +63,9 @@ private:
     bool automoveInProgress = false;
     QMap<int, QString> multipvMoves;
     int selectedBestMoveRank = 1;
+    QElapsedTimer screenshotElapsed;
+    QElapsedTimer fenElapsed;
+    QElapsedTimer evalElapsed;
 
 
 

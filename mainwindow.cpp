@@ -135,6 +135,7 @@ MainWindow::MainWindow(QWidget *parent)
                 QString fen = output.mid(6);  // Skip "[FEN] "
                 QString pieceLayout = fen.section(" ", 0, 0);
                 QString turnColor = fen.section(" ", 1, 1);
+                qDebug() << "[timing] FEN processing:" << fenElapsed.elapsed() << "ms";
 
                 isMyTurn = (getMyColor() == turnColor);
                 bool fenChanged = (lastFen != fen);
@@ -262,6 +263,8 @@ void MainWindow::captureScreenshot() {
     QScreen* screen = QGuiApplication::primaryScreen();
     if (!screen) return;
 
+    screenshotElapsed.restart();
+
     QPixmap fullShot = screen->grabWindow(0,
                                           captureRegion.x(),
                                           captureRegion.y(),
@@ -274,6 +277,7 @@ void MainWindow::captureScreenshot() {
     statusBar()->showMessage("Board changed → ready to analyze");
     QString imagePath = "last_screenshot.png";
     image.save("last_screenshot.png");
+    qDebug() << "[timing] Screenshot capture:" << screenshotElapsed.elapsed() << "ms";
     runFenPrediction("last_screenshot.png");
     qDebug() << "[runFenPrediction] Sending image path:" << imagePath;
 
@@ -313,6 +317,7 @@ void MainWindow::startStockfish() {
             if (bestMoveMatch.hasMatch()) {
                 QString bestMove = bestMoveMatch.captured(1);
                 QString chosenMove = bestMove;
+                qDebug() << "[timing] Stockfish evaluation:" << evalElapsed.elapsed() << "ms";
 
                 if (ui->stealthCheck->isChecked() && multipvMoves.size() > 1) {
                     bool pickAlt = QRandomGenerator::global()->generateDouble() < 0.3;
@@ -467,6 +472,7 @@ void MainWindow::runFenPrediction(const QString& imagePath) {
         return;
     }
 
+    fenElapsed.restart();
     QString toSend = imagePath + "\n";
     fenServer->write(toSend.toUtf8());
 }
@@ -476,6 +482,8 @@ void MainWindow::evaluatePosition(const QString& fen) {
 
     if (!stockfishProcess || stockfishProcess->state() != QProcess::Running)
         return;
+
+    evalElapsed.restart();
 
     QStringList commands = {
         "uci",
