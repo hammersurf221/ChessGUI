@@ -174,11 +174,6 @@ MainWindow::MainWindow(QWidget *parent)
                     QString uci = detectUciMove(lastFen, fen);
                     bool whiteMoved = lastFen.section(' ', 1, 1) == "w";
                     addMoveToHistory(uci, whiteMoved);
-                    if (board && uci.length() == 4) {
-                        QString from = uci.mid(0, 2);
-                        QString to = uci.mid(2, 2);
-                        board->setHighlights(from, to);
-                    }
                 }
 
                 qDebug() << "[gui] Received FEN:" << fen;
