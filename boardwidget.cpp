@@ -9,7 +9,6 @@
 #include <QSvgRenderer>
 #include <QVector>
 #include <QResizeEvent>
-#include <QResizeEvent>
 
 QPixmap BoardWidget::generateBoardPixmap(int width, int height) const {
   QPixmap pixmap(width, height);
