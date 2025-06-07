@@ -41,26 +41,18 @@ QPoint BoardWidget::squareToPosition(const QString &square,
   return QPoint(x, y);
 }
 
-void BoardWidget::clearAllPieces() {
-  for (auto *label : pieceLabels.values()) {
-    label->hide();
-    label->deleteLater();
-  }
-  pieceLabels.clear();
-}
-
 void BoardWidget::setPositionFromFen(const QString &fen, bool flipped) {
   if (fen == currentFen && flipped == currentFlipped)
     return;
 
   currentFen = fen;
   currentFlipped = flipped;
-  updatePieces(fen, flipped);
+  parseFen(fen);
   update();
 }
 
-void BoardWidget::updatePieces(const QString &fen, bool flipped) {
-  clearAllPieces();
+void BoardWidget::parseFen(const QString &fen) {
+  boardPieces.clear();
 
   QStringList parts = fen.split(" ");
   if (parts.isEmpty())
@@ -68,14 +60,12 @@ void BoardWidget::updatePieces(const QString &fen, bool flipped) {
 
   QString board = parts[0];
 
-
   int rank = 0, file = 0;
   for (QChar c : board) {
     if (c == '/') {
       rank++;
       file = 0;
       continue;
-
     }
 
     if (c.isDigit()) {
@@ -83,39 +73,25 @@ void BoardWidget::updatePieces(const QString &fen, bool flipped) {
       continue;
     }
 
-    QString key = squareToKey(rank, file); // ranks 0 = 8th rank, 7 = 1st rank
-    QString pieceCode =
-        QString("%1%2").arg(c.isUpper() ? 'w' : 'b').arg(c.toUpper());
-
-    QString piecePath = QString("assets/pieces/%1.svg").arg(pieceCode);
-
-
-    QLabel *pieceLabel = new QLabel(this);
-    QSvgRenderer renderer(piecePath);
-    qreal tileWidth = static_cast<qreal>(width()) / 8.0;
-    qreal tileHeight = static_cast<qreal>(height()) / 8.0;
-    int pieceSize = qRound(qMin(tileWidth, tileHeight));
-    QPixmap pixmap(pieceSize, pieceSize);
-    pixmap.fill(Qt::transparent);
-
-    QPainter painter(&pixmap);
-    renderer.render(&painter, QRectF(0, 0, pieceSize, pieceSize));
-
-
-    pieceLabel->setPixmap(pixmap);
-    pieceLabel->setFixedSize(pieceSize, pieceSize);
-
-    qreal tileW = static_cast<qreal>(width()) / 8.0;
-    qreal tileH = static_cast<qreal>(height()) / 8.0;
-    QPoint squarePos = squareToPosition(key, flipped);
-    int centeredX = qRound(squarePos.x() + tileW / 2.0 - pieceSize / 2.0);
-    int centeredY = qRound(squarePos.y() + tileH / 2.0 - pieceSize / 2.0);
-    pieceLabel->move(centeredX, centeredY);
-    pieceLabel->show();
-
-    pieceLabels.insert(key, pieceLabel);
+    QString key = squareToKey(rank, file);
+    boardPieces.insert(key, c);
     file++;
   }
+}
+
+void BoardWidget::preparePiecePixmaps(int size) {
+    piecePixmaps.clear();
+    const QStringList codes = {"wK", "wQ", "wR", "wB", "wN", "wP",
+                                "bK", "bQ", "bR", "bB", "bN", "bP"};
+    for (const QString &code : codes) {
+        QSvgRenderer renderer(QString("assets/pieces/%1.svg").arg(code));
+        QPixmap pix(size, size);
+        pix.fill(Qt::transparent);
+        QPainter p(&pix);
+        renderer.render(&p, QRectF(0, 0, size, size));
+        piecePixmaps.insert(code, pix);
+    }
+    cachedPieceSize = size;
 }
 
 void BoardWidget::paintEvent(QPaintEvent *event) {
@@ -131,6 +107,20 @@ void BoardWidget::paintEvent(QPaintEvent *event) {
             bool light = (row + col) % 2 == 0;
             painter.fillRect(square, light ? lightSquare : darkSquare);
         }
+    }
+
+    int pieceSize = qRound(qMin(static_cast<qreal>(tileW), static_cast<qreal>(tileH)));
+    if (pieceSize != cachedPieceSize)
+        preparePiecePixmaps(pieceSize);
+
+    for (auto it = boardPieces.constBegin(); it != boardPieces.constEnd(); ++it) {
+        QString key = it.key();
+        QChar c = it.value();
+        QString code = QString("%1%2").arg(c.isUpper() ? 'w' : 'b').arg(c.toUpper());
+        QPoint pos = squareToPosition(key, currentFlipped);
+        int centeredX = qRound(pos.x() + tileW / 2.0 - pieceSize / 2.0);
+        int centeredY = qRound(pos.y() + tileH / 2.0 - pieceSize / 2.0);
+        painter.drawPixmap(centeredX, centeredY, piecePixmaps.value(code));
     }
 }
 
@@ -152,6 +142,7 @@ void BoardWidget::resizeEvent(QResizeEvent *event) {
         arrowOverlay->setGeometry(rect());
         arrowOverlay->raise();
     }
-    updatePieces(currentFen, currentFlipped);
+    cachedPieceSize = -1; // force regeneration of pixmaps
+    update();
 }
 
