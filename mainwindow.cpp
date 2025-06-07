@@ -11,6 +11,7 @@
 #include <QRandomGenerator>
 #include <QLabel>
 #include <QShortcut>
+#include <QVector>
 #include "globalhotkeymanager.h"
 
 
@@ -168,6 +169,10 @@ MainWindow::MainWindow(QWidget *parent)
                 qDebug() << "[gui] Passing to board: flipped =" << (getMyColor() == "b");
 
                 if (board) {
+                    if (fenChanged && !lastPieceLayout.isEmpty()) {
+                        auto mv = detectMoveSquares(lastPieceLayout, pieceLayout);
+                        board->setLastMoveSquares(mv.first, mv.second);
+                    }
                     board->setPositionFromFen(pieceLayout, getMyColor() == "b");
                     if (!isMyTurn) {
                         board->setArrows({});
@@ -189,6 +194,7 @@ MainWindow::MainWindow(QWidget *parent)
                 }
 
                 lastFen = fen;
+                lastPieceLayout = pieceLayout;
                 ui->fenDisplay->setPlainText(fen);
             }
         }
@@ -633,6 +639,42 @@ void MainWindow::updateEvalLabel() {
     int x = (ui->evalBar->width() - evalScoreLabel->width()) / 2;
 
     evalScoreLabel->move(x, y);
+}
+
+QPair<QString, QString> MainWindow::detectMoveSquares(const QString& prevFen, const QString& newFen) const {
+    auto fenToArray = [](const QString& fen) {
+        QVector<QChar> board;
+        QStringList ranks = fen.split('/');
+        for (const QString& r : ranks) {
+            for (QChar c : r) {
+                if (c.isDigit()) {
+                    int n = c.digitValue();
+                    for (int i = 0; i < n; ++i) board.append('1');
+                } else {
+                    board.append(c);
+                }
+            }
+        }
+        return board;
+    };
+
+    QVector<QChar> prevArr = fenToArray(prevFen);
+    QVector<QChar> newArr = fenToArray(newFen);
+
+    QString from, to;
+    for (int i = 0; i < 64 && (from.isEmpty() || to.isEmpty()); ++i) {
+        if (prevArr[i] != newArr[i]) {
+            int rank = i / 8;
+            int file = i % 8;
+            QString square = QString("%1%2").arg(QChar('a' + file)).arg(8 - rank);
+            if (newArr[i] == '1' && from.isEmpty()) {
+                from = square;
+            } else if (newArr[i] != prevArr[i]) {
+                to = square;
+            }
+        }
+    }
+    return {from, to};
 }
 
 

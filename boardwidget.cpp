@@ -158,10 +158,24 @@ void BoardWidget::updatePieces(const QString &fen, bool flipped) {
 void BoardWidget::paintEvent(QPaintEvent* event) {
     QWidget::paintEvent(event);  // draw base
 
-    if (arrows.isEmpty()) return;
-
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
+
+    int tileSize = width() / 8;
+
+    QColor highlightColor(255, 255, 0, 100);
+    if (!lastMoveFrom.isEmpty()) {
+        QPoint pos = squareToPosition(lastMoveFrom, currentFlipped);
+        painter.fillRect(QRect(pos, QSize(tileSize, tileSize)), highlightColor);
+    }
+    if (!lastMoveTo.isEmpty()) {
+        QPoint pos = squareToPosition(lastMoveTo, currentFlipped);
+        painter.fillRect(QRect(pos, QSize(tileSize, tileSize)), highlightColor);
+    }
+
+    if (arrows.isEmpty()) return;
+
+
 
     for (const auto& arrow : arrows) {
         QString fromSquare = arrow.first;
@@ -199,6 +213,12 @@ void BoardWidget::paintEvent(QPaintEvent* event) {
 void BoardWidget::setArrows(const QList<QPair<QString, QString>>& newArrows) {
     if (arrowOverlay)
         arrowOverlay->setArrows(newArrows, currentFlipped);
+}
+
+void BoardWidget::setLastMoveSquares(const QString& from, const QString& to) {
+    lastMoveFrom = from;
+    lastMoveTo = to;
+    update();
 }
 
 QSize BoardWidget::sizeHint() const {

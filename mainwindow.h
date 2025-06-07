@@ -10,6 +10,7 @@
 #include <QProcess>
 #include <QQueue>
 #include <QMap>
+#include <QPair>
 #include <QElapsedTimer>
 #include "globalhotkeymanager.h"
 
@@ -68,6 +69,8 @@ private:
     QElapsedTimer fenElapsed;
     QElapsedTimer evalElapsed;
     GlobalHotkeyManager* hotkeyManager = nullptr;
+    QString lastPieceLayout;
+    QPair<QString, QString> detectMoveSquares(const QString& prevFen, const QString& newFen) const;
 
 
 

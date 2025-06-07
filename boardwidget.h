@@ -15,6 +15,7 @@ public:
     explicit BoardWidget(QWidget *parent = nullptr);
     void setPositionFromFen(const QString &fen, bool flipped);
     void setArrows(const QList<QPair<QString, QString>>& newArrows);
+    void setLastMoveSquares(const QString& from, const QString& to);
     void paintEvent(QPaintEvent* event) override;
 
 private:
@@ -30,6 +31,8 @@ private:
     QList<QPair<QString, QString>> arrows;
 
     ArrowOverlay* arrowOverlay;
+    QString lastMoveFrom;
+    QString lastMoveTo;
     QSize sizeHint() const override;
 
 };
