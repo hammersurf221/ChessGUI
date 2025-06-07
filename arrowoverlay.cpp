@@ -15,6 +15,12 @@ void ArrowOverlay::setArrows(const QList<QPair<QString, QString>>& newArrows, bo
     update();
 }
 
+void ArrowOverlay::setHighlights(const QString& from, const QString& to) {
+    highlightFrom = from;
+    highlightTo = to;
+    update();
+}
+
 QPoint ArrowOverlay::squareToPosition(const QString& square) const {
     int file = square[0].unicode() - 'a';
     int rank = 8 - square[1].digitValue();
@@ -24,19 +30,32 @@ QPoint ArrowOverlay::squareToPosition(const QString& square) const {
         rank = 7 - rank;
     }
 
-    return QPoint(file * 64, rank * 64);
+    int tileSize = width() / 8;
+    return QPoint(file * tileSize, rank * tileSize);
 }
 
 void ArrowOverlay::paintEvent(QPaintEvent*) {
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
 
+    int tileSize = width() / 8;
+
+    auto drawHighlight = [&](const QString& square) {
+        if (square.isEmpty())
+            return;
+        QPoint pos = squareToPosition(square);
+        QRect rect(pos, QSize(tileSize, tileSize));
+        painter.fillRect(rect, QColor(255, 215, 0, 120));
+    };
+
+    drawHighlight(highlightFrom);
+    drawHighlight(highlightTo);
+
     for (const auto& arrow : arrows) {
         QPoint from = squareToPosition(arrow.first);
         QPoint to = squareToPosition(arrow.second);
-
-        QPoint fromCenter = from + QPoint(32, 32);
-        QPoint toCenter = to + QPoint(32, 32);
+        QPoint fromCenter = from + QPoint(tileSize / 2, tileSize / 2);
+        QPoint toCenter = to + QPoint(tileSize / 2, tileSize / 2);
 
         QPen pen(QColor("#66cc88"));  // Teal color
         pen.setWidth(8);              // Thicker line
