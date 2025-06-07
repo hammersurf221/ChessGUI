@@ -101,8 +101,8 @@ void BoardWidget::setPositionFromFen(const QString &fen, bool flipped) {
     currentFlipped = flipped;
     updatePieces(fen, flipped);
 
-    highlightFrom.clear();
-    highlightTo.clear();
+    QString highlightFrom;
+    QString highlightTo;
     if (!prevFen.isEmpty()) {
         auto parseBoard = [](const QString& layout) {
             QVector<QVector<QChar>> board(8, QVector<QChar>(8, '.'));
@@ -141,10 +141,12 @@ void BoardWidget::setPositionFromFen(const QString &fen, bool flipped) {
         }
     }
 
-    update();
+    if (arrowOverlay) {
+        arrowOverlay->setHighlights(highlightFrom, highlightTo);
+        arrowOverlay->raise();
+    }
 
-    if (arrowOverlay)
-        arrowOverlay->raise();  // 🟢 Ensure overlay is always on top after updates
+    update();
 }
 
 
@@ -204,18 +206,6 @@ void BoardWidget::paintEvent(QPaintEvent* event) {
 
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
-
-    int tileSize = width() / 8;
-
-    auto drawHighlight = [&](const QString& square) {
-        if (square.isEmpty()) return;
-        QPoint pos = squareToPosition(square, currentFlipped);
-        QRect rect(pos, QSize(tileSize, tileSize));
-        painter.fillRect(rect, QColor(255, 215, 0, 120));
-    };
-
-    drawHighlight(highlightFrom);
-    drawHighlight(highlightTo);
 
     if (arrows.isEmpty())
         return;

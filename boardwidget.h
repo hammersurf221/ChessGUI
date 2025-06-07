@@ -30,8 +30,6 @@ private:
     QList<QPair<QString, QString>> arrows;
 
     ArrowOverlay* arrowOverlay;
-    QString highlightFrom;
-    QString highlightTo;
     QSize sizeHint() const override;
 
 };
