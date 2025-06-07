@@ -50,7 +50,7 @@ BoardWidget::BoardWidget(QWidget *parent) : QWidget(parent) {
     boardPixmap.load(boardPath);
   } else {
     // Generate the board image
-    boardPixmap = generateBoardPixmap(600, 600);
+    boardPixmap = generateBoardPixmap(512, 512);
 
     // Save it for future use
     QDir().mkpath("assets");

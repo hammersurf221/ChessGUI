@@ -16,19 +16,6 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
-     <spacer name="horizontalSpacer_3">
-      <property name="orientation">
-       <enum>Qt::Orientation::Horizontal</enum>
-      </property>
-      <property name="sizeHint" stdset="0">
-       <size>
-        <width>40</width>
-        <height>20</height>
-       </size>
-      </property>
-     </spacer>
-    </item>
-    <item>
      <layout class="QVBoxLayout" name="verticalLayout_3">
       <item>
        <spacer name="verticalSpacer_4">
@@ -168,8 +155,8 @@ border: 1px solid #444;
          </property>
          <property name="minimumSize">
           <size>
-           <width>600</width>
-           <height>600</height>
+           <width>512</width>
+           <height>512</height>
           </size>
          </property>
          <property name="frameShape">
@@ -195,6 +182,19 @@ border: 1px solid #444;
        </item>
       </layout>
      </widget>
+    </item>
+    <item>
+     <spacer name="horizontalSpacer_4">
+      <property name="orientation">
+       <enum>Qt::Orientation::Horizontal</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>40</width>
+        <height>20</height>
+       </size>
+      </property>
+     </spacer>
     </item>
     <item>
      <spacer name="horizontalSpacer_2">
@@ -224,7 +224,7 @@ border: 1px solid #444;
          <item>
           <widget class="QPushButton" name="toggleAnalysisButton">
            <property name="text">
-            <string>Start Analysis</string>
+            <string>Start Analysis (Ctrl +A)</string>
            </property>
           </widget>
          </item>
@@ -261,14 +261,14 @@ border: 1px solid #444;
          <item>
           <widget class="QCheckBox" name="automoveCheck">
            <property name="text">
-            <string>Enable Automove</string>
+            <string>Enable Automove (Ctrl+M)</string>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QCheckBox" name="stealthCheck">
            <property name="text">
-            <string>Enable Stealth Mode</string>
+            <string>Enable Stealth Mode (Ctrl+S)</string>
            </property>
           </widget>
          </item>
