@@ -8,7 +8,7 @@ from PIL import Image
 from ccn_model import CCN
 from core.game_state_tracker import GameStateTracker
 from core.turn_detector import detect_turn_from_images
-from utils.board_utils import flip_fen_pov
+from utils.board_utils import flip_fen_pov, PIECE_TO_IDX
 from skimage.metrics import structural_similarity as ssim
 import numpy as np
 from collections import deque
@@ -36,9 +36,23 @@ last_emitted_fen = None
 SSIM_THRESHOLD = 0.99
 prev_board_matrix = None
 
+# Standard starting position represented as index matrix
+INITIAL_BOARD = np.array([
+    [PIECE_TO_IDX['r'], PIECE_TO_IDX['n'], PIECE_TO_IDX['b'], PIECE_TO_IDX['q'], PIECE_TO_IDX['k'], PIECE_TO_IDX['b'], PIECE_TO_IDX['n'], PIECE_TO_IDX['r']],
+    [PIECE_TO_IDX['p']] * 8,
+    [0] * 8,
+    [0] * 8,
+    [0] * 8,
+    [0] * 8,
+    [PIECE_TO_IDX['P']] * 8,
+    [PIECE_TO_IDX['R'], PIECE_TO_IDX['N'], PIECE_TO_IDX['B'], PIECE_TO_IDX['Q'], PIECE_TO_IDX['K'], PIECE_TO_IDX['B'], PIECE_TO_IDX['N'], PIECE_TO_IDX['R']],
+], dtype=np.uint8)
+
 def main():
     import sys
     from collections import deque
+
+    global last_image_array, last_emitted_fen, last_ssim, current_ssim, prev_board_matrix
 
     model = CCN()
 
@@ -55,6 +69,8 @@ def main():
     ])
 
     tracker = GameStateTracker()
+    global prev_board_matrix
+    prev_board_matrix = INITIAL_BOARD.copy()
     print("ready")
     sys.stdout.flush()
 
@@ -74,14 +90,23 @@ def main():
             image = Image.open(path).convert("RGB")
             image_array = np.array(image)
 
-            global last_image_array, last_emitted_fen, last_ssim, current_ssim, prev_board_matrix
+            
 
             if last_image_array is None:
-                # Initialize on the first frame
+                # Initialize on the first frame and emit FEN immediately
                 last_image_array = np.copy(image_array)
                 last_ssim = 0.0
                 current_ssim = 1.0
                 print("[debug] First frame — initializing SSIM", flush=True)
+
+                tensor = transform(image)
+                board = predict_board(model, tensor)
+                fen = tracker.update(board)
+                if my_color == 'b':
+                    fen = flip_fen_pov(fen)
+                print(f"[FEN] {fen}", flush=True)
+                last_emitted_fen = fen
+                prev_board_matrix = board.copy()
                 continue
 
             similarity = ssim(last_image_array, image_array, channel_axis=2)
