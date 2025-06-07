@@ -5,6 +5,7 @@
 #include <QWidget>
 #include <QLabel>
 #include <QMap>
+#include <QResizeEvent>
 
 
 class BoardWidget : public QWidget
