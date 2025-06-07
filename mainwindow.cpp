@@ -12,6 +12,7 @@
 #include <QLabel>
 #include <QShortcut>
 #include <QScrollBar>
+#include <QStatusBar>
 #include "globalhotkeymanager.h"
 
 
