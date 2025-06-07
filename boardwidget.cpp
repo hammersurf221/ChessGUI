@@ -205,7 +205,10 @@ void BoardWidget::updatePieces(const QString &fen, bool flipped) {
 
         pieceLabel->setPixmap(pixmap);
         pieceLabel->setFixedSize(pieceSize, pieceSize);
-        pieceLabel->move(squareToPosition(key, flipped));  // ← render visually flipped
+        QPoint topLeft = squareToPosition(key, flipped);
+        topLeft.rx() += (tileWidth - pieceSize) / 2;
+        topLeft.ry() += (tileHeight - pieceSize) / 2;
+        pieceLabel->move(topLeft);
         pieceLabel->show();
 
         pieceLabels.insert(key, pieceLabel);
