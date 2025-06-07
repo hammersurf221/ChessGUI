@@ -164,6 +164,12 @@ MainWindow::MainWindow(QWidget *parent)
                 isMyTurn = (getMyColor() == turnColor);
                 bool fenChanged = (lastFen != fen);
 
+                if (!lastFen.isEmpty() && fenChanged) {
+                    QString uci = detectUciMove(lastFen, fen);
+                    bool whiteMoved = lastFen.section(' ', 1, 1) == "w";
+                    addMoveToHistory(uci, whiteMoved);
+                }
+
                 qDebug() << "[gui] Received FEN:" << fen;
                 qDebug() << "[gui] Piece layout:" << pieceLayout;
                 qDebug() << "[gui] Passing to board: flipped =" << (getMyColor() == "b");
@@ -641,6 +647,7 @@ void MainWindow::updateEvalLabel() {
     evalScoreLabel->move(x, y);
 }
 
+
 QPair<QString, QString> MainWindow::detectMoveSquares(const QString& prevFen, const QString& newFen) const {
     auto fenToArray = [](const QString& fen) {
         QVector<QChar> board;
@@ -652,11 +659,26 @@ QPair<QString, QString> MainWindow::detectMoveSquares(const QString& prevFen, co
                     for (int i = 0; i < n; ++i) board.append('1');
                 } else {
                     board.append(c);
+
+QString MainWindow::detectUciMove(const QString& prevFen, const QString& currFen) const {
+    auto parseBoard = [](const QString& layout) {
+        QVector<QVector<QChar>> board(8, QVector<QChar>(8, '.'));
+        QStringList ranks = layout.split('/');
+        for (int r = 0; r < qMin(8, ranks.size()); ++r) {
+            int c = 0;
+            for (QChar ch : ranks[r]) {
+                if (ch.isDigit()) {
+                    c += ch.digitValue();
+                } else {
+                    if (c < 8) board[r][c] = ch;
+                    ++c;
+
                 }
             }
         }
         return board;
     };
+
 
     QVector<QChar> prevArr = fenToArray(prevFen);
     QVector<QChar> newArr = fenToArray(newFen);
@@ -675,6 +697,46 @@ QPair<QString, QString> MainWindow::detectMoveSquares(const QString& prevFen, co
         }
     }
     return {from, to};
+
+    QString prevLayout = prevFen.section(' ', 0, 0);
+    QString currLayout = currFen.section(' ', 0, 0);
+    auto prevBoard = parseBoard(prevLayout);
+    auto currBoard = parseBoard(currLayout);
+
+    QString from, to;
+    for (int r = 0; r < 8; ++r) {
+        for (int c = 0; c < 8; ++c) {
+            if (prevBoard[r][c] != currBoard[r][c]) {
+                if (prevBoard[r][c] != '.' && currBoard[r][c] == '.') {
+                    from = QString(QChar('a' + c)) + QString::number(8 - r);
+                } else if (prevBoard[r][c] == '.' && currBoard[r][c] != '.') {
+                    to = QString(QChar('a' + c)) + QString::number(8 - r);
+                } else if (prevBoard[r][c] != currBoard[r][c] && currBoard[r][c] != '.') {
+                    to = QString(QChar('a' + c)) + QString::number(8 - r);
+                    if (from.isEmpty())
+                        from = QString(QChar('a' + c)) + QString::number(8 - r);
+                }
+            }
+        }
+    }
+
+    if (!from.isEmpty() && !to.isEmpty())
+        return from + to;
+    return {};
+}
+
+void MainWindow::addMoveToHistory(const QString& moveUci, bool whiteMove) {
+    if (moveUci.isEmpty()) return;
+
+    if (whiteMove || moveHistoryLines.isEmpty()) {
+        moveHistoryLines.append(QString::number(moveHistoryLines.size() + 1) + ". " + moveUci);
+    } else {
+        moveHistoryLines.last().append(" " + moveUci);
+    }
+
+    ui->pgnDisplay->setPlainText(moveHistoryLines.join("\n"));
+    ui->pgnDisplay->verticalScrollBar()->setValue(ui->pgnDisplay->verticalScrollBar()->maximum());
+
 }
 
 

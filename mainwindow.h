@@ -72,6 +72,10 @@ private:
     QString lastPieceLayout;
     QPair<QString, QString> detectMoveSquares(const QString& prevFen, const QString& newFen) const;
 
+    QStringList moveHistoryLines;
+    QString detectUciMove(const QString& prevFen, const QString& currFen) const;
+    void addMoveToHistory(const QString& moveUci, bool whiteMove);
+
 
 
 protected:
