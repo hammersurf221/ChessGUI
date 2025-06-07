@@ -59,7 +59,15 @@ def main():
     sys.stdout.flush()
 
     for line in sys.stdin:
-        path = os.path.abspath(line.strip())
+        line = line.strip()
+        if line.startswith("[color]"):
+            new_color = line.split("]")[-1].strip()
+            if new_color in ("w", "b"):
+                my_color = new_color
+                print(f"[update] my_color updated to: {my_color}", flush=True)
+            continue
+
+        path = os.path.abspath(line)
         print(f"[python received] {path}", flush=True)
 
         try:

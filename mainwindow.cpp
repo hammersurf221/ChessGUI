@@ -77,16 +77,23 @@ MainWindow::MainWindow(QWidget *parent)
             myColor = "w";
             ui->evalBar->setInvertedAppearance(false);  // white on bottom
             updateEvalLabel();
+
+            if (fenServer && fenServer->state() == QProcess::Running) {
+                fenServer->write("[color] w\n");
+            }
         }
     });
     connect(ui->blackRadioButton, &QRadioButton::toggled, this, [=](bool checked) {
         if (checked) {
             myColor = "b";
-            ui->evalBar->setInvertedAppearance(true);  // black on bottom
+            ui->evalBar->setInvertedAppearance(true);
             updateEvalLabel();
+
+            if (fenServer && fenServer->state() == QProcess::Running) {
+                fenServer->write("[color] b\n");
+            }
         }
     });
-
 
 
     connect(fenServer, &QProcess::readyReadStandardOutput, this, [=]() {
@@ -395,12 +402,8 @@ void MainWindow::startStockfish() {
 }
 
 void MainWindow::startFenServer() {
-
-    // Set the working directory to where your Python script resides (if needed)
     QString scriptPath = QCoreApplication::applicationDirPath() + "/python/fen_tracker/main.py";
-
-    // Get the selected player color
-    QString color = getMyColor();  // This must return "w" or "b"
+    QString color = getMyColor();  // This returns "w" or "b"
     QStringList arguments;
     arguments << scriptPath << "--color" << color;
 
@@ -408,12 +411,19 @@ void MainWindow::startFenServer() {
 
     fenServer->start("python", arguments);
 
+    if (!fenServer->waitForStarted()) {
+        qDebug() << "[fenServer] Failed to start";
+        return;
+    }
+
+    // ✅ Immediately send the color again in case user toggled it early
+    fenServer->write(QString("[color] %1\n").arg(color).toUtf8());
+
     connect(fenServer, &QProcess::readyReadStandardOutput, this, [=]() {
         QStringList lines = QString::fromUtf8(fenServer->readAllStandardOutput()).split("\n", Qt::SkipEmptyParts);
         for (const QString& rawLine : lines) {
             QString output = rawLine.trimmed();
             qDebug() << "[fenServer stdout]" << output;
-            // You can replicate your existing parsing logic here if desired
         }
     });
 
@@ -421,8 +431,8 @@ void MainWindow::startFenServer() {
         QString error = QString::fromUtf8(fenServer->readAllStandardError());
         qDebug() << "[fenServer stderr]" << error;
     });
-
 }
+
 
 
 
