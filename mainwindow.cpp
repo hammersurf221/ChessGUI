@@ -11,6 +11,7 @@
 #include <QRandomGenerator>
 #include <QLabel>
 #include <QShortcut>
+#include <QScrollBar>
 #include "globalhotkeymanager.h"
 
 
