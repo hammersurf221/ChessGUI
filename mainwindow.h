@@ -11,6 +11,7 @@
 #include <QQueue>
 #include <QMap>
 #include <QElapsedTimer>
+#include "globalhotkeymanager.h"
 
 
 QT_BEGIN_NAMESPACE
@@ -66,6 +67,7 @@ private:
     QElapsedTimer screenshotElapsed;
     QElapsedTimer fenElapsed;
     QElapsedTimer evalElapsed;
+    GlobalHotkeyManager* hotkeyManager = nullptr;
 
 
 
