@@ -8,6 +8,7 @@
 #include <QPen>
 #include <QBrush>
 #include <QVector>
+#include <QResizeEvent>
 
 
 
