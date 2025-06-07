@@ -5,6 +5,7 @@
 #include <QMap>
 #include <QWidget>
 #include <QPixmap>
+#include "arrowoverlay.h"
 
 class BoardWidget : public QWidget {
   Q_OBJECT
@@ -21,6 +22,7 @@ protected:
 private:
 
   QLabel *boardBackground;
+  ArrowOverlay *arrowOverlay = nullptr;
   QMap<QString, QLabel *> pieceLabels; // key = square like "e4"
   QString currentFen;
   bool currentFlipped = false;
