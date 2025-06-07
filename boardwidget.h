@@ -1,7 +1,6 @@
 #ifndef BOARDWIDGET_H
 #define BOARDWIDGET_H
 
-#include "arrowoverlay.h"
 #include <QLabel>
 #include <QMap>
 #include <QWidget>
@@ -29,11 +28,6 @@ private:
   QPoint squareToPosition(const QString &square, bool flipped) const;
   void updatePieces(const QString &fen, bool flipped);
   void clearAllPieces();
-  QList<QPair<QString, QString>> arrows;
-
-  ArrowOverlay *arrowOverlay;
-  QString highlightFrom;
-  QString highlightTo;
   QSize sizeHint() const override;
   QPixmap originalBoardPixmap;
 
