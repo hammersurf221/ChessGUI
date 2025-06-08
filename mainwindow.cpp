@@ -17,6 +17,7 @@
 #include "globalhotkeymanager.h"
 #include "settingsdialog.h"
 #include <QSettings>
+#include <cmath>
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -370,7 +371,8 @@ void MainWindow::startStockfish() {
         QRegularExpression bestMovePattern("bestmove ([a-h][1-8][a-h][1-8])");
         QRegularExpression matePattern("score mate (-?\\d+)");
         QRegularExpression cpPattern("score cp (-?\\d+)");
-        QRegularExpression pvPattern("multipv\\s+(\\d+).*pv\\s+([a-h][1-8][a-h][1-8])");
+        QRegularExpression pvPattern(
+            "multipv\\s+(\\d+)\\s+.*score\\s+cp\\s+(-?\\d+)\\s+.*pv\\s+([a-h][1-8][a-h][1-8])");
 
         for (const QString& line : lines) {
             QString trimmed = line.trimmed();
@@ -378,36 +380,54 @@ void MainWindow::startStockfish() {
             QRegularExpressionMatch pvMatch = pvPattern.match(trimmed);
             if (pvMatch.hasMatch()) {
                 int idx = pvMatch.captured(1).toInt();
-                QString mv = pvMatch.captured(2);
-                multipvMoves[idx] = mv;
+                int cp = pvMatch.captured(2).toInt();
+                QString mv = pvMatch.captured(3);
+                multipvMoves[idx] = qMakePair(mv, cp);
             }
 
             QRegularExpressionMatch bestMoveMatch = bestMovePattern.match(trimmed);
             if (bestMoveMatch.hasMatch()) {
                 QString bestMove = bestMoveMatch.captured(1);
                 QString chosenMove = bestMove;
+                int chosenScore = multipvMoves.value(1).second;
+                selectedBestMoveRank = 1;
                 qDebug() << "[timing] Stockfish evaluation:" << evalElapsed.elapsed() << "ms";
 
-                if (ui->stealthCheck->isChecked() && multipvMoves.size() > 1) {
-                    bool pickAlt = QRandomGenerator::global()->generateDouble() < 0.3;
-                    if (pickAlt) {
-                        QList<int> keys = multipvMoves.keys();
-                        keys.removeOne(1);  // exclude best
-                        if (!keys.isEmpty()) {
-                            int randIdx = QRandomGenerator::global()->bounded(keys.size());
-                            selectedBestMoveRank = keys[randIdx];
-                            chosenMove = multipvMoves.value(selectedBestMoveRank, bestMove);
-                        } else {
-                            selectedBestMoveRank = 1;
-                            chosenMove = bestMove;
+                if (ui->stealthCheck->isChecked() && !multipvMoves.isEmpty()) {
+                    auto first = multipvMoves.value(1);
+                    auto second = multipvMoves.value(2);
+                    auto third = multipvMoves.value(3);
+                    chosenMove = first.first.isEmpty() ? bestMove : first.first;
+                    chosenScore = first.second;
+
+                    if (!second.first.isEmpty() && std::abs(first.second - second.second) < 30) {
+                        bool pickSecond = QRandomGenerator::global()->bounded(2);
+                        if (pickSecond) {
+                            selectedBestMoveRank = 2;
+                            chosenMove = second.first;
+                            chosenScore = second.second;
                         }
-                    } else {
-                        selectedBestMoveRank = 1;
-                        chosenMove = bestMove;
                     }
-                } else {
-                    selectedBestMoveRank = 1;
-                    chosenMove = bestMove;
+
+                    double roll = QRandomGenerator::global()->generateDouble();
+                    if (roll > accuracy) {
+                        QList<int> alts;
+                        if (!second.first.isEmpty()) alts.append(2);
+                        if (!third.first.isEmpty()) alts.append(3);
+                        if (!alts.isEmpty()) {
+                            int idx = alts[QRandomGenerator::global()->bounded(alts.size())];
+                            if (idx == 2) {
+                                selectedBestMoveRank = 2;
+                                chosenMove = second.first;
+                                chosenScore = second.second;
+                            } else {
+                                selectedBestMoveRank = 3;
+                                chosenMove = third.first;
+                                chosenScore = third.second;
+                            }
+                        }
+                    }
+                    qDebug() << "[stealth] Move" << chosenMove << "score" << chosenScore;
                 }
 
 
