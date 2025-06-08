@@ -14,6 +14,7 @@
 #include <QShortcut>
 #include <QScrollBar>
 #include <QStatusBar>
+#include <QPainter>
 #include "globalhotkeymanager.h"
 #include "settingsdialog.h"
 #include <QSettings>
@@ -256,6 +257,17 @@ void MainWindow::on_setRegionButton_clicked() {
     QScreen* screen = QGuiApplication::primaryScreen();
     QPixmap screenPixmap = screen->grabWindow(0);
     QImage screenshot = screenPixmap.toImage();
+
+    // Mask out this application's window so detection ignores it
+    double dpr = screenshot.devicePixelRatio();
+    QRect windowRect = frameGeometry();
+    QRect scaledRect(windowRect.x() * dpr,
+                     windowRect.y() * dpr,
+                     windowRect.width() * dpr,
+                     windowRect.height() * dpr);
+    QPainter maskPainter(&screenshot);
+    maskPainter.fillRect(scaledRect, Qt::black);
+    maskPainter.end();
 
     QRect detected;
     if (useAutoBoardDetectionSetting && !forceManualRegionSetting)
