@@ -8,6 +8,7 @@
 #include <QRegularExpression>
 #include <QDialog>
 #include <QDir>
+#include <QStandardPaths>
 #include <QRandomGenerator>
 #include <QLabel>
 #include <QDebug>
@@ -15,6 +16,7 @@
 #include <QScrollBar>
 #include <QStatusBar>
 #include <QPainter>
+#include <QFile>
 #include "globalhotkeymanager.h"
 #include "settingsdialog.h"
 #include <QSettings>
@@ -250,6 +252,8 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
+    QString tempDir = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
+    QFile::remove(QDir(tempDir).filePath("chessgui_last_screenshot.png"));
     delete ui;
 }
 
@@ -363,11 +367,12 @@ void MainWindow::captureScreenshot() {
     QImage image = resized.toImage().convertToFormat(QImage::Format_RGB888);
 
     statusBar()->showMessage("Board changed → ready to analyze");
-    QString imagePath = "last_screenshot.png";
-    image.save("last_screenshot.png");
+    QString tempDir = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
+    QString imagePath = QDir(tempDir).filePath("chessgui_last_screenshot.png");
+    image.save(imagePath);
     qDebug() << "[timing] Screenshot capture:" << screenshotElapsed.elapsed() << "ms";
-    runFenPrediction("last_screenshot.png");
     qDebug() << "[runFenPrediction] Sending image path:" << imagePath;
+    runFenPrediction(imagePath);
 
 
 }
