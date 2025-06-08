@@ -14,12 +14,6 @@
 #include <QPair>
 #include <QElapsedTimer>
 #include "globalhotkeymanager.h"
-#include <QtCharts/QChartView>
-#include <QtCharts/QLineSeries>
-#include <QtCharts/QBarSeries>
-#include <QtCharts/QBarSet>
-#include <QtCharts/QBarCategoryAxis>
-#include <QtCharts/QValueAxis>
 
 
 QT_BEGIN_NAMESPACE
@@ -71,21 +65,7 @@ private:
     void updateStatusLabel(const QString& text);
     void startFenServer();
     QLabel* evalScoreLabel = nullptr;
-    QtCharts::QChartView* evalChartView = nullptr;
-    QtCharts::QLineSeries* evalSeries = nullptr;
-    QtCharts::QValueAxis* evalAxisX = nullptr;
-    QtCharts::QValueAxis* evalAxisY = nullptr;
-    int evalIndex = 0;
-    QtCharts::QChartView* moveBarChartView = nullptr;
-    QtCharts::QBarSeries* moveBarSeries = nullptr;
-    QtCharts::QBarSet* moveBarSet = nullptr;
-    QtCharts::QBarCategoryAxis* moveAxisX = nullptr;
-    QtCharts::QValueAxis* moveAxisY = nullptr;
-    int firstMoveCount = 0;
-    int secondMoveCount = 0;
-    int thirdMoveCount = 0;
     void updateEvalLabel();
-    void updateMoveChart();
     SettingsDialog* settingsDialog = nullptr;
     QString currentBestMove;
     void playBestMove();
