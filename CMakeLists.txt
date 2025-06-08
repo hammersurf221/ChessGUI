@@ -82,6 +82,16 @@ install(DIRECTORY ${CMAKE_SOURCE_DIR}/python DESTINATION .)
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/assets DESTINATION .)
 install(FILES ${CMAKE_SOURCE_DIR}/stockfish.exe DESTINATION .)
 
+# Install OpenCV DLL (adjust filename if needed)
+install(FILES "C:/opencv/build/x64/vc16/bin/opencv_world4110.dll" DESTINATION .)
+
+# Install all Qt DLLs copied by windeployqt into staging/
+install(DIRECTORY "${CMAKE_BINARY_DIR}/staging/"
+        DESTINATION .
+        FILES_MATCHING PATTERN "*.dll")
+install(DIRECTORY "${CMAKE_BINARY_DIR}/staging/platforms"
+        DESTINATION platforms)
+
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(ChessGUI)
 endif()
@@ -127,4 +137,13 @@ set(CPACK_PACKAGE_VERSION "0.1.0")
 set(CPACK_GENERATOR "NSIS")
 set(CPACK_NSIS_DISPLAY_NAME "FENgineLive")
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "FENgineLive")
+
+# Fix Start Menu shortcut target
+set(CPACK_PACKAGE_EXECUTABLES "ChessGUI" "FENgineLive")
+set(CPACK_NSIS_DISPLAY_NAME "FENgineLive")
+set(CPACK_NSIS_INSTALLED_ICON_NAME "ChessGUI.exe")
+set(CPACK_NSIS_EXECUTABLES_DIRECTORY ".")
+
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "FENgineLive")
+set(CPACK_NSIS_MODIFY_PATH ON)
 include(CPack)
