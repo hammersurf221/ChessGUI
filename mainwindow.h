@@ -91,7 +91,7 @@ private:
     bool lastEvalValid = false;
     int pendingEvalLine = -1;
 
-    bool restartStockfishOnCrash = true;
+
 
 protected:
     bool eventFilter(QObject* obj, QEvent* event) override;
