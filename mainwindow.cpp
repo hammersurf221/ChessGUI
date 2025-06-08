@@ -14,12 +14,6 @@
 #include <QShortcut>
 #include <QScrollBar>
 #include <QStatusBar>
-#include <QtCharts/QChartView>
-#include <QtCharts/QLineSeries>
-#include <QtCharts/QBarSeries>
-#include <QtCharts/QBarSet>
-#include <QtCharts/QBarCategoryAxis>
-#include <QtCharts/QValueAxis>
 #include "globalhotkeymanager.h"
 #include "settingsdialog.h"
 #include <QSettings>
@@ -123,46 +117,6 @@ MainWindow::MainWindow(QWidget *parent)
     evalScoreLabel->show();
     updateEvalLabel();
     connect(ui->evalBar, &QProgressBar::valueChanged, this, &MainWindow::updateEvalLabel);
-
-    evalChartView = ui->evalChartView;
-    evalSeries = new QtCharts::QLineSeries(this);
-    {
-        QtCharts::QChart* c = new QtCharts::QChart();
-        c->legend()->hide();
-        c->addSeries(evalSeries);
-        evalAxisX = new QtCharts::QValueAxis();
-        evalAxisY = new QtCharts::QValueAxis();
-        evalAxisX->setTitleText("Move");
-        evalAxisY->setTitleText("Eval");
-        evalAxisY->setRange(-10, 10);
-        c->addAxis(evalAxisX, Qt::AlignBottom);
-        c->addAxis(evalAxisY, Qt::AlignLeft);
-        evalSeries->attachAxis(evalAxisX);
-        evalSeries->attachAxis(evalAxisY);
-        evalChartView->setChart(c);
-    }
-
-    moveBarChartView = ui->moveBarChartView;
-    moveBarSet = new QtCharts::QBarSet("Chosen");
-    moveBarSet->append(0);
-    moveBarSet->append(0);
-    moveBarSet->append(0);
-    moveBarSeries = new QtCharts::QBarSeries();
-    moveBarSeries->append(moveBarSet);
-    {
-        QtCharts::QChart* bc = new QtCharts::QChart();
-        bc->legend()->hide();
-        bc->addSeries(moveBarSeries);
-        moveAxisX = new QtCharts::QBarCategoryAxis();
-        moveAxisX->append(QStringList({"1st","2nd","3rd"}));
-        bc->addAxis(moveAxisX, Qt::AlignBottom);
-        moveAxisY = new QtCharts::QValueAxis();
-        moveAxisY->setRange(0, 1);
-        bc->addAxis(moveAxisY, Qt::AlignLeft);
-        moveBarSeries->attachAxis(moveAxisX);
-        moveBarSeries->attachAxis(moveAxisY);
-        moveBarChartView->setChart(bc);
-    }
     ui->fenDisplay->setPlainText("Waiting for FEN...");
     screenshotTimer = new QTimer(this);
     connect(screenshotTimer, &QTimer::timeout, this, &MainWindow::captureScreenshot);
@@ -512,16 +466,6 @@ void MainWindow::startStockfish() {
                     qDebug() << "[stealth] Move" << chosenMove << "score" << chosenScore;
                 }
 
-                if (ui->stealthCheck->isChecked()) {
-                    if (selectedBestMoveRank == 1)
-                        ++firstMoveCount;
-                    else if (selectedBestMoveRank == 2)
-                        ++secondMoveCount;
-                    else if (selectedBestMoveRank == 3)
-                        ++thirdMoveCount;
-                    updateMoveChart();
-                }
-
 
                 multipvMoves.clear();
 
@@ -601,15 +545,6 @@ void MainWindow::startStockfish() {
                     }
                     lastEvalForMe = numericEval;
                     lastEvalValid = true;
-                    if (evalSeries) {
-                        evalSeries->append(evalIndex, numericEval);
-                        evalAxisX->setRange(0, ++evalIndex);
-                        double minY = evalAxisY->min();
-                        double maxY = evalAxisY->max();
-                        if (numericEval < minY) minY = numericEval;
-                        if (numericEval > maxY) maxY = numericEval;
-                        evalAxisY->setRange(std::floor(minY) - 1, std::ceil(maxY) + 1);
-                    }
                 }
             }
         }
@@ -840,15 +775,6 @@ void MainWindow::updateEvalLabel() {
     int x = (ui->evalBar->width() - evalScoreLabel->width()) / 2;
 
     evalScoreLabel->move(x, y);
-}
-
-void MainWindow::updateMoveChart() {
-    if (!moveBarSet || !moveAxisY) return;
-    moveBarSet->replace(0, firstMoveCount);
-    moveBarSet->replace(1, secondMoveCount);
-    moveBarSet->replace(2, thirdMoveCount);
-    int maxCount = std::max({firstMoveCount, secondMoveCount, thirdMoveCount, 1});
-    moveAxisY->setRange(0, maxCount);
 }
 
 QString MainWindow::detectUciMove(const QString& prevFen, const QString& currFen) const {
