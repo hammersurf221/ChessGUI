@@ -57,3 +57,8 @@ ctest
 2. Follow the coding conventions above and provide clear commit messages.
 3. Ensure the project builds without warnings before opening a pull request.
 4. Include any new assets or scripts in the appropriate directories.
+
+## Documentation
+The `README.md` file acts as the primary user manual. Keep it fully up to date
+whenever functionality changes. The README should stand on its own without
+needing to reference this guide.
