@@ -27,7 +27,6 @@ set(PROJECT_SOURCES
         arrowoverlay.cpp
         settingsdialog.h
         settingsdialog.cpp
-        SettingsDialog.ui
         regionselector.h
         regionselector.cpp
         chessboard_detector.h
