@@ -44,6 +44,12 @@ private:
     QString lastFen;
     int analysisInterval = 1000;  // milliseconds
     int stockfishDepth = 15;
+    int autoMoveDelayMs = 0;
+    bool autoMoveWhenReady = false;
+    bool useAutoBoardDetectionSetting = true;
+    bool forceManualRegionSetting = false;
+    QString stockfishPath;
+    QString fenModelPath;
     QString getMyColor() const;
     void captureScreenshot();
     void runFenPrediction(const QString& imagePath);
