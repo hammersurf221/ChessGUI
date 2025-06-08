@@ -39,9 +39,8 @@ QRect detectChessboard(const QImage& qimage) {
     cv::adaptiveThreshold(gray, thresh, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C,
                           cv::THRESH_BINARY, 11, 2);
 
-    cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(5, 5));
-    cv::Mat closed;
-    cv::morphologyEx(thresh, closed, cv::MORPH_CLOSE, kernel);
+    cv::Mat closed = thresh.clone();  // Use raw threshold output directly
+
 
     std::vector<std::vector<cv::Point>> contours;
     cv::findContours(closed, contours, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
@@ -54,32 +53,42 @@ QRect detectChessboard(const QImage& qimage) {
         int score;
     };
 
+
     std::vector<Candidate> candidates;
 
+
     for (const auto& contour : contours) {
-        double peri = cv::arcLength(contour, true);
-        std::vector<cv::Point> approx;
-        cv::approxPolyDP(contour, approx, 0.02 * peri, true);
+        cv::Rect rect = cv::boundingRect(contour);
+        double aspect = static_cast<double>(rect.width) / rect.height;
+        double area = rect.area();
 
-        if (approx.size() == 4) {
-            cv::Rect rect = cv::boundingRect(approx);
-            double aspect = static_cast<double>(rect.width) / rect.height;
-            double area = rect.area();
-
-            if (aspect > 0.75 && aspect < 1.25 && area > imgArea * 0.01) {
-                cv::Rect roiRect = rect & cv::Rect(0, 0, gray.cols, gray.rows);
-                int score = lineScore(gray(roiRect));
-                candidates.push_back({rect, score});
-                qDebug() << "[detectChessboard] candidate" << rect.x << rect.y
-                         << rect.width << rect.height << "score" << score;
-            }
+        if (aspect > 0.5 && aspect < 1.6 && area > imgArea * 0.004) {
+            cv::Rect roiRect = rect & cv::Rect(0, 0, gray.cols, gray.rows);
+            int score = lineScore(gray(roiRect));
+            qDebug() << "[detectChessboard] candidate" << rect.x << rect.y
+                     << rect.width << rect.height << "score" << score;
+            candidates.push_back({rect, score});
         }
     }
 
+
     if (candidates.empty()) {
         qDebug() << "[detectChessboard] no candidate rectangles";
+
+        // 🆕 Add these debug saves here
+        cv::imwrite("debug_thresh.png", thresh);
+        cv::imwrite("debug_closed.png", closed);
+
+        // Optionally: show contours visually
+        cv::Mat debugImage;
+        cv::cvtColor(closed, debugImage, cv::COLOR_GRAY2BGR);
+        for (const auto& c : contours)
+            cv::drawContours(debugImage, std::vector<std::vector<cv::Point>>{c}, -1, cv::Scalar(0, 255, 0), 1);
+        cv::imwrite("debug_contours.png", debugImage);
+
         return QRect();
     }
+
 
     auto best = std::max_element(candidates.begin(), candidates.end(),
                                  [](const Candidate& a, const Candidate& b) {
