@@ -15,6 +15,7 @@
 #include <QScrollBar>
 #include <QStatusBar>
 #include "globalhotkeymanager.h"
+#include "settingsdialog.h"
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -98,6 +99,15 @@ MainWindow::MainWindow(QWidget *parent)
     ui->fenDisplay->setPlainText("Waiting for FEN...");
     screenshotTimer = new QTimer(this);
     connect(screenshotTimer, &QTimer::timeout, this, &MainWindow::captureScreenshot);
+
+    settingsDialog = new SettingsDialog(this);
+    settingsDialog->setInterval(analysisInterval);
+    settingsDialog->setDepth(stockfishDepth);
+    connect(settingsDialog, &SettingsDialog::resetPgnRequested, this, [=]() {
+        moveHistoryLines.clear();
+        ui->pgnDisplay->clear();
+    });
+    connect(ui->actionOpen_Settings, &QAction::triggered, this, &MainWindow::openSettings);
 
     startStockfish();  // Launch Stockfish engine
 
@@ -494,7 +504,7 @@ void MainWindow::on_toggleAnalysisButton_clicked() {
 
         startFenServer();  // ✅ start now with selected color
 
-        screenshotTimer->start(1000);  // 1000ms = 1 second
+        screenshotTimer->start(analysisInterval);
         ui->toggleAnalysisButton->setText("Stop Analysis");
         statusBar()->showMessage("Analysis started");
         updateStatusLabel("Analysis started");
@@ -532,7 +542,7 @@ void MainWindow::evaluatePosition(const QString& fen) {
         "uci",
         QString("setoption name MultiPV value %1").arg(ui->stealthCheck->isChecked() ? 3 : 1),
         "position fen " + fen,
-        "go depth 15"
+        QString("go depth %1").arg(stockfishDepth)
     };
 
     multipvMoves.clear();
@@ -718,6 +728,22 @@ void MainWindow::addMoveToHistory(const QString& moveUci, bool whiteMove) {
 
     ui->pgnDisplay->setPlainText(moveHistoryLines.join("\n"));
     ui->pgnDisplay->verticalScrollBar()->setValue(ui->pgnDisplay->verticalScrollBar()->maximum());
+}
+
+void MainWindow::openSettings()
+{
+    if (!settingsDialog)
+        return;
+    settingsDialog->setInterval(analysisInterval);
+    settingsDialog->setDepth(stockfishDepth);
+    if (settingsDialog->exec() == QDialog::Accepted) {
+        analysisInterval = settingsDialog->interval();
+        stockfishDepth = settingsDialog->depth();
+        if (analysisRunning) {
+            screenshotTimer->stop();
+            screenshotTimer->start(analysisInterval);
+        }
+    }
 }
 
 

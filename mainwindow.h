@@ -3,6 +3,7 @@
 #include "regionselector.h"
 #include "chessboard_detector.h"
 #include "boardwidget.h"
+#include "settingsdialog.h"
 #include <QLabel>
 #include <QMainWindow>
 #include <QTimer>
@@ -31,6 +32,7 @@ public:
 private slots:
     void on_setRegionButton_clicked();
     void on_toggleAnalysisButton_clicked();
+    void openSettings();
 
 private:
     Ui::MainWindow *ui;
@@ -41,6 +43,7 @@ private:
     QProcess* stockfishProcess = nullptr;
     QString lastFen;
     int analysisInterval = 1000;  // milliseconds
+    int stockfishDepth = 15;
     QString getMyColor() const;
     void captureScreenshot();
     void runFenPrediction(const QString& imagePath);
@@ -56,6 +59,7 @@ private:
     void startFenServer();
     QLabel* evalScoreLabel = nullptr;
     void updateEvalLabel();
+    SettingsDialog* settingsDialog = nullptr;
     QString currentBestMove;
     void playBestMove();
     bool isMyTurn = false;
