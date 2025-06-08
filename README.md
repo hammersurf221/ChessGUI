@@ -1,55 +1,109 @@
 # ChessGUI
 
-ChessGUI is a desktop application written in C++ using Qt that displays a chessboard and communicates with the Stockfish engine for move analysis.  Python helper scripts perform chessboard image recognition and FEN prediction with PyTorch models.
+ChessGUI is a cross-platform desktop application that displays a digital chessboard and integrates with the Stockfish engine to provide move analysis. Additional Python tools enable automatic board recognition and automation features.
 
-## Prerequisites
-- **Qt 5 or Qt 6**, a C++17 compiler and CMake for building the GUI
-- **Python 3** with packages such as `torch`, `numpy`, `Pillow`, and `scikit-image` for the optional recognition utilities
+## Features
 
-## Building the GUI
-Follow the steps from `AGENTS.md`:
+- Interactive chessboard interface rendered with Qt
+- Stockfish engine integration for real-time analysis
+- Arrow overlays showing suggested moves
+- Automatic board detection using OpenCV
+- Optional automation to play the best move after a delay
+- Persistent settings stored via QSettings
+- Python-based FEN prediction and utilities
+
+## Directory Overview
+
+- **C++/Qt Source** – application code in `main.cpp`, `mainwindow.*`, `boardwidget.*`, `regionselector.*`, and related headers
+- **Python Utilities** – board recognition and automation scripts in `python/`
+- **Assets** – piece images, fonts and style sheet under `assets/`
+- **Stockfish Engine** – a `stockfish.exe` binary is included, but you may specify a custom engine path in the settings
+- **Build Output** – create a `build/` directory for CMake build files (not tracked)
+
+## Building
+
+1. Install Qt 5 or Qt 6, a C++17 capable compiler and CMake
+2. From the repository root run:
+
 ```bash
 mkdir -p build
 cd build
 cmake ..
 make -j$(nproc)
 ```
-The resulting executable `ChessGUI` will appear in the `build/` directory.
 
-## Running the GUI
-After building, launch the application:
+The resulting executable will be located in the `build/` folder.
+
+### Building on Windows
+
+Use the Qt/MSVC environment or MinGW. Open a Qt command prompt and invoke the same CMake commands as above.
+
+## Running
+
+Launch the compiled binary from the build directory:
+
 ```bash
-./build/ChessGUI
+./ChessGUI
 ```
-The GUI will start with options to select a board region, toggle automated move analysis, and display Stockfish suggestions.
 
-## Settings
-Open **File → Settings** (**Preferences** on macOS) to customize runtime options.
-The dialog lets you configure Stockfish depth, analysis interval, automatic board
-detection, manual region selection, and paths to the Stockfish executable and FEN
-prediction model. You can also enable stealth mode, change the default player
-color, and set an auto‑move delay. All choices persist between launches, and a
-**Reset to Defaults** button restores the original values.
+Upon first launch you can manually select a screen region for the chessboard or enable automatic detection. The main window shows Stockfish evaluations and suggested moves. Arrow overlays indicate the best line on the board.
 
-### Debugging Chessboard Detection
-Set the environment variable `CHESSGUI_DEBUG_DETECT=1` before launching the
-application to save intermediate images from the automatic board detection
-routine.  The images will appear in the working directory as
-`detect_debug_*.png` files showing the grayscale input, edge map, detected lines
-and final rectangle.
+## Configuration
+
+Open **File → Settings** to configure runtime options:
+
+- **Analysis Interval** – delay between Stockfish evaluations
+- **Search Depth** – depth passed to the engine
+- **Automatic Board Detection** – toggle OpenCV based detection
+- **Force Manual Region** – always prompt for a region
+- **Auto Play Best Move** – automatically execute the best move using the Python helper
+- **Auto Move Delay** – wait time before executing the move
+- **Stealth Mode** – hide overlays during automation
+- **Stockfish Path** – location of the Stockfish binary
+- **FEN Model Path** – path to the PyTorch model for board recognition
+- **Default Player Color** – determines orientation and automation color
+
+Settings persist between runs and can be restored to defaults from the dialog.
+
+You can enable extra debug output for board detection by setting the environment variable `CHESSGUI_DEBUG_DETECT=1`. Intermediate images will be saved as `detect_debug_*.png`.
 
 ## Python Utilities
-The `python/` folder contains scripts used for board recognition and automation:
-- `fen_server-workingV2.py` – standalone FEN prediction server
-- `fen_server-working.py` and `fen_server-slow.py` – alternative server variants
-- `fen_predictor.py` – command‑line FEN predictor for a single image
-- `fen_tracker/` – real‑time tracker and automation helpers such as `main.py` and `play_move.py`
 
-Example invocation from `AGENTS.md`:
+The `python/fen_tracker` package provides neural network based board recognition and automation scripts.
+
+### Dependencies
+
+Install Python 3 packages:
+
 ```bash
-python3 python/fen_server-workingV2.py
+pip install torch torchvision pillow numpy scikit-image pyautogui
 ```
-Check each script for its specific arguments.
 
-## Testing
-The project does not include automated tests, but if any are added they can be run with `ctest` after building.
+### FEN Prediction Server
+
+Run the FEN server to stream board positions:
+
+```bash
+python3 python/fen_tracker/main.py --color w
+```
+
+It prints FEN strings to standard output when a new board state is detected.
+
+### Automated Move Execution
+
+`python/fen_tracker/play_move.py` moves pieces with realistic mouse drags. Usage:
+
+```bash
+python3 python/fen_tracker/play_move.py e2 e4 100 100 64 false
+```
+
+Arguments specify the origin square, destination square, top-left board coordinates, tile size and whether the board is flipped.
+
+## Development Guidelines
+
+- Use four spaces for indentation
+- Place opening braces on the same line as the control statement or function
+- Prefer modern C++17 features
+- Keep headers and source files synchronized
+
+Contributions are welcome. Please open pull requests from feature branches and ensure the project builds without warnings.
