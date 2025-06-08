@@ -362,23 +362,32 @@ void MainWindow::startStockfish() {
     restartStockfishOnCrash = true;
     stockfishProcess = new QProcess(this);
 
-    connect(stockfishProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
-            this, [this](int, QProcess::ExitStatus exitStatus) {
-                if (exitStatus == QProcess::CrashExit && restartStockfishOnCrash) {
+    QProcess* proc = stockfishProcess;
+
+    connect(proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+            this, [this, proc](int, QProcess::ExitStatus exitStatus) {
+                bool shouldRestart = (proc == stockfishProcess) &&
+                                     restartStockfishOnCrash &&
+                                     exitStatus == QProcess::CrashExit;
+                proc->deleteLater();
+                if (proc == stockfishProcess)
+                    stockfishProcess = nullptr;
+                if (shouldRestart) {
                     statusBar()->showMessage("Stockfish crashed - restarting");
                     updateStatusLabel("Stockfish crashed - restarting");
-                    stockfishProcess->deleteLater();
-                    stockfishProcess = nullptr;
                     QTimer::singleShot(0, this, &MainWindow::startStockfish);
                 }
             });
 
-    connect(stockfishProcess, &QProcess::errorOccurred, this,
-            [this](QProcess::ProcessError error) {
-                if (error == QProcess::Crashed && restartStockfishOnCrash) {
+    connect(proc, &QProcess::errorOccurred, this,
+            [this, proc](QProcess::ProcessError error) {
+                bool shouldRestart = (proc == stockfishProcess) &&
+                                     restartStockfishOnCrash &&
+                                     error == QProcess::Crashed;
+                if (shouldRestart) {
                     statusBar()->showMessage("Stockfish crashed - restarting");
                     updateStatusLabel("Stockfish crashed - restarting");
-                    stockfishProcess->deleteLater();
+                    proc->deleteLater();
                     stockfishProcess = nullptr;
                     QTimer::singleShot(0, this, &MainWindow::startStockfish);
                 }
