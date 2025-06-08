@@ -24,6 +24,24 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    QSettings settings("ChessGUI", "ChessGUI");
+    analysisInterval = settings.value("analysisInterval", 1000).toInt();
+    stockfishDepth = settings.value("stockfishDepth", 15).toInt();
+    autoMoveDelayMs = settings.value("autoMoveDelay", 0).toInt();
+    autoMoveWhenReady = settings.value("autoMoveWhenReady", false).toBool();
+    useAutoBoardDetectionSetting = settings.value("autoBoardDetection", true).toBool();
+    forceManualRegionSetting = settings.value("forceManualRegion", false).toBool();
+    stockfishPath = settings.value("stockfishPath",
+        QCoreApplication::applicationDirPath() + "/stockfish.exe").toString();
+    fenModelPath = settings.value("fenModelPath").toString();
+
+    ui->automoveCheck->setChecked(autoMoveWhenReady);
+    ui->stealthCheck->setChecked(settings.value("stealthMode", false).toBool());
+    QString color = settings.value("defaultColor", "White").toString();
+    if (color.compare("Black", Qt::CaseInsensitive) == 0)
+        ui->blackRadioButton->setChecked(true);
+    else
+        ui->whiteRadioButton->setChecked(true);
     updateStatusLabel("Idle");
     setStatusLight("gray");
     // === Hotkeys ===
@@ -233,7 +251,9 @@ void MainWindow::on_setRegionButton_clicked() {
     QPixmap screenPixmap = screen->grabWindow(0);
     QImage screenshot = screenPixmap.toImage();
 
-    QRect detected = detectChessboard(screenshot);
+    QRect detected;
+    if (useAutoBoardDetectionSetting && !forceManualRegionSetting)
+        detected = detectChessboard(screenshot);
     qDebug() << "Detected chessboard region:" << detected;
 
     if (!detected.isNull()) {
@@ -336,8 +356,7 @@ void MainWindow::captureScreenshot() {
 
 void MainWindow::startStockfish() {
     stockfishProcess = new QProcess(this);
-    QString stockfishPath = QCoreApplication::applicationDirPath() + "/stockfish.exe";
-    stockfishProcess->start(stockfishPath);
+    stockfishProcess->start(this->stockfishPath);
 
 
     if (!stockfishProcess->waitForStarted()) {
@@ -610,8 +629,8 @@ void MainWindow::updateStatusLabel(const QString& text) {
 }
 
 void MainWindow::playBestMove() {
-    if (currentBestMove.length() != 4) return;
-
+    if (currentBestMove.length() != 4 || automoveInProgress)
+        return;
     automoveInProgress = true;
     qDebug() << "[automove] Starting move execution";
 
@@ -636,21 +655,28 @@ void MainWindow::playBestMove() {
          << (flipped ? "true" : "false")
          << (stealth ? "true" : "false");
 
-    QProcess* moveProcess = new QProcess(this);
-    connect(moveProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
-            this, [=](int exitCode, QProcess::ExitStatus exitStatus) {
-                qDebug() << "[automove] Move script finished with code" << exitCode;
-                automoveInProgress = false;
-                moveProcess->deleteLater();
-            });
+    auto execute = [=]() {
+        QProcess* moveProcess = new QProcess(this);
+        connect(moveProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+                this, [=](int exitCode, QProcess::ExitStatus exitStatus) {
+                    qDebug() << "[automove] Move script finished with code" << exitCode;
+                    automoveInProgress = false;
+                    moveProcess->deleteLater();
+                });
 
-    moveProcess->start("python", args);
+        moveProcess->start("python", args);
 
-    if (!moveProcess->waitForStarted()) {
-        qDebug() << "[automove] Failed to start move process";
-        automoveInProgress = false;
-        moveProcess->deleteLater();
-    }
+        if (!moveProcess->waitForStarted()) {
+            qDebug() << "[automove] Failed to start move process";
+            automoveInProgress = false;
+            moveProcess->deleteLater();
+        }
+    };
+
+    if (autoMoveDelayMs > 0)
+        QTimer::singleShot(autoMoveDelayMs, this, execute);
+    else
+        execute();
 }
 
 void MainWindow::updateEvalLabel() {
@@ -737,15 +763,37 @@ void MainWindow::openSettings()
         return;
     settingsDialog->setAnalysisInterval(analysisInterval);
     settingsDialog->setStockfishDepth(stockfishDepth);
-    QSettings s("ChessGUI", "ChessGUI");
-    settingsDialog->setStockfishPath(s.value("stockfishPath").toString());
-    settingsDialog->setFenModelPath(s.value("fenModelPath").toString());
+    settingsDialog->setStealthModeEnabled(ui->stealthCheck->isChecked());
+    settingsDialog->setUseAutoBoardDetection(useAutoBoardDetectionSetting);
+    settingsDialog->setForceManualRegion(forceManualRegionSetting);
+    settingsDialog->setAutoMoveWhenReady(ui->automoveCheck->isChecked());
+    settingsDialog->setAutoMoveDelay(autoMoveDelayMs);
+    settingsDialog->setStockfishPath(stockfishPath);
+    settingsDialog->setFenModelPath(fenModelPath);
+    settingsDialog->setDefaultPlayerColor(ui->whiteRadioButton->isChecked() ? "White" : "Black");
     if (settingsDialog->exec() == QDialog::Accepted) {
         analysisInterval = settingsDialog->analysisInterval();
         stockfishDepth = settingsDialog->stockfishDepth();
+        ui->stealthCheck->setChecked(settingsDialog->stealthModeEnabled());
+        useAutoBoardDetectionSetting = settingsDialog->useAutoBoardDetection();
+        forceManualRegionSetting = settingsDialog->forceManualRegion();
+        ui->automoveCheck->setChecked(settingsDialog->autoMoveWhenReady());
+        autoMoveDelayMs = settingsDialog->autoMoveDelay();
+        stockfishPath = settingsDialog->stockfishPath();
+        fenModelPath = settingsDialog->fenModelPath();
+        if (settingsDialog->defaultPlayerColor() == "Black")
+            ui->blackRadioButton->setChecked(true);
+        else
+            ui->whiteRadioButton->setChecked(true);
         if (analysisRunning) {
             screenshotTimer->stop();
             screenshotTimer->start(analysisInterval);
+        }
+        if (stockfishProcess) {
+            stockfishProcess->kill();
+            stockfishProcess->deleteLater();
+            stockfishProcess = nullptr;
+            startStockfish();
         }
     }
 }
