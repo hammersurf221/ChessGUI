@@ -11,6 +11,7 @@
 #include <QProcess>
 #include <QQueue>
 #include <QMap>
+#include <QPair>
 #include <QElapsedTimer>
 #include "globalhotkeymanager.h"
 
@@ -73,8 +74,9 @@ private:
     QQueue<QString> recentBestMoves;
     QString lastPlayedFen;
     bool automoveInProgress = false;
-    QMap<int, QString> multipvMoves;
+    QMap<int, QPair<QString, int>> multipvMoves;
     int selectedBestMoveRank = 1;
+    double accuracy = 0.9;
     QElapsedTimer screenshotElapsed;
     QElapsedTimer fenElapsed;
     QElapsedTimer evalElapsed;

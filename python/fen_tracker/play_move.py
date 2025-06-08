@@ -1,20 +1,50 @@
 import sys
 import time
+import math
 import pyautogui
 import random
 
-def human_like_drag(start, end, steps=20):
+def bezier(p0, p1, p2, p3, t):
+    """Return a point on a cubic Bezier curve for parameter t."""
+    mt = 1 - t
+    x = (
+        mt ** 3 * p0[0]
+        + 3 * mt ** 2 * t * p1[0]
+        + 3 * mt * t ** 2 * p2[0]
+        + t ** 3 * p3[0]
+    )
+    y = (
+        mt ** 3 * p0[1]
+        + 3 * mt ** 2 * t * p1[1]
+        + 3 * mt * t ** 2 * p2[1]
+        + t ** 3 * p3[1]
+    )
+    return x, y
+
+
+def human_like_drag(start, end, steps=30):
     x1, y1 = start
-    x2, y2 = end
+    x4, y4 = end
+
+    # Slightly randomized control points for natural variation
+    ctrl1 = (x1 + random.randint(-15, 15), y1 + random.randint(-15, 15))
+    ctrl2 = (x4 + random.randint(-15, 15), y4 + random.randint(-15, 15))
+
     pyautogui.moveTo(x1, y1)
     pyautogui.mouseDown()
-    for i in range(steps):
+
+    for i in range(steps + 1):
         t = i / steps
-        ease = t ** 2 * (3 - 2 * t)  # smoothstep easing
-        nx = int(x1 + (x2 - x1) * ease + random.uniform(-1.5, 1.5))
-        ny = int(y1 + (y2 - y1) * ease + random.uniform(-1.5, 1.5))
-        pyautogui.moveTo(nx, ny, duration=random.uniform(0.01, 0.03))
-    pyautogui.moveTo(x2, y2, duration=0.05)
+        # ease-in/ease-out using a sinusoidal curve
+        ease_t = 0.5 - math.cos(t * math.pi) / 2
+        bx, by = bezier((x1, y1), ctrl1, ctrl2, (x4, y4), ease_t)
+        jx = bx + random.uniform(-2, 2)
+        jy = by + random.uniform(-2, 2)
+        pyautogui.moveTo(jx, jy, duration=0)
+        time.sleep(0.01 + random.uniform(0, 0.01))
+
+    pyautogui.moveTo(x4, y4, duration=0)
+    time.sleep(random.uniform(0.1, 0.5))
     pyautogui.mouseUp()
 
 def main():
