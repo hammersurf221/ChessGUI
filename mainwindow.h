@@ -84,7 +84,12 @@ private:
 
     QStringList moveHistoryLines;
     QString detectUciMove(const QString& prevFen, const QString& currFen) const;
-    void addMoveToHistory(const QString& moveUci, bool whiteMove);
+    int addMoveToHistory(const QString& moveUci, bool whiteMove);
+    void appendEvalChangeToHistory(int index, double delta);
+
+    double lastEvalForMe = 0.0;
+    bool lastEvalValid = false;
+    int pendingEvalLine = -1;
 
 
 

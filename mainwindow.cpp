@@ -18,6 +18,7 @@
 #include "settingsdialog.h"
 #include <QSettings>
 #include <cmath>
+#include <algorithm>
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -203,7 +204,7 @@ MainWindow::MainWindow(QWidget *parent)
                 if (!lastFen.isEmpty() && fenChanged) {
                     QString uci = detectUciMove(lastFen, fen);
                     bool whiteMoved = lastFen.section(' ', 1, 1) == "w";
-                    addMoveToHistory(uci, whiteMoved);
+                    pendingEvalLine = addMoveToHistory(uci, whiteMoved);
                 }
 
                 qDebug() << "[gui] Received FEN:" << fen;
@@ -221,16 +222,18 @@ MainWindow::MainWindow(QWidget *parent)
                     ui->bestMoveDisplay->clear();  // ✅ Only clear if FEN changed and it's not your turn
                 }
 
-                if (isMyTurn) {
+                if (fenChanged) {
                     evaluatePosition(fen);
+                }
+
+                if (isMyTurn) {
                     statusBar()->showMessage("My turn — analyzing...");
                     updateStatusLabel("My turn — analyzing...");
                     setStatusLight("green");
                 } else {
-                    statusBar()->showMessage("Opponent's turn — waiting...");
-                    updateStatusLabel("Opponent's turn — waiting...");
+                    statusBar()->showMessage("Opponent's turn — analyzing...");
+                    updateStatusLabel("Opponent's turn — analyzing...");
                     setStatusLight("red");
-                    // Do NOT clear bestMoveDisplay here
                 }
 
                 lastFen = fen;
@@ -460,11 +463,21 @@ void MainWindow::startStockfish() {
             QRegularExpressionMatch cpMatch = cpPattern.match(trimmed);
 
             QString eval;
+            double numericEval = 0.0;
+            bool hasNumeric = false;
             if (mateMatch.hasMatch()) {
                 eval = "Mate in " + mateMatch.captured(1);
+                int mateScore = mateMatch.captured(1).toInt();
+                int sign = (lastEvaluatedFen.section(' ', 1, 1) == getMyColor()) ? 1 : -1;
+                numericEval = sign * (mateScore > 0 ? 1000.0 : -1000.0);
+                hasNumeric = true;
             } else if (cpMatch.hasMatch()) {
-                double score = cpMatch.captured(1).toInt() / 100.0;
-                eval = QString::number(score, 'f', 2);
+                int scoreCp = cpMatch.captured(1).toInt();
+                eval = QString::number(scoreCp / 100.0, 'f', 2);
+                int sign = (lastEvaluatedFen.section(' ', 1, 1) == getMyColor()) ? 1 : -1;
+                numericEval = sign * (scoreCp / 100.0);
+                numericEval = std::clamp(numericEval, -1000.0, 1000.0);
+                hasNumeric = true;
             }
 
             if (!eval.isEmpty()) {
@@ -488,6 +501,19 @@ void MainWindow::startStockfish() {
                         evalScoreLabel->setText(eval);
                         updateEvalLabel();
                     }
+                }
+
+                if (hasNumeric) {
+                    double delta = 0.0;
+                    if (lastEvalValid) {
+                        delta = numericEval - lastEvalForMe;
+                    }
+                    if (pendingEvalLine != -1) {
+                        appendEvalChangeToHistory(pendingEvalLine, delta);
+                        pendingEvalLine = -1;
+                    }
+                    lastEvalForMe = numericEval;
+                    lastEvalValid = true;
                 }
             }
         }
@@ -764,15 +790,28 @@ QString MainWindow::detectUciMove(const QString& prevFen, const QString& currFen
     return {};
 }
 
-void MainWindow::addMoveToHistory(const QString& moveUci, bool whiteMove) {
-    if (moveUci.isEmpty()) return;
+int MainWindow::addMoveToHistory(const QString& moveUci, bool whiteMove) {
+    if (moveUci.isEmpty()) return -1;
 
+    int index = 0;
     if (whiteMove || moveHistoryLines.isEmpty()) {
         moveHistoryLines.append(QString::number(moveHistoryLines.size() + 1) + ". " + moveUci);
+        index = moveHistoryLines.size() - 1;
     } else {
         moveHistoryLines.last().append(" " + moveUci);
+        index = moveHistoryLines.size() - 1;
     }
 
+    ui->pgnDisplay->setPlainText(moveHistoryLines.join("\n"));
+    ui->pgnDisplay->verticalScrollBar()->setValue(ui->pgnDisplay->verticalScrollBar()->maximum());
+    return index;
+}
+
+void MainWindow::appendEvalChangeToHistory(int index, double delta) {
+    if (index < 0 || index >= moveHistoryLines.size()) return;
+    QString sign = delta >= 0 ? "+" : "";
+    QString deltaStr = QString("%1%2").arg(sign).arg(QString::number(delta, 'f', 2));
+    moveHistoryLines[index].append(QString(" (%1)").arg(deltaStr));
     ui->pgnDisplay->setPlainText(moveHistoryLines.join("\n"));
     ui->pgnDisplay->verticalScrollBar()->setValue(ui->pgnDisplay->verticalScrollBar()->maximum());
 }
