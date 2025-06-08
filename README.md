@@ -1,4 +1,6 @@
 # ChessGUI
+**ChatGPT wrote this, not me. Currently writing actual ReadMe.**
+
 
 **ChessGUI** is a desktop chessboard viewer and analyzer that combines a C++/Qt graphical interface with Python-based helpers for real-time board recognition and engine analysis. It uses OpenCV and a custom neural network model to detect chess positions from screen captures, then evaluates them using [Stockfish](https://stockfishchess.org/). It can optionally automate the best move with natural mouse gestures.
 
