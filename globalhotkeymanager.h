@@ -6,9 +6,6 @@
 #ifdef Q_OS_WIN
 #include <QAbstractNativeEventFilter>
 #include <QMap>
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
 #include <windows.h>
 #endif
 
