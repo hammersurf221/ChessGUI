@@ -339,17 +339,37 @@ border: 1px solid #444;
         </widget>
        </item>
        <item>
-        <widget class="QPlainTextEdit" name="fenDisplay">
-         <property name="readOnly">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-    </item>
-   </layout>
-  </widget>
+       <widget class="QPlainTextEdit" name="fenDisplay">
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QChartView" name="evalChartView">
+        <property name="minimumSize">
+         <size>
+          <width>200</width>
+          <height>150</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QChartView" name="moveBarChartView">
+        <property name="minimumSize">
+         <size>
+          <width>200</width>
+          <height>150</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
