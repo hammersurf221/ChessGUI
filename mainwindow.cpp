@@ -125,13 +125,13 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->evalBar, &QProgressBar::valueChanged, this, &MainWindow::updateEvalLabel);
 
     evalChartView = ui->evalChartView;
-    evalSeries = new QtCharts::QLineSeries(this);
+    evalSeries = new QLineSeries(this);
     {
-        QtCharts::QChart* c = new QtCharts::QChart();
+        QChart* c = new QChart();
         c->legend()->hide();
         c->addSeries(evalSeries);
-        evalAxisX = new QtCharts::QValueAxis();
-        evalAxisY = new QtCharts::QValueAxis();
+        evalAxisX = new QValueAxis();
+        evalAxisY = new QValueAxis();
         evalAxisX->setTitleText("Move");
         evalAxisY->setTitleText("Eval");
         evalAxisY->setRange(-10, 10);
@@ -143,20 +143,20 @@ MainWindow::MainWindow(QWidget *parent)
     }
 
     moveBarChartView = ui->moveBarChartView;
-    moveBarSet = new QtCharts::QBarSet("Chosen");
+    moveBarSet = new QBarSet("Chosen");
     moveBarSet->append(0);
     moveBarSet->append(0);
     moveBarSet->append(0);
-    moveBarSeries = new QtCharts::QBarSeries();
+    moveBarSeries = new QBarSeries();
     moveBarSeries->append(moveBarSet);
     {
-        QtCharts::QChart* bc = new QtCharts::QChart();
+        QChart* bc = new QChart();
         bc->legend()->hide();
         bc->addSeries(moveBarSeries);
-        moveAxisX = new QtCharts::QBarCategoryAxis();
+        moveAxisX = new QBarCategoryAxis();
         moveAxisX->append(QStringList({"1st","2nd","3rd"}));
         bc->addAxis(moveAxisX, Qt::AlignBottom);
-        moveAxisY = new QtCharts::QValueAxis();
+        moveAxisY = new QValueAxis();
         moveAxisY->setRange(0, 1);
         bc->addAxis(moveAxisY, Qt::AlignLeft);
         moveBarSeries->attachAxis(moveAxisX);
