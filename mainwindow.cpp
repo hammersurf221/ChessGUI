@@ -359,7 +359,40 @@ void MainWindow::captureScreenshot() {
 }
 
 void MainWindow::startStockfish() {
+    restartStockfishOnCrash = true;
     stockfishProcess = new QProcess(this);
+
+    QProcess* proc = stockfishProcess;
+
+    connect(proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+            this, [this, proc](int, QProcess::ExitStatus exitStatus) {
+                bool shouldRestart = (proc == stockfishProcess) &&
+                                     restartStockfishOnCrash &&
+                                     exitStatus == QProcess::CrashExit;
+                proc->deleteLater();
+                if (proc == stockfishProcess)
+                    stockfishProcess = nullptr;
+                if (shouldRestart) {
+                    statusBar()->showMessage("Stockfish crashed - restarting");
+                    updateStatusLabel("Stockfish crashed - restarting");
+                    QTimer::singleShot(0, this, &MainWindow::startStockfish);
+                }
+            });
+
+    connect(proc, &QProcess::errorOccurred, this,
+            [this, proc](QProcess::ProcessError error) {
+                bool shouldRestart = (proc == stockfishProcess) &&
+                                     restartStockfishOnCrash &&
+                                     error == QProcess::Crashed;
+                if (shouldRestart) {
+                    statusBar()->showMessage("Stockfish crashed - restarting");
+                    updateStatusLabel("Stockfish crashed - restarting");
+                    proc->deleteLater();
+                    stockfishProcess = nullptr;
+                    QTimer::singleShot(0, this, &MainWindow::startStockfish);
+                }
+            });
+
     stockfishProcess->start(this->stockfishPath);
 
 
@@ -849,6 +882,7 @@ void MainWindow::openSettings()
             screenshotTimer->start(analysisInterval);
         }
         if (stockfishProcess) {
+            restartStockfishOnCrash = false;
             stockfishProcess->kill();
             stockfishProcess->deleteLater();
             stockfishProcess = nullptr;
