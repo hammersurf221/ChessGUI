@@ -132,6 +132,11 @@ Then:
 
 ---
 
+## TROUBLESHOOTING:
+- Status repeatedly showing "Stockfish Crashed" --> Stockfish.exe is incompatible with your processor. 
+Visit Stockfish download page and download the correct version for your device. Extract folder, rename "XXXXXXXXX.exe" file to "stockfish.exe", move to FENgineLive folder.
+- Start Analysis button not working (nothing happens) --> Writeable temp directories aren't working. Run app as administrator.
+
 ## 🙌 Acknowledgments
 
 - [Stockfish](https://stockfishchess.org/) — world-class chess engine
