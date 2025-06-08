@@ -786,7 +786,9 @@ void MainWindow::playBestMove() {
     QString from = currentBestMove.mid(0, 2);
     QString to = currentBestMove.mid(2, 2);
 
-    QString scriptPath = QDir::cleanPath(QCoreApplication::applicationDirPath() + "/../../python/fen_tracker/play_move.py");
+    QString scriptPath =
+        QDir::cleanPath(QCoreApplication::applicationDirPath() +
+                        "/python/fen_tracker/play_move.py");
 
     int originX = captureRegion.x();
     int originY = captureRegion.y();
