@@ -606,6 +606,7 @@ void MainWindow::evaluatePosition(const QString& fen) {
 
     QStringList commands = {
         "uci",
+        "ucinewgame",
         QString("setoption name MultiPV value %1").arg(ui->stealthCheck->isChecked() ? 3 : 1),
         "position fen " + fen,
         QString("go depth %1").arg(stockfishDepth)
