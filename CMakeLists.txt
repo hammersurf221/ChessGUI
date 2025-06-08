@@ -13,9 +13,6 @@ find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Svg)
 
-
-
-
 set(PROJECT_SOURCES
         main.cpp
         mainwindow.cpp
@@ -78,9 +75,12 @@ set_target_properties(ChessGUI PROPERTIES
 include(GNUInstallDirs)
 install(TARGETS ChessGUI
     BUNDLE DESTINATION .
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    RUNTIME DESTINATION .
 )
+
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/python DESTINATION .)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/assets DESTINATION .)
+install(FILES ${CMAKE_SOURCE_DIR}/stockfish.exe DESTINATION .)
 
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(ChessGUI)
@@ -117,11 +117,14 @@ else()
     message(FATAL_ERROR "OpenCV not found. Set OpenCV_DIR to the folder containing OpenCVConfig.cmake")
 endif()
 
+# Include MSVC runtime and configure NSIS installer
+include(InstallRequiredSystemLibraries)
 
-# Include OpenCV headers
-include_directories(${OpenCV_INCLUDE_DIRS})
-
-# Link OpenCV libraries
-target_link_libraries(ChessGUI PRIVATE ${OpenCV_LIBS})
-
-
+set(CPACK_PACKAGE_NAME "FENgineLive")
+set(CPACK_PACKAGE_VENDOR "William Samiri")
+set(CPACK_PACKAGE_CONTACT "williamsamiri011@gmail.com")
+set(CPACK_PACKAGE_VERSION "0.1.0")
+set(CPACK_GENERATOR "NSIS")
+set(CPACK_NSIS_DISPLAY_NAME "FENgineLive")
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "FENgineLive")
+include(CPack)
