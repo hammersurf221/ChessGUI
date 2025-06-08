@@ -10,6 +10,7 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QFileDialog>
+#include <QCoreApplication>
 
 SettingsDialog::SettingsDialog(QWidget *parent)
     : QDialog(parent), settings("ChessGUI", "ChessGUI")
@@ -121,8 +122,11 @@ void SettingsDialog::loadSettings()
     setAutoMoveDelay(settings.value("autoMoveDelay", 0).toInt());
 
 
-    setStockfishPath(settings.value("stockfishPath").toString());
-    setFenModelPath(settings.value("fenModelPath").toString());
+    QString defaultStockfish = QCoreApplication::applicationDirPath() + "/stockfish.exe";
+    QString defaultFenModel = QCoreApplication::applicationDirPath() + "/python/fen_tracker/ccn_model_default.pth";
+
+    setStockfishPath(settings.value("stockfishPath", defaultStockfish).toString());
+    setFenModelPath(settings.value("fenModelPath", defaultFenModel).toString());
     setDefaultPlayerColor(settings.value("defaultColor", "White").toString());
 }
 
@@ -169,8 +173,8 @@ void SettingsDialog::resetDefaults()
     setForceManualRegion(false);
     setAutoMoveWhenReady(false);
     setAutoMoveDelay(0);
-    setStockfishPath(QString());
-    setFenModelPath(QString());
+    setStockfishPath(QCoreApplication::applicationDirPath() + "/stockfish.exe");
+    setFenModelPath(QCoreApplication::applicationDirPath() + "/python/fen_tracker/ccn_model_default.pth");
     setDefaultPlayerColor("White");
 }
 
