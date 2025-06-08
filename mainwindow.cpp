@@ -359,7 +359,31 @@ void MainWindow::captureScreenshot() {
 }
 
 void MainWindow::startStockfish() {
+    restartStockfishOnCrash = true;
     stockfishProcess = new QProcess(this);
+
+    connect(stockfishProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+            this, [this](int, QProcess::ExitStatus exitStatus) {
+                if (exitStatus == QProcess::CrashExit && restartStockfishOnCrash) {
+                    statusBar()->showMessage("Stockfish crashed - restarting");
+                    updateStatusLabel("Stockfish crashed - restarting");
+                    stockfishProcess->deleteLater();
+                    stockfishProcess = nullptr;
+                    QTimer::singleShot(0, this, &MainWindow::startStockfish);
+                }
+            });
+
+    connect(stockfishProcess, &QProcess::errorOccurred, this,
+            [this](QProcess::ProcessError error) {
+                if (error == QProcess::Crashed && restartStockfishOnCrash) {
+                    statusBar()->showMessage("Stockfish crashed - restarting");
+                    updateStatusLabel("Stockfish crashed - restarting");
+                    stockfishProcess->deleteLater();
+                    stockfishProcess = nullptr;
+                    QTimer::singleShot(0, this, &MainWindow::startStockfish);
+                }
+            });
+
     stockfishProcess->start(this->stockfishPath);
 
 
@@ -849,6 +873,7 @@ void MainWindow::openSettings()
             screenshotTimer->start(analysisInterval);
         }
         if (stockfishProcess) {
+            restartStockfishOnCrash = false;
             stockfishProcess->kill();
             stockfishProcess->deleteLater();
             stockfishProcess = nullptr;
