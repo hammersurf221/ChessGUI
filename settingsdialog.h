@@ -35,25 +35,11 @@ public:
     void setForceManualRegion(bool force);
     bool forceManualRegion() const;
 
-    // Notifications
-    void setSoundOnMove(bool enable);
-    bool soundOnMove() const;
-    void setShowErrorPopups(bool enable);
-    bool showErrorPopups() const;
-
     // Move automation
     void setAutoMoveWhenReady(bool enable);
     bool autoMoveWhenReady() const;
     void setAutoMoveDelay(int delay);
     int autoMoveDelay() const;
-
-    // Advanced
-    void setLogDebugOutput(bool enable);
-    bool logDebugOutput() const;
-    void setSaveScreenshots(bool enable);
-    bool saveScreenshots() const;
-    void setShowEvalLabels(bool enable);
-    bool showEvalLabels() const;
 
     // Misc
     void setStockfishPath(const QString &path);
@@ -83,17 +69,8 @@ private:
 
     QCheckBox *autoBoardDetectCheckBox;
     QCheckBox *forceManualRegionCheckBox;
-
-    QCheckBox *soundOnMoveCheckBox;
-    QCheckBox *errorPopupCheckBox;
-
     QCheckBox *autoMoveCheckBox;
     QSpinBox *autoMoveDelaySpinBox;
-
-    QCheckBox *logDebugCheckBox;
-    QCheckBox *saveScreenshotsCheckBox;
-    QCheckBox *showEvalLabelsCheckBox;
-
     QLineEdit *stockfishPathEdit;
     QPushButton *stockfishBrowseButton;
     QLineEdit *fenModelPathEdit;

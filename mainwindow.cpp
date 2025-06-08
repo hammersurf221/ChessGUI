@@ -16,6 +16,7 @@
 #include <QStatusBar>
 #include "globalhotkeymanager.h"
 #include "settingsdialog.h"
+#include <QSettings>
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -736,6 +737,9 @@ void MainWindow::openSettings()
         return;
     settingsDialog->setAnalysisInterval(analysisInterval);
     settingsDialog->setStockfishDepth(stockfishDepth);
+    QSettings s("ChessGUI", "ChessGUI");
+    settingsDialog->setStockfishPath(s.value("stockfishPath").toString());
+    settingsDialog->setFenModelPath(s.value("fenModelPath").toString());
     if (settingsDialog->exec() == QDialog::Accepted) {
         analysisInterval = settingsDialog->analysisInterval();
         stockfishDepth = settingsDialog->stockfishDepth();

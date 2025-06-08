@@ -42,15 +42,6 @@ SettingsDialog::SettingsDialog(QWidget *parent)
     boardTab->setLayout(boardLayout);
     tabs->addTab(boardTab, tr("Board Detection"));
 
-    // Notification tab
-    QWidget *notifyTab = new QWidget(this);
-    QVBoxLayout *notifyLayout = new QVBoxLayout(notifyTab);
-    soundOnMoveCheckBox = new QCheckBox(tr("Enable Sound on Move"), notifyTab);
-    errorPopupCheckBox = new QCheckBox(tr("Show Popups for Errors"), notifyTab);
-    notifyLayout->addWidget(soundOnMoveCheckBox);
-    notifyLayout->addWidget(errorPopupCheckBox);
-    notifyTab->setLayout(notifyLayout);
-    tabs->addTab(notifyTab, tr("Notifications"));
 
     // Move automation tab
     QWidget *moveTab = new QWidget(this);
@@ -63,17 +54,6 @@ SettingsDialog::SettingsDialog(QWidget *parent)
     moveTab->setLayout(moveLayout);
     tabs->addTab(moveTab, tr("Move Automation"));
 
-    // Advanced tab
-    QWidget *advTab = new QWidget(this);
-    QVBoxLayout *advLayout = new QVBoxLayout(advTab);
-    logDebugCheckBox = new QCheckBox(tr("Log Debug Output"), advTab);
-    saveScreenshotsCheckBox = new QCheckBox(tr("Save Screenshots for Each Frame"), advTab);
-    showEvalLabelsCheckBox = new QCheckBox(tr("Show Evaluation Labels on Board"), advTab);
-    advLayout->addWidget(logDebugCheckBox);
-    advLayout->addWidget(saveScreenshotsCheckBox);
-    advLayout->addWidget(showEvalLabelsCheckBox);
-    advTab->setLayout(advLayout);
-    tabs->addTab(advTab, tr("Advanced"));
 
     // Misc tab
     QWidget *miscTab = new QWidget(this);
@@ -136,15 +116,10 @@ void SettingsDialog::loadSettings()
     setUseAutoBoardDetection(settings.value("autoBoardDetection", true).toBool());
     setForceManualRegion(settings.value("forceManualRegion", false).toBool());
 
-    setSoundOnMove(settings.value("soundOnMove", true).toBool());
-    setShowErrorPopups(settings.value("showErrorPopups", true).toBool());
 
     setAutoMoveWhenReady(settings.value("autoMoveWhenReady", false).toBool());
     setAutoMoveDelay(settings.value("autoMoveDelay", 0).toInt());
 
-    setLogDebugOutput(settings.value("logDebugOutput", false).toBool());
-    setSaveScreenshots(settings.value("saveScreenshots", false).toBool());
-    setShowEvalLabels(settings.value("showEvalLabels", false).toBool());
 
     setStockfishPath(settings.value("stockfishPath").toString());
     setFenModelPath(settings.value("fenModelPath").toString());
@@ -158,13 +133,8 @@ void SettingsDialog::saveSettings()
     settings.setValue("stealthMode", stealthModeEnabled());
     settings.setValue("autoBoardDetection", useAutoBoardDetection());
     settings.setValue("forceManualRegion", forceManualRegion());
-    settings.setValue("soundOnMove", soundOnMove());
-    settings.setValue("showErrorPopups", showErrorPopups());
     settings.setValue("autoMoveWhenReady", autoMoveWhenReady());
     settings.setValue("autoMoveDelay", autoMoveDelay());
-    settings.setValue("logDebugOutput", logDebugOutput());
-    settings.setValue("saveScreenshots", saveScreenshots());
-    settings.setValue("showEvalLabels", showEvalLabels());
     settings.setValue("stockfishPath", stockfishPath());
     settings.setValue("fenModelPath", fenModelPath());
     settings.setValue("defaultColor", defaultPlayerColor());
@@ -197,13 +167,8 @@ void SettingsDialog::resetDefaults()
     setStealthModeEnabled(false);
     setUseAutoBoardDetection(true);
     setForceManualRegion(false);
-    setSoundOnMove(true);
-    setShowErrorPopups(true);
     setAutoMoveWhenReady(false);
     setAutoMoveDelay(0);
-    setLogDebugOutput(false);
-    setSaveScreenshots(false);
-    setShowEvalLabels(false);
     setStockfishPath(QString());
     setFenModelPath(QString());
     setDefaultPlayerColor("White");
@@ -260,25 +225,6 @@ bool SettingsDialog::forceManualRegion() const
     return forceManualRegionCheckBox->isChecked();
 }
 
-void SettingsDialog::setSoundOnMove(bool enable)
-{
-    soundOnMoveCheckBox->setChecked(enable);
-}
-
-bool SettingsDialog::soundOnMove() const
-{
-    return soundOnMoveCheckBox->isChecked();
-}
-
-void SettingsDialog::setShowErrorPopups(bool enable)
-{
-    errorPopupCheckBox->setChecked(enable);
-}
-
-bool SettingsDialog::showErrorPopups() const
-{
-    return errorPopupCheckBox->isChecked();
-}
 
 void SettingsDialog::setAutoMoveWhenReady(bool enable)
 {
@@ -300,35 +246,6 @@ int SettingsDialog::autoMoveDelay() const
     return autoMoveDelaySpinBox->value();
 }
 
-void SettingsDialog::setLogDebugOutput(bool enable)
-{
-    logDebugCheckBox->setChecked(enable);
-}
-
-bool SettingsDialog::logDebugOutput() const
-{
-    return logDebugCheckBox->isChecked();
-}
-
-void SettingsDialog::setSaveScreenshots(bool enable)
-{
-    saveScreenshotsCheckBox->setChecked(enable);
-}
-
-bool SettingsDialog::saveScreenshots() const
-{
-    return saveScreenshotsCheckBox->isChecked();
-}
-
-void SettingsDialog::setShowEvalLabels(bool enable)
-{
-    showEvalLabelsCheckBox->setChecked(enable);
-}
-
-bool SettingsDialog::showEvalLabels() const
-{
-    return showEvalLabelsCheckBox->isChecked();
-}
 
 void SettingsDialog::setStockfishPath(const QString &path)
 {
