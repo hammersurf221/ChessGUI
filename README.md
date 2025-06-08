@@ -23,6 +23,14 @@ After building, launch the application:
 ```
 The GUI will start with options to select a board region, toggle automated move analysis, and display Stockfish suggestions.
 
+## Settings
+Open **File → Settings** (**Preferences** on macOS) to customize runtime options.
+The dialog lets you configure Stockfish depth, analysis interval, automatic board
+detection, manual region selection, and paths to the Stockfish executable and FEN
+prediction model. You can also enable stealth mode, change the default player
+color, and set an auto‑move delay. All choices persist between launches, and a
+**Reset to Defaults** button restores the original values.
+
 ## Python Utilities
 The `python/` folder contains scripts used for board recognition and automation:
 - `fen_server-workingV2.py` – standalone FEN prediction server

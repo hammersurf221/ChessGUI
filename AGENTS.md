@@ -27,6 +27,19 @@ python3 python/fen_server-workingV2.py
 ```
 Check individual scripts for their command line arguments.
 
+## Runtime Settings
+The application remembers your preferences between sessions. Open **File → Settings** (**Preferences** on macOS) to adjust options such as:
+
+- Stockfish search depth and analysis interval
+- Automatic board detection and manual region selection
+- Paths to the Stockfish executable and FEN prediction model
+- Whether to automatically play the best move and the delay before doing so
+- A "stealth mode" toggle to hide overlays
+- Default player color
+
+Changes persist automatically thanks to `QSettings`. A **Reset to Defaults** button
+is provided to restore the built‑in values at any time.
+
 ## Testing
 The project does not currently include automated tests. If tests are added, they can be run after building with:
 ```bash
