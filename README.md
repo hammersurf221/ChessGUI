@@ -31,6 +31,13 @@ prediction model. You can also enable stealth mode, change the default player
 color, and set an auto‑move delay. All choices persist between launches, and a
 **Reset to Defaults** button restores the original values.
 
+### Debugging Chessboard Detection
+Set the environment variable `CHESSGUI_DEBUG_DETECT=1` before launching the
+application to save intermediate images from the automatic board detection
+routine.  The images will appear in the working directory as
+`detect_debug_*.png` files showing the grayscale input, edge map, detected lines
+and final rectangle.
+
 ## Python Utilities
 The `python/` folder contains scripts used for board recognition and automation:
 - `fen_server-workingV2.py` – standalone FEN prediction server
