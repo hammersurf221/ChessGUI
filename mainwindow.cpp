@@ -498,17 +498,16 @@ void MainWindow::startStockfish() {
             QString eval;
             double numericEval = 0.0;
             bool hasNumeric = false;
+            int signForMe = (lastEvaluatedFen.section(' ', 1, 1) == getMyColor()) ? 1 : -1;
             if (mateMatch.hasMatch()) {
                 eval = "Mate in " + mateMatch.captured(1);
                 int mateScore = mateMatch.captured(1).toInt();
-                int sign = (lastEvaluatedFen.section(' ', 1, 1) == getMyColor()) ? 1 : -1;
-                numericEval = sign * (mateScore > 0 ? 1000.0 : -1000.0);
+                numericEval = signForMe * (mateScore > 0 ? 1000.0 : -1000.0);
                 hasNumeric = true;
             } else if (cpMatch.hasMatch()) {
                 int scoreCp = cpMatch.captured(1).toInt();
                 eval = QString::number(scoreCp / 100.0, 'f', 2);
-                int sign = (lastEvaluatedFen.section(' ', 1, 1) == getMyColor()) ? 1 : -1;
-                numericEval = sign * (scoreCp / 100.0);
+                numericEval = signForMe * (scoreCp / 100.0);
                 numericEval = std::clamp(numericEval, -1000.0, 1000.0);
                 hasNumeric = true;
             }
@@ -520,15 +519,14 @@ void MainWindow::startStockfish() {
                 if (ui->evalBar) {
                     if (mateMatch.hasMatch()) {
                         int mateScore = mateMatch.captured(1).toInt();
-                        if (getMyColor() == "b") mateScore = -mateScore;
+                        int barValue = signForMe * (mateScore > 0 ? 1000 : -1000);
                         ui->evalBar->setMaximum(1000);
                         ui->evalBar->setMinimum(-1000);
-                        ui->evalBar->setValue(mateScore > 0 ? 1000 : -1000);
+                        ui->evalBar->setValue(barValue);
                     } else if (cpMatch.hasMatch()) {
                         int score = cpMatch.captured(1).toInt();
                         score = std::clamp(score, -1000, 1000);
-                        if (getMyColor() == "b") score = -score;
-                        ui->evalBar->setValue(score);
+                        ui->evalBar->setValue(signForMe * score);
                     }
                     if (evalScoreLabel) {
                         evalScoreLabel->setText(eval);
