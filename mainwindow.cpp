@@ -35,7 +35,9 @@ MainWindow::MainWindow(QWidget *parent)
     forceManualRegionSetting = settings.value("forceManualRegion", false).toBool();
     stockfishPath = settings.value("stockfishPath",
         QCoreApplication::applicationDirPath() + "/stockfish.exe").toString();
-    fenModelPath = settings.value("fenModelPath").toString();
+    fenModelPath = settings.value("fenModelPath",
+        QCoreApplication::applicationDirPath() +
+        "/python/fen_tracker/ccn_model_default.pth").toString();
 
     ui->automoveCheck->setChecked(autoMoveWhenReady);
     ui->stealthCheck->setChecked(settings.value("stealthMode", false).toBool());
