@@ -93,6 +93,11 @@ private:
 
     bool restartStockfishOnCrash = true;
 
+    QString pythonExe;
+    QString pythonScript;
+    QString modelPath;
+
+
 protected:
     bool eventFilter(QObject* obj, QEvent* event) override;
 

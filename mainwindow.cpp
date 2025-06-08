@@ -18,6 +18,7 @@
 #include "globalhotkeymanager.h"
 #include "settingsdialog.h"
 #include <QSettings>
+#include <QStandardPaths>
 #include <cmath>
 #include <algorithm>
 
@@ -252,6 +253,16 @@ MainWindow::~MainWindow()
 {
     delete ui;
 }
+
+
+void logToFile(const QString &msg) {
+    QFile logFile(QCoreApplication::applicationDirPath() + "/log.txt");
+    if (logFile.open(QIODevice::Append | QIODevice::Text)) {
+        QTextStream out(&logFile);
+        out << QDateTime::currentDateTime().toString("[yyyy-MM-dd hh:mm:ss] ") << msg << "\n";
+    }
+}
+
 
 void MainWindow::on_setRegionButton_clicked() {
     QScreen* screen = QGuiApplication::primaryScreen();
@@ -597,6 +608,30 @@ void MainWindow::startFenServer() {
         QString error = QString::fromUtf8(fenServer->readAllStandardError());
         qDebug() << "[fenServer stderr]" << error;
     });
+    QProcess *process = new QProcess(this);
+
+    connect(process, &QProcess::readyReadStandardOutput, [=]() {
+        logToFile("[stdout] " + process->readAllStandardOutput());
+    });
+    connect(process, &QProcess::readyReadStandardError, [=]() {
+        logToFile("[stderr] " + process->readAllStandardError());
+    });
+    connect(process, &QProcess::errorOccurred, [=](QProcess::ProcessError error) {
+        logToFile("❌ QProcess error occurred: " + QString::number(error));
+    });
+    connect(process, &QProcess::started, [=]() {
+        logToFile("✅ QProcess started successfully.");
+    });
+    connect(process, &QProcess::finished, [=](int exitCode, QProcess::ExitStatus status) {
+        logToFile(QString("✅ QProcess finished. Exit code: %1, status: %2").arg(exitCode).arg(status));
+    });
+
+    // Start the process
+    process->start(pythonExe, QStringList() << pythonScript << "--model" << modelPath);
+    if (!process->waitForStarted(5000)) {
+        logToFile("❌ Failed to start Python process.");
+    }
+
 }
 
 
@@ -605,11 +640,27 @@ void MainWindow::startFenServer() {
 
 
 void MainWindow::on_toggleAnalysisButton_clicked() {
+    QString pythonExe = QStandardPaths::findExecutable("python");
+    QString pythonScript = QCoreApplication::applicationDirPath() + "/python/fen_tracker/main.py";
+    QSettings settings("ChessGUI", "ChessGUI");
+    QString modelPath = settings.value("fenModelPath").toString();
+
     if (!analysisRunning) {
         setStatusLight("yellow"); // 🟡 Indicate analysis has started
+
         if (captureRegion.isNull()) {
             statusBar()->showMessage("No region set!");
             updateStatusLabel("No region set!");
+
+            logToFile("Trying to launch Python script...");
+            logToFile("Python exe: " + pythonExe);
+            logToFile("Script path: " + pythonScript);
+            logToFile("Model path: " + modelPath);
+
+            if (!QFile::exists(pythonExe)) logToFile("❌ Python not found!");
+            if (!QFile::exists(pythonScript)) logToFile("❌ Script not found!");
+            if (!QFile::exists(modelPath)) logToFile("❌ Model file not found!");
+
             return;
         }
 
@@ -628,6 +679,7 @@ void MainWindow::on_toggleAnalysisButton_clicked() {
     }
 
     analysisRunning = !analysisRunning;
+
 }
 
 void MainWindow::runFenPrediction(const QString& imagePath) {
