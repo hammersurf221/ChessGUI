@@ -1,109 +1,140 @@
 # ChessGUI
 
-ChessGUI is a cross-platform desktop application that displays a digital chessboard and integrates with the Stockfish engine to provide move analysis. Additional Python tools enable automatic board recognition and automation features.
+**ChessGUI** is a desktop chessboard viewer and analyzer that combines a C++/Qt graphical interface with Python-based helpers for real-time board recognition and engine analysis. It uses OpenCV and a custom neural network model to detect chess positions from screen captures, then evaluates them using [Stockfish](https://stockfishchess.org/). It can optionally automate the best move with natural mouse gestures.
 
-## Features
+---
 
-- Interactive chessboard interface rendered with Qt
-- Stockfish engine integration for real-time analysis
-- Arrow overlays showing suggested moves
-- Automatic board detection using OpenCV
-- Optional automation to play the best move after a delay
-- Persistent settings stored via QSettings
-- Python-based FEN prediction and utilities
+## 🔍 Features
 
-## Directory Overview
+- 📷 **Automatic board detection** using OpenCV and a PyTorch model  
+- 🧠 **Real-time Stockfish analysis** with configurable depth and intervals  
+- 🎯 **Move overlay arrows** for suggested moves  
+- 🔁 **Auto-move** feature to play the best move with human-like motion  
+- 💾 **Persistent settings** using Qt's `QSettings`  
+- 🖥️ **Screen region selector** with optional global hotkeys  
+- 🛠️ **Cross-platform** build with CMake and Qt 5/6  
 
-- **C++/Qt Source** – application code in `main.cpp`, `mainwindow.*`, `boardwidget.*`, `regionselector.*`, and related headers
-- **Python Utilities** – board recognition and automation scripts in `python/`
-- **Assets** – piece images, fonts and style sheet under `assets/`
-- **Stockfish Engine** – a `stockfish.exe` binary is included, but you may specify a custom engine path in the settings
-- **Build Output** – create a `build/` directory for CMake build files (not tracked)
+---
 
-## Building
+## 🏗️ Building the GUI
 
-1. Install Qt 5 or Qt 6, a C++17 capable compiler and CMake
-2. From the repository root run:
+### Requirements
+
+- Qt 5 or Qt 6
+- C++17-compatible compiler
+- CMake 3.15 or later
+- OpenCV (linked with the project)
+
+### Build Instructions
 
 ```bash
+git clone https://github.com/yourusername/ChessGUI.git
+cd ChessGUI
 mkdir -p build
 cd build
 cmake ..
 make -j$(nproc)
 ```
 
-The resulting executable will be located in the `build/` folder.
-
-### Building on Windows
-
-Use the Qt/MSVC environment or MinGW. Open a Qt command prompt and invoke the same CMake commands as above.
-
-## Running
-
-Launch the compiled binary from the build directory:
+Run the executable:
 
 ```bash
 ./ChessGUI
 ```
 
-Upon first launch you can manually select a screen region for the chessboard or enable automatic detection. The main window shows Stockfish evaluations and suggested moves. Arrow overlays indicate the best line on the board.
+---
 
-## Configuration
+## 🐍 Python Utilities
 
-Open **File → Settings** to configure runtime options:
+### Requirements
 
-- **Analysis Interval** – delay between Stockfish evaluations
-- **Search Depth** – depth passed to the engine
-- **Automatic Board Detection** – toggle OpenCV based detection
-- **Force Manual Region** – always prompt for a region
-- **Auto Play Best Move** – automatically execute the best move using the Python helper
-- **Auto Move Delay** – wait time before executing the move
-- **Stealth Mode** – hide overlays during automation
-- **Stockfish Path** – location of the Stockfish binary
-- **FEN Model Path** – path to the PyTorch model for board recognition
-- **Default Player Color** – determines orientation and automation color
-
-Settings persist between runs and can be restored to defaults from the dialog.
-
-You can enable extra debug output for board detection by setting the environment variable `CHESSGUI_DEBUG_DETECT=1`. Intermediate images will be saved as `detect_debug_*.png`.
-
-## Python Utilities
-
-The `python/fen_tracker` package provides neural network based board recognition and automation scripts.
-
-### Dependencies
-
-Install Python 3 packages:
+Install required Python packages:
 
 ```bash
-pip install torch torchvision pillow numpy scikit-image pyautogui
+pip install torch numpy Pillow scikit-image pyautogui
 ```
 
-### FEN Prediction Server
-
-Run the FEN server to stream board positions:
+### Run the FEN Tracker
 
 ```bash
 python3 python/fen_tracker/main.py --color w
 ```
 
-It prints FEN strings to standard output when a new board state is detected.
+This starts the neural network server and prints FEN strings as board positions are detected and stabilized.
 
-### Automated Move Execution
+---
 
-`python/fen_tracker/play_move.py` moves pieces with realistic mouse drags. Usage:
+## 📁 Project Structure
 
-```bash
-python3 python/fen_tracker/play_move.py e2 e4 100 100 64 false
+```
+ChessGUI/
+├── assets/              # SVG piece images and GUI assets
+├── build/               # CMake build output (not versioned)
+├── python/
+│   └── fen_tracker/     # Neural net model, FEN prediction scripts
+├── main.cpp             # Application entry point
+├── mainwindow.*         # Main GUI logic
+├── boardwidget.*        # Chessboard display and FEN updates
+├── regionselector.*     # Region selection overlay
+└── CMakeLists.txt       # CMake build config
 ```
 
-Arguments specify the origin square, destination square, top-left board coordinates, tile size and whether the board is flipped.
+---
 
-## Development Guidelines
+## ⚙️ Configuration
 
-- Use four spaces for indentation
-- Place opening braces on the same line as the control statement or function
-- Prefer modern C++17 features
-- Keep headers and source files synchronized
+The GUI settings dialog includes:
 
-Contributions are welcome. Please open pull requests from feature branches and ensure the project builds without warnings.
+- Stockfish path
+- Neural network model path
+- Analysis interval
+- Engine depth
+- Auto-move delay
+- Auto-detection toggle
+
+Settings are saved using `QSettings`. You can reset all options via the "Reset to Defaults" button.
+
+Enable debug logging:
+
+```bash
+export CHESSGUI_DEBUG_DETECT=1
+```
+
+---
+
+## 🧠 How It Works
+
+1. Select (or auto-detect) a screen region containing the chessboard.
+2. The GUI periodically captures screenshots.
+3. The Python server uses a CNN to predict the board state.
+4. A FEN string is sent back to the GUI.
+5. Stockfish evaluates the position and suggests the best move.
+6. If enabled, the move is played automatically using `pyautogui`.
+
+---
+
+## ✅ Example: End-to-End Flow
+
+```bash
+# Start the Python FEN tracker
+python3 python/fen_tracker/main.py --color w
+
+# Build and run the GUI
+cd build
+./ChessGUI
+```
+
+Then:
+- Select a board region in the GUI.
+- Click "Start Analysis".
+- The application will display move suggestions and optionally play them.
+
+
+---
+
+## 🙌 Acknowledgments
+
+- [Stockfish](https://stockfishchess.org/) — world-class chess engine
+- [PyTorch](https://pytorch.org/) — deep learning framework
+- [OpenCV](https://opencv.org/) — computer vision library
+- [Qt](https://www.qt.io/) — cross-platform GUI toolkit
