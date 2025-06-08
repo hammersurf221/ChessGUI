@@ -101,8 +101,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(screenshotTimer, &QTimer::timeout, this, &MainWindow::captureScreenshot);
 
     settingsDialog = new SettingsDialog(this);
-    settingsDialog->setInterval(analysisInterval);
-    settingsDialog->setDepth(stockfishDepth);
+    settingsDialog->setAnalysisInterval(analysisInterval);
+    settingsDialog->setStockfishDepth(stockfishDepth);
     connect(settingsDialog, &SettingsDialog::resetPgnRequested, this, [=]() {
         moveHistoryLines.clear();
         ui->pgnDisplay->clear();
@@ -734,11 +734,11 @@ void MainWindow::openSettings()
 {
     if (!settingsDialog)
         return;
-    settingsDialog->setInterval(analysisInterval);
-    settingsDialog->setDepth(stockfishDepth);
+    settingsDialog->setAnalysisInterval(analysisInterval);
+    settingsDialog->setStockfishDepth(stockfishDepth);
     if (settingsDialog->exec() == QDialog::Accepted) {
-        analysisInterval = settingsDialog->interval();
-        stockfishDepth = settingsDialog->depth();
+        analysisInterval = settingsDialog->analysisInterval();
+        stockfishDepth = settingsDialog->stockfishDepth();
         if (analysisRunning) {
             screenshotTimer->stop();
             screenshotTimer->start(analysisInterval);
