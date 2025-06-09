@@ -137,12 +137,45 @@ MainWindow::MainWindow(QWidget *parent)
     });
     connect(ui->actionOpen_Settings, &QAction::triggered, this, &MainWindow::openSettings);
 
+    set1 = new QtCharts::QBarSet("1st");
+    set2 = new QtCharts::QBarSet("2nd");
+    set3 = new QtCharts::QBarSet("3rd");
+    *set1 << 0;
+    *set2 << 0;
+    *set3 << 0;
+    set1->setColor(Qt::white);
+    set2->setColor(Qt::white);
+    set3->setColor(Qt::white);
+
+    QtCharts::QBarSeries* series = new QtCharts::QBarSeries();
+    series->append(set1);
+    series->append(set2);
+    series->append(set3);
+
+    stealthChart = new QtCharts::QChart();
+    stealthChart->addSeries(series);
+    stealthChart->legend()->setVisible(false);
+    stealthChart->setBackgroundBrush(QColor("#2A2A2A"));
+    stealthChart->setBackgroundPen(QColor("#444"));
+
+    QtCharts::QBarCategoryAxis* axisX = new QtCharts::QBarCategoryAxis();
+    axisX->append(QStringList() << "1st" << "2nd" << "3rd");
+    stealthChart->addAxis(axisX, Qt::AlignBottom);
+    series->attachAxis(axisX);
+
+    stealthAxisY = new QtCharts::QValueAxis();
+    stealthAxisY->setRange(0, 1);
+    stealthAxisY->setLabelFormat("%d");
+    stealthChart->addAxis(stealthAxisY, Qt::AlignLeft);
+    series->attachAxis(stealthAxisY);
+
+    stealthChartView = ui->stealthChartView;
+    stealthChartView->setChart(stealthChart);
+    stealthChartView->setRenderHint(QPainter::Antialiasing);
+
     auto updateStealthUI = [this](bool checked) {
         ui->stealthDisabledLabel->setVisible(!checked);
-        ui->stealthGraphContainer->setVisible(true);
-        ui->firstMoveBar->setVisible(checked);
-        ui->secondMoveBar->setVisible(checked);
-        ui->thirdMoveBar->setVisible(checked);
+        stealthChartView->setVisible(checked);
         updateStealthGraph();
     };
     connect(ui->stealthCheck, &QCheckBox::toggled, this, updateStealthUI);
@@ -984,13 +1017,10 @@ void MainWindow::openSettings()
 
 void MainWindow::updateStealthGraph() {
     int maxCount = std::max({bestMoveCount1, bestMoveCount2, bestMoveCount3, 1});
-    ui->firstMoveBar->setMaximum(maxCount);
-    ui->secondMoveBar->setMaximum(maxCount);
-    ui->thirdMoveBar->setMaximum(maxCount);
-
-    ui->firstMoveBar->setValue(bestMoveCount1);
-    ui->secondMoveBar->setValue(bestMoveCount2);
-    ui->thirdMoveBar->setValue(bestMoveCount3);
+    stealthAxisY->setRange(0, maxCount);
+    set1->replace(0, bestMoveCount1);
+    set2->replace(0, bestMoveCount2);
+    set3->replace(0, bestMoveCount3);
 }
 
 
