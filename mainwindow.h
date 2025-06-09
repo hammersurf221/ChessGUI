@@ -13,6 +13,11 @@
 #include <QMap>
 #include <QPair>
 #include <QElapsedTimer>
+#include <QtCharts/QChartView>
+#include <QtCharts/QBarSet>
+#include <QtCharts/QBarSeries>
+#include <QtCharts/QBarCategoryAxis>
+#include <QtCharts/QValueAxis>
 #include "globalhotkeymanager.h"
 
 
@@ -76,6 +81,16 @@ private:
     bool automoveInProgress = false;
     QMap<int, QPair<QString, int>> multipvMoves;
     int selectedBestMoveRank = 1;
+    int bestMoveCount1 = 0;
+    int bestMoveCount2 = 0;
+    int bestMoveCount3 = 0;
+    QtCharts::QChartView* stealthChartView = nullptr;
+    QtCharts::QChart* stealthChart = nullptr;
+    QtCharts::QBarSet* set1 = nullptr;
+    QtCharts::QBarSet* set2 = nullptr;
+    QtCharts::QBarSet* set3 = nullptr;
+    QtCharts::QValueAxis* stealthAxisY = nullptr;
+    void updateStealthGraph();
     double accuracy = 0.9;
     QElapsedTimer screenshotElapsed;
     QElapsedTimer fenElapsed;
