@@ -15,7 +15,6 @@
 #include <QElapsedTimer>
 #include "globalhotkeymanager.h"
 
-QT_CHARTS_USE_NAMESPACE
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
