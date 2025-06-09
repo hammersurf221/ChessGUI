@@ -3,6 +3,7 @@
 #include <QPixmap>
 #include <QSvgRenderer>
 #include <QResizeEvent>
+#include <QLinearGradient>
 
 BoardWidget::BoardWidget(QWidget *parent) : QWidget(parent) {
 
@@ -105,7 +106,11 @@ void BoardWidget::paintEvent(QPaintEvent *event) {
         for (int col = 0; col < 8; ++col) {
             QRect square(col * tileW, row * tileH, tileW, tileH);
             bool light = (row + col) % 2 == 0;
-            painter.fillRect(square, light ? lightSquare : darkSquare);
+            QLinearGradient grad(square.topLeft(), square.bottomRight());
+            QColor base = light ? lightSquare : darkSquare;
+            grad.setColorAt(0.0, base.lighter(108));
+            grad.setColorAt(1.0, base.darker(108));
+            painter.fillRect(square, grad);
         }
     }
 
