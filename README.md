@@ -241,7 +241,7 @@ This project uses a custom CNN (Convolutional Neural Network) to visually scan i
 						</tr>
 						<tr style='border-bottom: 1px solid #eee;'>
 							<td style='padding: 8px;'><b><a href='/python/fen_tracker/ccn_model_default.pth'>ccn_model_default.pth</a></b></td>
-							<td style='padding: 8px;'>- AwesomeApp<strong>Code File:</strong> <code>dataProcessor.js</code><strong>Summary:</strong>The <code>dataProcessor.js</code> file in the AwesomeApp codebase serves as a crucial component responsible for handling and processing incoming data within the application<br>- It plays a pivotal role in ensuring that data is efficiently managed and manipulated to meet the applications requirements<br>- By abstracting the complexities of data processing, this file enhances the overall architecture's modularity and scalability, contributing to the seamless functioning of the AwesomeApp.</td>
+							<td style='padding: 8px;'>- Model weight for CCN. Customizable for different themes/boards.</td>
 						</tr>
 						<tr style='border-bottom: 1px solid #eee;'>
 							<td style='padding: 8px;'><b><a href='/python/fen_tracker/main.py'>main.py</a></b></td>
