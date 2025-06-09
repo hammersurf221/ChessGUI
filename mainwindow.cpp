@@ -12,6 +12,7 @@
 #include <QRandomGenerator>
 #include <QLabel>
 #include <QDebug>
+#include <QCheckBox>
 #include <QShortcut>
 #include <QScrollBar>
 #include <QStatusBar>
@@ -135,6 +136,50 @@ MainWindow::MainWindow(QWidget *parent)
         ui->pgnDisplay->clear();
     });
     connect(ui->actionOpen_Settings, &QAction::triggered, this, &MainWindow::openSettings);
+
+    set1 = new QtCharts::QBarSet("1st");
+    set2 = new QtCharts::QBarSet("2nd");
+    set3 = new QtCharts::QBarSet("3rd");
+    *set1 << 0;
+    *set2 << 0;
+    *set3 << 0;
+    set1->setColor(Qt::white);
+    set2->setColor(Qt::white);
+    set3->setColor(Qt::white);
+
+    QtCharts::QBarSeries* series = new QtCharts::QBarSeries();
+    series->append(set1);
+    series->append(set2);
+    series->append(set3);
+
+    stealthChart = new QtCharts::QChart();
+    stealthChart->addSeries(series);
+    stealthChart->legend()->setVisible(false);
+    stealthChart->setBackgroundBrush(QColor("#2A2A2A"));
+    stealthChart->setBackgroundPen(QColor("#444"));
+
+    QtCharts::QBarCategoryAxis* axisX = new QtCharts::QBarCategoryAxis();
+    axisX->append(QStringList() << "1st" << "2nd" << "3rd");
+    stealthChart->addAxis(axisX, Qt::AlignBottom);
+    series->attachAxis(axisX);
+
+    stealthAxisY = new QtCharts::QValueAxis();
+    stealthAxisY->setRange(0, 1);
+    stealthAxisY->setLabelFormat("%d");
+    stealthChart->addAxis(stealthAxisY, Qt::AlignLeft);
+    series->attachAxis(stealthAxisY);
+
+    stealthChartView = ui->stealthChartView;
+    stealthChartView->setChart(stealthChart);
+    stealthChartView->setRenderHint(QPainter::Antialiasing);
+
+    auto updateStealthUI = [this](bool checked) {
+        ui->stealthDisabledLabel->setVisible(!checked);
+        stealthChartView->setVisible(checked);
+        updateStealthGraph();
+    };
+    connect(ui->stealthCheck, &QCheckBox::toggled, this, updateStealthUI);
+    updateStealthUI(ui->stealthCheck->isChecked());
 
     startStockfish();  // Launch Stockfish engine
 
@@ -506,6 +551,13 @@ void MainWindow::startStockfish() {
                         label += QString(" (Move: %1)").arg(selectedBestMoveRank);
                     }
                     ui->bestMoveDisplay->setText(label);
+                    if (selectedBestMoveRank == 1)
+                        ++bestMoveCount1;
+                    else if (selectedBestMoveRank == 2)
+                        ++bestMoveCount2;
+                    else if (selectedBestMoveRank == 3)
+                        ++bestMoveCount3;
+                    updateStealthGraph();
 
                     if (chosenMove.length() == 4) {
                         QString from = chosenMove.mid(0, 2);
@@ -961,6 +1013,14 @@ void MainWindow::openSettings()
             startStockfish();
         }
     }
+}
+
+void MainWindow::updateStealthGraph() {
+    int maxCount = std::max({bestMoveCount1, bestMoveCount2, bestMoveCount3, 1});
+    stealthAxisY->setRange(0, maxCount);
+    set1->replace(0, bestMoveCount1);
+    set2->replace(0, bestMoveCount2);
+    set3->replace(0, bestMoveCount3);
 }
 
 
