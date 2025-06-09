@@ -76,6 +76,10 @@ private:
     bool automoveInProgress = false;
     QMap<int, QPair<QString, int>> multipvMoves;
     int selectedBestMoveRank = 1;
+    int bestMoveCount1 = 0;
+    int bestMoveCount2 = 0;
+    int bestMoveCount3 = 0;
+    void updateStealthGraph();
     double accuracy = 0.9;
     QElapsedTimer screenshotElapsed;
     QElapsedTimer fenElapsed;

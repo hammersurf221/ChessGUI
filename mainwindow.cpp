@@ -12,6 +12,7 @@
 #include <QRandomGenerator>
 #include <QLabel>
 #include <QDebug>
+#include <QCheckBox>
 #include <QShortcut>
 #include <QScrollBar>
 #include <QStatusBar>
@@ -135,6 +136,17 @@ MainWindow::MainWindow(QWidget *parent)
         ui->pgnDisplay->clear();
     });
     connect(ui->actionOpen_Settings, &QAction::triggered, this, &MainWindow::openSettings);
+
+    auto updateStealthUI = [this](bool checked) {
+        ui->stealthDisabledLabel->setVisible(!checked);
+        ui->stealthGraphContainer->setVisible(true);
+        ui->firstMoveBar->setVisible(checked);
+        ui->secondMoveBar->setVisible(checked);
+        ui->thirdMoveBar->setVisible(checked);
+        updateStealthGraph();
+    };
+    connect(ui->stealthCheck, &QCheckBox::toggled, this, updateStealthUI);
+    updateStealthUI(ui->stealthCheck->isChecked());
 
     startStockfish();  // Launch Stockfish engine
 
@@ -506,6 +518,13 @@ void MainWindow::startStockfish() {
                         label += QString(" (Move: %1)").arg(selectedBestMoveRank);
                     }
                     ui->bestMoveDisplay->setText(label);
+                    if (selectedBestMoveRank == 1)
+                        ++bestMoveCount1;
+                    else if (selectedBestMoveRank == 2)
+                        ++bestMoveCount2;
+                    else if (selectedBestMoveRank == 3)
+                        ++bestMoveCount3;
+                    updateStealthGraph();
 
                     if (chosenMove.length() == 4) {
                         QString from = chosenMove.mid(0, 2);
@@ -961,6 +980,17 @@ void MainWindow::openSettings()
             startStockfish();
         }
     }
+}
+
+void MainWindow::updateStealthGraph() {
+    int maxCount = std::max({bestMoveCount1, bestMoveCount2, bestMoveCount3, 1});
+    ui->firstMoveBar->setMaximum(maxCount);
+    ui->secondMoveBar->setMaximum(maxCount);
+    ui->thirdMoveBar->setMaximum(maxCount);
+
+    ui->firstMoveBar->setValue(bestMoveCount1);
+    ui->secondMoveBar->setValue(bestMoveCount2);
+    ui->thirdMoveBar->setValue(bestMoveCount3);
 }
 
 
