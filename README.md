@@ -73,6 +73,8 @@ This project uses a custom CNN (Convolutional Neural Network) to visually scan i
 | 🛡️ | **Security**      | <ul><li>Implements secure file handling practices</li><li>Sanitizes user inputs to prevent vulnerabilities</li></ul> |
 | 📦 | **Dependencies**  | <ul><li>Relies on OpenCV, Qt, and CMake for building</li><li>Includes pre-trained model file ccn_model_default.pth</li></ul> |
 
+The main interface also shows a small bar graph below the FEN display when **Stealth Mode** is enabled, tracking how often the 1st, 2nd, and 3rd best moves were chosen.
+
 ---
 
 ## Project Structure
