@@ -339,31 +339,12 @@ border: 1px solid #444;
         </widget>
        </item>
        <item>
-       <widget class="QPlainTextEdit" name="fenDisplay">
-        <property name="readOnly">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QWidget" name="stealthGraphContainer" native="true">
-        <layout class="QVBoxLayout" name="verticalLayout_graph">
-         <item>
-          <widget class="QLabel" name="stealthDisabledLabel">
-           <property name="text">
-            <string>Stealth Mode Disabled</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QChartView" name="stealthChartView"/>
-         </item>
-        </layout>
-       </widget>
-      </item>
+        <widget class="QPlainTextEdit" name="fenDisplay">
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
     </item>
