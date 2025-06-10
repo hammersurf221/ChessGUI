@@ -919,6 +919,7 @@ MainWindow::MoveChoice MainWindow::pickBestMove(bool stealth)
     // --- constants (promote to settings if you want user control) -------------
     constexpr int CP_THRESHOLD = 30;          // ≤ 0.30 pawn considered “similar”
     constexpr double ALT_PICK_PROB = 0.30;    // 30 % chance to pick an alt
+    constexpr double CLEAR_WIN_THRESHOLD = 3.0;  // ≥ +3 pawns => always best move
     // -------------------------------------------------------------------------
 
     MoveChoice choice;
@@ -931,8 +932,8 @@ MainWindow::MoveChoice MainWindow::pickBestMove(bool stealth)
     choice.score = first.second;
     choice.rank  = 1;
 
-    // 1. When stealth mode is *off*, always return the absolute best move.
-    if (!stealth)
+    // 1. When stealth mode is *off* or eval is clearly winning, return best move.
+    if (!stealth || (lastEvalValid && lastEvalForMe >= CLEAR_WIN_THRESHOLD))
         return choice;
 
     // 2. Build a list of “near-equal” alternatives (rank 2-3 within threshold)
