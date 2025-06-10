@@ -201,6 +201,11 @@ MainWindow::MainWindow(QWidget *parent)
                     QString uci = detectUciMove(lastFen, fen);
                     bool whiteMoved = lastFen.section(' ', 1, 1) == "w";
                     pendingEvalLine = addMoveToHistory(uci, whiteMoved);
+                    bool weMoved = lastFen.section(' ', 1, 1) == getMyColor();
+                    if (weMoved) {
+                        lastOwnMove = uci;
+                        lastPlayedFen = fen;
+                    }
                 }
 
                 qDebug() << "[gui] Received FEN:" << fen;
@@ -233,6 +238,7 @@ MainWindow::MainWindow(QWidget *parent)
                 }
 
                 lastFen = fen;
+                repetitionTable[fen] = repetitionTable.value(fen, 0) + 1;
                 ui->fenDisplay->setPlainText(fen);
             }
         }
@@ -916,51 +922,69 @@ void MainWindow::openSettings()
 
 MainWindow::MoveChoice MainWindow::pickBestMove(bool stealth)
 {
-    // --- constants (promote to settings if you want user control) -------------
-    constexpr int CP_THRESHOLD = 30;          // ≤ 0.30 pawn considered “similar”
-    constexpr double ALT_PICK_PROB = 0.30;    // 30 % chance to pick an alt
-    constexpr double CLEAR_WIN_THRESHOLD = 3.0;  // ≥ +3 pawns => always best move
-    // -------------------------------------------------------------------------
 
+    Q_UNUSED(stealth);
     MoveChoice choice;
-    auto first  = multipvMoves.value(1);  // (move, cp)
-    auto second = multipvMoves.value(2);
-    auto third  = multipvMoves.value(3);
-
-    // Default to the engine’s top line.
-    choice.move  = first.first;
+    auto first = multipvMoves.value(1);
+    choice.move = first.first;
     choice.score = first.second;
-    choice.rank  = 1;
+    choice.rank = 1;
 
-    // 1. When stealth mode is *off* or eval is clearly winning, return best move.
-    if (!stealth || (lastEvalValid && lastEvalForMe >= CLEAR_WIN_THRESHOLD))
+    QString reverseMove;
+    if (lastOwnMove.length() >= 4)
+        reverseMove = lastOwnMove.mid(2, 2) + lastOwnMove.mid(0, 2);
+
+    if (choice.move.isEmpty() || choice.move != reverseMove || reverseMove.isEmpty())
         return choice;
 
-    // 2. Build a list of “near-equal” alternatives (rank 2-3 within threshold)
-    QList<int> nearEqual;
-    if (!second.first.isEmpty() &&
-        std::abs(first.second - second.second) <= CP_THRESHOLD)
-        nearEqual << 2;
+    if (!lastPlayedFen.isEmpty() && repetitionTable.value(lastPlayedFen) >= 2 &&
+        stockfishProcess && stockfishProcess->state() == QProcess::Running) {
+        stockfishProcess->write(QString("position fen %1\n").arg(lastFen).toUtf8());
+        stockfishProcess->write("d\n");
 
-    if (!third.first.isEmpty() &&
-        std::abs(first.second - third.second) <= CP_THRESHOLD)
-        nearEqual << 3;
+        QString buffer;
+        QStringList legalMoves;
+        QElapsedTimer timer;
+        timer.start();
+        while (timer.elapsed() < 2000) {
+            if (stockfishProcess->waitForReadyRead(200)) {
+                buffer += QString::fromUtf8(stockfishProcess->readAllStandardOutput());
+                int idx = buffer.indexOf("Legal moves:");
+                if (idx != -1) {
+                    QString line = buffer.mid(idx).section(QLatin1Char('\n'), 0, 0);
+                    line = line.section(":", 1).trimmed();
+                    legalMoves = line.split(' ', Qt::SkipEmptyParts);
+                    break;
+                }
+            }
+        }
 
-    // 3. With 30 % probability, randomly choose one of the near-equal moves.
-    if (!nearEqual.isEmpty() &&
-        QRandomGenerator::global()->generateDouble() < ALT_PICK_PROB)
-    {
-        int idx = nearEqual.at(
-            QRandomGenerator::global()->bounded(nearEqual.size()));
+        legalMoves.removeAll(reverseMove);
+        if (!legalMoves.isEmpty()) {
+            QString cmd = "searchmoves " + legalMoves.join(' ') + "\n";
+            stockfishProcess->write(cmd.toUtf8());
+        }
 
-        const auto picked = multipvMoves.value(idx);
-        choice.move  = picked.first;
-        choice.score = picked.second;
-        choice.rank  = idx;
+        stockfishProcess->write(QString("go depth %1\n").arg(stockfishDepth).toUtf8());
+
+        QString bestOut;
+        timer.restart();
+        QRegularExpression bestMovePattern("bestmove ([a-h][1-8][a-h][1-8])");
+        while (timer.elapsed() < 5000) {
+            if (stockfishProcess->waitForReadyRead(200)) {
+                bestOut += QString::fromUtf8(stockfishProcess->readAllStandardOutput());
+                QRegularExpressionMatch m = bestMovePattern.match(bestOut);
+                if (m.hasMatch()) {
+                    choice.move = m.captured(1);
+                    break;
+                }
+            }
+        }
     }
 
     return choice;
+
+
+
+
 }
-
-
-

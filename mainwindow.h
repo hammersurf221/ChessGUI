@@ -80,6 +80,8 @@ private:
     QString lastEvaluatedFen;
     QQueue<QString> recentBestMoves;
     QString lastPlayedFen;
+    QString lastOwnMove;
+    QHash<QString, int> repetitionTable;
     bool automoveInProgress = false;
     QMap<int, QPair<QString, int>> multipvMoves;
     int selectedBestMoveRank = 1;
