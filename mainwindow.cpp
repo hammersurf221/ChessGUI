@@ -188,7 +188,6 @@ MainWindow::MainWindow(QWidget *parent)
             }
 
 
-
             if (output.startsWith("[FEN] ")) {
                 QString fen = output.mid(6);  // Skip "[FEN] "
                 QString pieceLayout = fen.section(" ", 0, 0);
@@ -424,7 +423,7 @@ void MainWindow::startStockfish() {
                 }
             });
 
-    stockfishProcess->start(this->stockfishPath);
+    stockfishProcess->start(this->stockfishPath, QStringList{});
 
 
     if (!stockfishProcess->waitForStarted()) {
