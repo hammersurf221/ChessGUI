@@ -76,6 +76,8 @@ private:
     SettingsDialog* settingsDialog = nullptr;
     QString currentBestMove;
     void playBestMove();
+    void playMove(const QString &uci);
+    void updateRepetitionTable(const QString &fen, bool afterMove = true);
     bool isMyTurn = false;
     QString lastEvaluatedFen;
     QQueue<QString> recentBestMoves;
