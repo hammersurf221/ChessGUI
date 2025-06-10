@@ -530,13 +530,15 @@ void MainWindow::startStockfish() {
             bool hasNumeric = false;
             int signForMe = (lastEvaluatedFen.section(' ', 1, 1) == getMyColor()) ? 1 : -1;
             if (mateMatch.hasMatch()) {
-                eval = "Mate in " + mateMatch.captured(1);
-                int mateScore = mateMatch.captured(1).toInt();
-                numericEval = signForMe * (mateScore > 0 ? 1000.0 : -1000.0);
+                int mateMoves = mateMatch.captured(1).toInt();
+                int signedMate = signForMe >= 0 ? mateMoves : -mateMoves;
+                eval = QString("M%1").arg(signedMate);
+                numericEval = signForMe * (mateMoves > 0 ? 1000.0 : -1000.0);
                 hasNumeric = true;
             } else if (cpMatch.hasMatch()) {
                 int scoreCp = cpMatch.captured(1).toInt();
-                eval = QString::number(scoreCp / 100.0, 'f', 2);
+                int signedCp = signForMe * scoreCp;
+                eval = QString::number(signedCp / 100.0, 'f', 2);
                 numericEval = signForMe * (scoreCp / 100.0);
                 numericEval = std::clamp(numericEval, -1000.0, 1000.0);
                 hasNumeric = true;
@@ -791,6 +793,7 @@ void MainWindow::playBestMove() {
                     qDebug() << "[automove] Move script finished with code" << exitCode;
                     automoveInProgress = false;
                     moveProcess->deleteLater();
+                    captureScreenshot();
                 });
 
         QString embeddedPython = QCoreApplication::applicationDirPath() + "/python/python.exe";
