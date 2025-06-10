@@ -462,6 +462,43 @@ void MainWindow::startStockfish() {
                 QString bestMove = bestMoveMatch.captured(1);
                 qDebug() << "[timing] Stockfish evaluation:" << evalElapsed.elapsed() << "ms";
 
+                QString reverseMove;
+                if (lastOwnMove.length() >= 4)
+                    reverseMove = lastOwnMove.mid(2, 2) + lastOwnMove.mid(0, 2);
+
+                if (!reverseMove.isEmpty() && bestMove == reverseMove &&
+                    repetitionTable.value(lastFen) >= 2 &&
+                    stockfishProcess && stockfishProcess->state() == QProcess::Running) {
+
+                    stockfishProcess->write(QString("position fen %1\n").arg(lastFen).toUtf8());
+                    stockfishProcess->write("d\n");
+
+                    QString buffer;
+                    if (stockfishProcess->waitForReadyRead(150))
+                        buffer += QString::fromUtf8(stockfishProcess->readAllStandardOutput());
+                    int idx = buffer.indexOf("Legal moves:");
+                    QStringList legalMoves;
+                    if (idx != -1) {
+                        QString line = buffer.mid(idx).section(QLatin1Char('\n'), 0, 0);
+                        line = line.section(":", 1).trimmed();
+                        legalMoves = line.split(' ', Qt::SkipEmptyParts);
+                    }
+
+                    legalMoves.removeAll(reverseMove);
+                    if (legalMoves.isEmpty()) {
+                        playMove(reverseMove);
+                        updateRepetitionTable(lastFen, true);
+                        return;
+                    }
+
+                    QString cmd = QStringLiteral("position fen %1\nsearchmoves %2\ngo depth %3\n")
+                                       .arg(lastFen)
+                                       .arg(legalMoves.join(' '))
+                                       .arg(stockfishDepth);
+                    stockfishProcess->write(cmd.toUtf8());
+                    return;
+                }
+
                 MoveChoice choice = pickBestMove(ui->stealthCheck->isChecked());
                 if (choice.move.isEmpty()) {
                     choice.move = bestMove;
@@ -787,6 +824,20 @@ void MainWindow::playBestMove() {
         execute();
 }
 
+void MainWindow::playMove(const QString &uci) {
+    QString prev = currentBestMove;
+    currentBestMove = uci;
+    playBestMove();
+    currentBestMove = prev;
+}
+
+void MainWindow::updateRepetitionTable(const QString &fen, bool afterMove) {
+    if (afterMove)
+        repetitionTable[fen] = repetitionTable.value(fen, 0) + 1;
+    else if (repetitionTable.contains(fen) && repetitionTable.value(fen) > 0)
+        repetitionTable[fen] -= 1;
+}
+
 void MainWindow::updateEvalLabel() {
     if (!evalScoreLabel || !ui->evalBar) return;
 
@@ -929,58 +980,6 @@ MainWindow::MoveChoice MainWindow::pickBestMove(bool stealth)
     choice.move = first.first;
     choice.score = first.second;
     choice.rank = 1;
-
-    QString reverseMove;
-    if (lastOwnMove.length() >= 4)
-        reverseMove = lastOwnMove.mid(2, 2) + lastOwnMove.mid(0, 2);
-
-    if (choice.move.isEmpty() || choice.move != reverseMove || reverseMove.isEmpty())
-        return choice;
-
-    if (!lastPlayedFen.isEmpty() && repetitionTable.value(lastPlayedFen) >= 2 &&
-        stockfishProcess && stockfishProcess->state() == QProcess::Running) {
-        stockfishProcess->write(QString("position fen %1\n").arg(lastFen).toUtf8());
-        stockfishProcess->write("d\n");
-
-        QString buffer;
-        QStringList legalMoves;
-        QElapsedTimer timer;
-        timer.start();
-        while (timer.elapsed() < 2000) {
-            if (stockfishProcess->waitForReadyRead(200)) {
-                buffer += QString::fromUtf8(stockfishProcess->readAllStandardOutput());
-                int idx = buffer.indexOf("Legal moves:");
-                if (idx != -1) {
-                    QString line = buffer.mid(idx).section(QLatin1Char('\n'), 0, 0);
-                    line = line.section(":", 1).trimmed();
-                    legalMoves = line.split(' ', Qt::SkipEmptyParts);
-                    break;
-                }
-            }
-        }
-
-        legalMoves.removeAll(reverseMove);
-        if (!legalMoves.isEmpty()) {
-            QString cmd = "searchmoves " + legalMoves.join(' ') + "\n";
-            stockfishProcess->write(cmd.toUtf8());
-        }
-
-        stockfishProcess->write(QString("go depth %1\n").arg(stockfishDepth).toUtf8());
-
-        QString bestOut;
-        timer.restart();
-        QRegularExpression bestMovePattern("bestmove ([a-h][1-8][a-h][1-8])");
-        while (timer.elapsed() < 5000) {
-            if (stockfishProcess->waitForReadyRead(200)) {
-                bestOut += QString::fromUtf8(stockfishProcess->readAllStandardOutput());
-                QRegularExpressionMatch m = bestMovePattern.match(bestOut);
-                if (m.hasMatch()) {
-                    choice.move = m.captured(1);
-                    break;
-                }
-            }
-        }
-    }
 
     return choice;
 
