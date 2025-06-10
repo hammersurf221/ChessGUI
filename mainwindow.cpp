@@ -641,24 +641,7 @@ void MainWindow::on_toggleAnalysisButton_clicked() {
     QString command = QString("\"%1\" \"%2\" \"%3\" > \"%4\" 2>&1")
                           .arg(pythonExe, pythonScript, modelPath, logPath);
 
-    if (analysisRunning) {
-        screenshotTimer->stop();
-        if (fenServer && fenServer->state() != QProcess::NotRunning) {
-            fenServer->kill();
-            fenServer->waitForFinished(3000);
-        }
-        ui->toggleAnalysisButton->setText("Start Analysis (Ctrl +A)");
-        updateStatusLabel("Idle");
-        setStatusLight("gray");
-        analysisRunning = false;
-    } else {
-        startFenServer();
-        screenshotTimer->start(analysisInterval);
-        ui->toggleAnalysisButton->setText("Stop Analysis (Ctrl +A)");
-        updateStatusLabel("Analyzing...");
-        setStatusLight("yellow");
-        analysisRunning = true;
-    }
+    analysisRunning = !analysisRunning;
 
 }
 
