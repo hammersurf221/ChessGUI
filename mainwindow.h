@@ -66,6 +66,13 @@ private:
     void startFenServer();
     QLabel* evalScoreLabel = nullptr;
     void updateEvalLabel();
+
+    struct MoveChoice {
+        QString move;
+        int rank = 1;
+        int score = 0;
+    };
+    MoveChoice pickBestMove(bool stealth);
     SettingsDialog* settingsDialog = nullptr;
     QString currentBestMove;
     void playBestMove();
