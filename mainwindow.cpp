@@ -916,34 +916,48 @@ void MainWindow::openSettings()
 
 MainWindow::MoveChoice MainWindow::pickBestMove(bool stealth)
 {
+    // --- constants (promote to settings if you want user control) -------------
+    constexpr int CP_THRESHOLD = 30;          // ≤ 0.30 pawn considered “similar”
+    constexpr double ALT_PICK_PROB = 0.30;    // 30 % chance to pick an alt
+    // -------------------------------------------------------------------------
+
     MoveChoice choice;
-    auto first = multipvMoves.value(1);
+    auto first  = multipvMoves.value(1);  // (move, cp)
     auto second = multipvMoves.value(2);
-    auto third = multipvMoves.value(3);
-    choice.move = first.first;
+    auto third  = multipvMoves.value(3);
+
+    // Default to the engine’s top line.
+    choice.move  = first.first;
     choice.score = first.second;
+    choice.rank  = 1;
+
+    // 1. When stealth mode is *off*, always return the absolute best move.
     if (!stealth)
         return choice;
 
-    if (!second.first.isEmpty() && std::abs(first.second - second.second) < 30 &&
-        QRandomGenerator::global()->bounded(2)) {
-        choice.rank = 2;
-        choice.move = second.first;
-        choice.score = second.second;
+    // 2. Build a list of “near-equal” alternatives (rank 2-3 within threshold)
+    QList<int> nearEqual;
+    if (!second.first.isEmpty() &&
+        std::abs(first.second - second.second) <= CP_THRESHOLD)
+        nearEqual << 2;
+
+    if (!third.first.isEmpty() &&
+        std::abs(first.second - third.second) <= CP_THRESHOLD)
+        nearEqual << 3;
+
+    // 3. With 30 % probability, randomly choose one of the near-equal moves.
+    if (!nearEqual.isEmpty() &&
+        QRandomGenerator::global()->generateDouble() < ALT_PICK_PROB)
+    {
+        int idx = nearEqual.at(
+            QRandomGenerator::global()->bounded(nearEqual.size()));
+
+        const auto picked = multipvMoves.value(idx);
+        choice.move  = picked.first;
+        choice.score = picked.second;
+        choice.rank  = idx;
     }
 
-    if (QRandomGenerator::global()->generateDouble() > accuracy) {
-        QList<int> candidates;
-        if (!second.first.isEmpty()) candidates.append(2);
-        if (!third.first.isEmpty()) candidates.append(3);
-        if (!candidates.isEmpty()) {
-            int idx = candidates[QRandomGenerator::global()->bounded(candidates.size())];
-            choice.rank = idx;
-            auto picked = multipvMoves.value(idx);
-            choice.move = picked.first;
-            choice.score = picked.second;
-        }
-    }
     return choice;
 }
 
