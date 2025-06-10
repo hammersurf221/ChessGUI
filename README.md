@@ -57,6 +57,7 @@ This project uses a custom CNN (Convolutional Neural Network) to visually scan i
 - **⌨️ Global hotkeys:** Streamline user interaction.
 - **🧠 Process real-time images:** Utilize neural networks for advanced gameplay tracking.
 - **🤫 Stealth mode with best-move randomization:** Uses multiple engine lines to disguise suggestions, but stops randomizing once the evaluation is clearly winning (about +3 pawns).
+- **♻️ Repetition avoidance:** Detects potential threefold repetition and excludes the immediate reversal move when necessary.
 
 ---
 
