@@ -239,9 +239,6 @@ border: 1px solid #444;
          </item>
          <item>
           <widget class="QPushButton" name="toggleAnalysisButton">
-           <property name="checkable">
-            <bool>true</bool>
-           </property>
            <property name="text">
             <string>Start Analysis (Ctrl +A)</string>
            </property>
