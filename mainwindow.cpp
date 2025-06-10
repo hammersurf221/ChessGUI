@@ -187,6 +187,7 @@ MainWindow::MainWindow(QWidget *parent)
                 return;  // ✅ DO NOT render or evaluate
             }
 
+
             if (output.startsWith("[FEN] ")) {
                 QString fen = output.mid(6);  // Skip "[FEN] "
                 QString pieceLayout = fen.section(" ", 0, 0);
@@ -244,6 +245,16 @@ MainWindow::~MainWindow()
 {
     QString tempDir = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
     QFile::remove(QDir(tempDir).filePath("chessgui_last_screenshot.png"));
+    if (screenshotTimer)
+        screenshotTimer->stop();
+    if (fenServer && fenServer->state() != QProcess::NotRunning) {
+        fenServer->kill();
+        fenServer->waitForFinished(3000);
+    }
+    if (stockfishProcess && stockfishProcess->state() != QProcess::NotRunning) {
+        stockfishProcess->kill();
+        stockfishProcess->waitForFinished(3000);
+    }
     delete ui;
 }
 
