@@ -187,18 +187,6 @@ MainWindow::MainWindow(QWidget *parent)
                 return;  // ✅ DO NOT render or evaluate
             }
 
-
-
-            if (output == "ready") {
-                qDebug() << "[fen_server] Ready";
-                return;
-            }
-
-            if (output.startsWith("[error]")) {
-                qDebug() << "[fen_server] Error:" << output;
-                return;
-            }
-
             if (output.startsWith("[FEN] ")) {
                 QString fen = output.mid(6);  // Skip "[FEN] "
                 QString pieceLayout = fen.section(" ", 0, 0);
@@ -424,7 +412,7 @@ void MainWindow::startStockfish() {
                 }
             });
 
-    stockfishProcess->start(this->stockfishPath);
+    stockfishProcess->start(this->stockfishPath, QStringList{});
 
 
     if (!stockfishProcess->waitForStarted()) {
