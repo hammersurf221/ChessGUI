@@ -14,3 +14,29 @@ dist/
 
 # Ignore logs
 *.log
+
+python/**             # ignore everything in python/
+# Ignore Python cache
+__pycache__/
+*.pyc
+
+# Ignore virtual environments
+venv/
+
+# Ignore system files
+.DS_Store
+
+# Ignore build folders
+build/
+dist/
+
+# Ignore logs
+*.log
+
+# ─── Ignore EVERYTHING that lives directly under external/python ──
+external/python/*
+
+# ─── …but keep the fen_tracker directory and all of its contents ──
+!external/python/fen_tracker/
+!external/python/fen_tracker/**
+

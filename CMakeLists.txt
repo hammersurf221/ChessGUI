@@ -78,7 +78,6 @@ install(TARGETS ChessGUI
     RUNTIME DESTINATION .
 )
 
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/python DESTINATION .)
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/assets DESTINATION .)
 install(FILES ${CMAKE_SOURCE_DIR}/stockfish.exe DESTINATION .)
 
@@ -94,14 +93,22 @@ if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(ChessGUI)
 endif()
 
-# Copy python folder to build directory
+# Copy python to build output
 add_custom_command(
     TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${CMAKE_SOURCE_DIR}/python"
+            "${CMAKE_SOURCE_DIR}/external/python"
             "$<TARGET_FILE_DIR:${PROJECT_NAME}>/python"
     COMMENT "Copying Python folder to build output..."
 )
+
+# Install into package
+install(DIRECTORY "${CMAKE_SOURCE_DIR}/external/python"
+        DESTINATION python PATTERN "__pycache__" EXCLUDE)
+
+
+install(FILES ${CPACK_INSTALL_SYSTEM_RUNTIME_LIBS}
+        DESTINATION python)
 
 file(COPY ${CMAKE_SOURCE_DIR}/stockfish.exe DESTINATION ${CMAKE_BINARY_DIR})
 

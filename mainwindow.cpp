@@ -15,6 +15,7 @@
 #include <QShortcut>
 #include <QScrollBar>
 #include <QStatusBar>
+#include <QMessageBox>
 #include <QPainter>
 #include <QFile>
 #include "globalhotkeymanager.h"
@@ -591,7 +592,9 @@ void MainWindow::startFenServer() {
 
     qDebug() << "[fenServer] Launching python with arguments:" << arguments;
 
-    fenServer->start("python", arguments);
+    QString embeddedPython = QCoreApplication::applicationDirPath() + "/python/python.exe";
+    fenServer->start(embeddedPython, arguments);
+
 
     if (!fenServer->waitForStarted()) {
         qDebug() << "[fenServer] Failed to start";
@@ -613,29 +616,6 @@ void MainWindow::startFenServer() {
         QString error = QString::fromUtf8(fenServer->readAllStandardError());
         qDebug() << "[fenServer stderr]" << error;
     });
-    QProcess *process = new QProcess(this);
-
-    connect(process, &QProcess::readyReadStandardOutput, [=]() {
-        logToFile("[stdout] " + process->readAllStandardOutput());
-    });
-    connect(process, &QProcess::readyReadStandardError, [=]() {
-        logToFile("[stderr] " + process->readAllStandardError());
-    });
-    connect(process, &QProcess::errorOccurred, [=](QProcess::ProcessError error) {
-        logToFile("❌ QProcess error occurred: " + QString::number(error));
-    });
-    connect(process, &QProcess::started, [=]() {
-        logToFile("✅ QProcess started successfully.");
-    });
-    connect(process, &QProcess::finished, [=](int exitCode, QProcess::ExitStatus status) {
-        logToFile(QString("✅ QProcess finished. Exit code: %1, status: %2").arg(exitCode).arg(status));
-    });
-
-    // Start the process
-    process->start(pythonExe, QStringList() << pythonScript << "--model" << modelPath);
-    if (!process->waitForStarted(5000)) {
-        logToFile("❌ Failed to start Python process.");
-    }
 
 }
 
@@ -645,43 +625,21 @@ void MainWindow::startFenServer() {
 
 
 void MainWindow::on_toggleAnalysisButton_clicked() {
-    QString pythonExe = QStandardPaths::findExecutable("python");
+    QString pythonExe = QCoreApplication::applicationDirPath() + "/python/python.exe";
     QString pythonScript = QCoreApplication::applicationDirPath() + "/python/fen_tracker/main.py";
     QSettings settings("ChessGUI", "ChessGUI");
     QString modelPath = settings.value("fenModelPath").toString();
+    QString logPath = QCoreApplication::applicationDirPath() + "/analysis_log.txt";
 
-    if (!analysisRunning) {
-        setStatusLight("yellow"); // 🟡 Indicate analysis has started
+    // Log values to help debug
+    qDebug() << "[Python] Exe:" << pythonExe;
+    qDebug() << "[Python] Exists?" << QFile::exists(pythonExe);
+    qDebug() << "[Python] Script:" << pythonScript;
+    qDebug() << "[Python] Model:" << modelPath;
 
-        if (captureRegion.isNull()) {
-            statusBar()->showMessage("No region set!");
-            updateStatusLabel("No region set!");
-
-            logToFile("Trying to launch Python script...");
-            logToFile("Python exe: " + pythonExe);
-            logToFile("Script path: " + pythonScript);
-            logToFile("Model path: " + modelPath);
-
-            if (!QFile::exists(pythonExe)) logToFile("❌ Python not found!");
-            if (!QFile::exists(pythonScript)) logToFile("❌ Script not found!");
-            if (!QFile::exists(modelPath)) logToFile("❌ Model file not found!");
-
-            return;
-        }
-
-        startFenServer();  // ✅ start now with selected color
-
-        screenshotTimer->start(analysisInterval);
-        ui->toggleAnalysisButton->setText("Stop Analysis");
-        statusBar()->showMessage("Analysis started");
-        updateStatusLabel("Analysis started");
-    } else {
-        screenshotTimer->stop();
-        ui->toggleAnalysisButton->setText("Start Analysis");
-        statusBar()->showMessage("Analysis stopped");
-        updateStatusLabel("Analysis stopped");
-        setStatusLight("gray");
-    }
+    // Build the command
+    QString command = QString("\"%1\" \"%2\" \"%3\" > \"%4\" 2>&1")
+                          .arg(pythonExe, pythonScript, modelPath, logPath);
 
     analysisRunning = !analysisRunning;
 
@@ -815,7 +773,9 @@ void MainWindow::playBestMove() {
                     moveProcess->deleteLater();
                 });
 
-        moveProcess->start("python", args);
+        QString embeddedPython = QCoreApplication::applicationDirPath() + "/python/python.exe";
+        moveProcess->start(embeddedPython, args);
+
 
         if (!moveProcess->waitForStarted()) {
             qDebug() << "[automove] Failed to start move process";
