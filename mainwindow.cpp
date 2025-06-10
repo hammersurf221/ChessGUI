@@ -629,17 +629,6 @@ void MainWindow::on_toggleAnalysisButton_clicked() {
     QString pythonScript = QCoreApplication::applicationDirPath() + "/python/fen_tracker/main.py";
     QSettings settings("ChessGUI", "ChessGUI");
     QString modelPath = settings.value("fenModelPath").toString();
-    QString logPath = QCoreApplication::applicationDirPath() + "/analysis_log.txt";
-
-    // Log values to help debug
-    qDebug() << "[Python] Exe:" << pythonExe;
-    qDebug() << "[Python] Exists?" << QFile::exists(pythonExe);
-    qDebug() << "[Python] Script:" << pythonScript;
-    qDebug() << "[Python] Model:" << modelPath;
-
-    // Build the command
-    QString command = QString("\"%1\" \"%2\" \"%3\" > \"%4\" 2>&1")
-                          .arg(pythonExe, pythonScript, modelPath, logPath);
 
     if (analysisRunning) {
         screenshotTimer->stop();
@@ -651,15 +640,30 @@ void MainWindow::on_toggleAnalysisButton_clicked() {
         updateStatusLabel("Idle");
         setStatusLight("gray");
         analysisRunning = false;
-    } else {
-        startFenServer();
-        screenshotTimer->start(analysisInterval);
-        ui->toggleAnalysisButton->setText("Stop Analysis (Ctrl +A)");
-        updateStatusLabel("Analyzing...");
-        setStatusLight("yellow");
-        analysisRunning = true;
+        return;
     }
 
+    if (captureRegion.isNull()) {
+        on_setRegionButton_clicked();
+        if (captureRegion.isNull()) {
+            QMessageBox::warning(this, tr("No Region"), tr("Please select a board region first."));
+            ui->toggleAnalysisButton->setChecked(false);
+            return;
+        }
+    }
+
+    if (!QFile::exists(pythonExe) || !QFile::exists(pythonScript) || !QFile::exists(modelPath)) {
+        QMessageBox::warning(this, tr("Missing Files"), tr("Python executable or model not found."));
+        ui->toggleAnalysisButton->setChecked(false);
+        return;
+    }
+
+    startFenServer();
+    screenshotTimer->start(analysisInterval);
+    ui->toggleAnalysisButton->setText("Stop Analysis (Ctrl +A)");
+    updateStatusLabel("Analyzing...");
+    setStatusLight("yellow");
+    analysisRunning = true;
 }
 
 void MainWindow::runFenPrediction(const QString& imagePath) {
