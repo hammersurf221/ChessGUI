@@ -454,62 +454,30 @@ void MainWindow::startStockfish() {
             QRegularExpressionMatch bestMoveMatch = bestMovePattern.match(trimmed);
             if (bestMoveMatch.hasMatch()) {
                 QString bestMove = bestMoveMatch.captured(1);
-                QString chosenMove = bestMove;
-                int chosenScore = multipvMoves.value(1).second;
-                selectedBestMoveRank = 1;
                 qDebug() << "[timing] Stockfish evaluation:" << evalElapsed.elapsed() << "ms";
 
-                if (ui->stealthCheck->isChecked() && !multipvMoves.isEmpty()) {
-                    auto first = multipvMoves.value(1);
-                    auto second = multipvMoves.value(2);
-                    auto third = multipvMoves.value(3);
-                    chosenMove = first.first.isEmpty() ? bestMove : first.first;
-                    chosenScore = first.second;
-
-                    if (!second.first.isEmpty() && std::abs(first.second - second.second) < 30) {
-                        bool pickSecond = QRandomGenerator::global()->bounded(2);
-                        if (pickSecond) {
-                            selectedBestMoveRank = 2;
-                            chosenMove = second.first;
-                            chosenScore = second.second;
-                        }
-                    }
-
-                    double roll = QRandomGenerator::global()->generateDouble();
-                    if (roll > accuracy) {
-                        QList<int> alts;
-                        if (!second.first.isEmpty()) alts.append(2);
-                        if (!third.first.isEmpty()) alts.append(3);
-                        if (!alts.isEmpty()) {
-                            int idx = alts[QRandomGenerator::global()->bounded(alts.size())];
-                            if (idx == 2) {
-                                selectedBestMoveRank = 2;
-                                chosenMove = second.first;
-                                chosenScore = second.second;
-                            } else {
-                                selectedBestMoveRank = 3;
-                                chosenMove = third.first;
-                                chosenScore = third.second;
-                            }
-                        }
-                    }
-                    qDebug() << "[stealth] Move" << chosenMove << "score" << chosenScore;
+                MoveChoice choice = pickBestMove(ui->stealthCheck->isChecked());
+                if (choice.move.isEmpty()) {
+                    choice.move = bestMove;
+                    choice.rank = 1;
                 }
-
-
+                selectedBestMoveRank = choice.rank;
                 multipvMoves.clear();
 
+                if (ui->stealthCheck->isChecked())
+                    qDebug() << "[stealth] Move" << choice.move << "score" << choice.score;
+
                 if (lastEvaluatedFen == lastFen) {  // ✅ Ensures best move matches current board
-                    currentBestMove = chosenMove;
-                    QString label = chosenMove;
-                    if (selectedBestMoveRank > 1) {
-                        label += QString(" (Move: %1)").arg(selectedBestMoveRank);
+                    currentBestMove = choice.move;
+                    QString label = choice.move;
+                    if (choice.rank > 1) {
+                        label += QString(" (Move: %1)").arg(choice.rank);
                     }
                     ui->bestMoveDisplay->setText(label);
 
-                    if (chosenMove.length() == 4) {
-                        QString from = chosenMove.mid(0, 2);
-                        QString to = chosenMove.mid(2, 2);
+                    if (choice.move.length() == 4) {
+                        QString from = choice.move.mid(0, 2);
+                        QString to = choice.move.mid(2, 2);
                         board->setArrows({ qMakePair(from, to) });
 
                         if (isMyTurn && ui->automoveCheck->isChecked() && lastEvaluatedFen == lastFen) {
@@ -944,6 +912,39 @@ void MainWindow::openSettings()
             startStockfish();
         }
     }
+}
+
+MainWindow::MoveChoice MainWindow::pickBestMove(bool stealth)
+{
+    MoveChoice choice;
+    auto first = multipvMoves.value(1);
+    auto second = multipvMoves.value(2);
+    auto third = multipvMoves.value(3);
+    choice.move = first.first;
+    choice.score = first.second;
+    if (!stealth)
+        return choice;
+
+    if (!second.first.isEmpty() && std::abs(first.second - second.second) < 30 &&
+        QRandomGenerator::global()->bounded(2)) {
+        choice.rank = 2;
+        choice.move = second.first;
+        choice.score = second.second;
+    }
+
+    if (QRandomGenerator::global()->generateDouble() > accuracy) {
+        QList<int> candidates;
+        if (!second.first.isEmpty()) candidates.append(2);
+        if (!third.first.isEmpty()) candidates.append(3);
+        if (!candidates.isEmpty()) {
+            int idx = candidates[QRandomGenerator::global()->bounded(candidates.size())];
+            choice.rank = idx;
+            auto picked = multipvMoves.value(idx);
+            choice.move = picked.first;
+            choice.score = picked.second;
+        }
+    }
+    return choice;
 }
 
 
