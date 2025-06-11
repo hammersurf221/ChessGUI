@@ -105,9 +105,6 @@ private:
     bool restartStockfishOnCrash = true;
     bool restartFenServerOnCrash = true;
 
-    QString pythonExe;
-    QString pythonScript;
-    QString modelPath;
 
 
 protected:
