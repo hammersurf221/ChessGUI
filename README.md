@@ -56,7 +56,7 @@ This project uses a custom CNN (Convolutional Neural Network) to visually scan i
 - **🎯 Detect chessboard patterns:** Ensure accuracy in image analysis.
 - **⌨️ Global hotkeys:** Streamline user interaction.
 - **🧠 Process real-time images:** Utilize neural networks for advanced gameplay tracking.
-- **🤫 Stealth mode with best-move randomization:** Uses multiple engine lines to disguise suggestions, but stops randomizing once the evaluation is clearly winning (about +3 pawns).
+- **🤫 Stealth mode with best-move randomization:** Stockfish now evaluates the top three moves and randomly picks among those within 30 centipawns of the best move, stopping randomization once the evaluation is clearly winning (about +3 pawns).
 - **♻️ Repetition avoidance:** Detects potential threefold repetition and excludes the immediate reversal move when necessary.
 
 ---

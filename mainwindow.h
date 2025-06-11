@@ -103,6 +103,7 @@ private:
     int pendingEvalLine = -1;
 
     bool restartStockfishOnCrash = true;
+    bool restartFenServerOnCrash = true;
 
     QString pythonExe;
     QString pythonScript;
