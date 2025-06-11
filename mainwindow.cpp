@@ -443,9 +443,6 @@ void MainWindow::startStockfish() {
     // ----- one-time UCI handshake & options -----
     stockfishProcess->write("uci\n");
     stockfishProcess->waitForReadyRead(200);                    // read to “uciok”
-    stockfishProcess->write(QString("setoption name Threads value %1\n")
-                                .arg(QThread::idealThreadCount()).toUtf8());
-    stockfishProcess->write("setoption name Hash value 512\n");
     stockfishProcess->write("ucinewgame\n");                    // fresh hash *once*
 
 
