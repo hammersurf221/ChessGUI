@@ -254,6 +254,7 @@ MainWindow::~MainWindow()
     if (screenshotTimer)
         screenshotTimer->stop();
     if (fenServer && fenServer->state() != QProcess::NotRunning) {
+        restartFenServerOnCrash = false;
         fenServer->kill();
         fenServer->waitForFinished(3000);
     }
@@ -597,6 +598,44 @@ void MainWindow::startStockfish() {
 }
 
 void MainWindow::startFenServer() {
+    restartFenServerOnCrash = true;
+
+    if (fenServer) {
+        fenServer->deleteLater();
+    }
+
+    fenServer = new QProcess(this);
+    QProcess* proc = fenServer;
+
+    connect(proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+            this, [this, proc](int, QProcess::ExitStatus exitStatus) {
+                bool shouldRestart = (proc == fenServer) &&
+                                     restartFenServerOnCrash &&
+                                     exitStatus == QProcess::CrashExit;
+                proc->deleteLater();
+                if (proc == fenServer)
+                    fenServer = nullptr;
+                if (shouldRestart) {
+                    statusBar()->showMessage("FEN server crashed - restarting");
+                    updateStatusLabel("FEN server crashed - restarting");
+                    QTimer::singleShot(0, this, &MainWindow::startFenServer);
+                }
+            });
+
+    connect(proc, &QProcess::errorOccurred, this,
+            [this, proc](QProcess::ProcessError error) {
+                bool shouldRestart = (proc == fenServer) &&
+                                     restartFenServerOnCrash &&
+                                     error == QProcess::Crashed;
+                if (shouldRestart) {
+                    statusBar()->showMessage("FEN server crashed - restarting");
+                    updateStatusLabel("FEN server crashed - restarting");
+                    proc->deleteLater();
+                    fenServer = nullptr;
+                    QTimer::singleShot(0, this, &MainWindow::startFenServer);
+                }
+            });
+
     QString scriptPath = QCoreApplication::applicationDirPath() + "/python/fen_tracker/main.py";
     QString color = getMyColor();  // This returns "w" or "b"
     QStringList arguments;
@@ -605,16 +644,15 @@ void MainWindow::startFenServer() {
     qDebug() << "[fenServer] Launching python with arguments:" << arguments;
 
     QString embeddedPython = QCoreApplication::applicationDirPath() + "/python/python.exe";
-    fenServer->start(embeddedPython, arguments);
+    proc->start(embeddedPython, arguments);
 
-
-    if (!fenServer->waitForStarted()) {
+    if (!proc->waitForStarted()) {
         qDebug() << "[fenServer] Failed to start";
         return;
     }
 
     // ✅ Immediately send the color again in case user toggled it early
-    fenServer->write(QString("[color] %1\n").arg(color).toUtf8());
+    proc->write(QString("[color] %1\n").arg(color).toUtf8());
 
     connect(fenServer, &QProcess::readyReadStandardOutput, this, [=]() {
         QStringList lines = QString::fromUtf8(fenServer->readAllStandardOutput()).split("\n", Qt::SkipEmptyParts);
@@ -645,6 +683,7 @@ void MainWindow::on_toggleAnalysisButton_clicked() {
     if (analysisRunning) {
         screenshotTimer->stop();
         if (fenServer && fenServer->state() != QProcess::NotRunning) {
+            restartFenServerOnCrash = false;
             fenServer->kill();
             fenServer->waitForFinished(3000);
         }
@@ -973,17 +1012,35 @@ void MainWindow::openSettings()
 
 MainWindow::MoveChoice MainWindow::pickBestMove(bool stealth)
 {
-
-    Q_UNUSED(stealth);
     MoveChoice choice;
+    if (multipvMoves.isEmpty())
+        return choice;
+
     auto first = multipvMoves.value(1);
-    choice.move = first.first;
-    choice.score = first.second;
-    choice.rank = 1;
+    int baseScore = first.second;
 
-    return choice;
+    QVector<MoveChoice> candidates;
+    MoveChoice best;
+    best.move = first.first;
+    best.score = first.second;
+    best.rank = 1;
+    candidates.append(best);
 
+    if (stealth) {
+        for (int i = 2; i <= 3; ++i) {
+            if (multipvMoves.contains(i)) {
+                auto pair = multipvMoves.value(i);
+                if (qAbs(baseScore - pair.second) < 30) {
+                    MoveChoice alt;
+                    alt.move = pair.first;
+                    alt.score = pair.second;
+                    alt.rank = i;
+                    candidates.append(alt);
+                }
+            }
+        }
+    }
 
-
-
+    int idx = QRandomGenerator::global()->bounded(candidates.size());
+    return candidates.at(idx);
 }
