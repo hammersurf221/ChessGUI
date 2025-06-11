@@ -96,6 +96,7 @@ MainWindow::MainWindow(QWidget *parent)
 #endif
 
     fenServer = new QProcess(this);
+    startFenServer();
     board = new BoardWidget();
     QVBoxLayout* layout = new QVBoxLayout(ui->chessBoardFrame);
     layout->setContentsMargins(0, 0, 0, 0);
@@ -675,18 +676,8 @@ void MainWindow::startFenServer() {
 
 
 void MainWindow::on_toggleAnalysisButton_clicked() {
-    QString pythonExe = QCoreApplication::applicationDirPath() + "/python/python.exe";
-    QString pythonScript = QCoreApplication::applicationDirPath() + "/python/fen_tracker/main.py";
-    QSettings settings("ChessGUI", "ChessGUI");
-    QString modelPath = settings.value("fenModelPath").toString();
-
     if (analysisRunning) {
         screenshotTimer->stop();
-        if (fenServer && fenServer->state() != QProcess::NotRunning) {
-            restartFenServerOnCrash = false;
-            fenServer->kill();
-            fenServer->waitForFinished(3000);
-        }
         ui->toggleAnalysisButton->setText("Start Analysis (Ctrl +A)");
         updateStatusLabel("Idle");
         setStatusLight("gray");
@@ -703,13 +694,6 @@ void MainWindow::on_toggleAnalysisButton_clicked() {
         }
     }
 
-    if (!QFile::exists(pythonExe) || !QFile::exists(pythonScript) || !QFile::exists(modelPath)) {
-        QMessageBox::warning(this, tr("Missing Files"), tr("Python executable or model not found."));
-        ui->toggleAnalysisButton->setChecked(false);
-        return;
-    }
-
-    startFenServer();
     screenshotTimer->start(analysisInterval);
     ui->toggleAnalysisButton->setText("Stop Analysis (Ctrl +A)");
     updateStatusLabel("Analyzing...");
