@@ -540,7 +540,7 @@ void MainWindow::startStockfish() {
             QString eval;
             double numericEval = 0.0;
             bool hasNumeric = false;
-            int signForMe = (lastEvaluatedFen.section(' ', 1, 1) == getMyColor()) ? 1 : -1;
+            int signForMe = (getMyColor() == "w") ? 1 : -1;   // + = good for me
             if (mateMatch.hasMatch()) {
                 int mateMoves = mateMatch.captured(1).toInt();
                 int signedMate = signForMe >= 0 ? mateMoves : -mateMoves;
