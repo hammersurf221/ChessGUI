@@ -103,8 +103,10 @@ add_custom_command(
 )
 
 # Install into package
-install(DIRECTORY "${CMAKE_SOURCE_DIR}/external/python"
-        DESTINATION python PATTERN "__pycache__" EXCLUDE)
+# Install Python scripts without preserving the top-level directory
+install(DIRECTORY "${CMAKE_SOURCE_DIR}/external/python/"
+        DESTINATION python
+        PATTERN "__pycache__" EXCLUDE)
 
 
 install(FILES ${CPACK_INSTALL_SYSTEM_RUNTIME_LIBS}
