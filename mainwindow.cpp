@@ -665,14 +665,6 @@ void MainWindow::startFenServer() {
     // ✅ Immediately send the color again in case user toggled it early
     proc->write(QString("[color] %1\n").arg(color).toUtf8());
 
-    connect(fenServer, &QProcess::readyReadStandardOutput, this, [=]() {
-        QStringList lines = QString::fromUtf8(fenServer->readAllStandardOutput()).split("\n", Qt::SkipEmptyParts);
-        for (const QString& rawLine : lines) {
-            QString output = rawLine.trimmed();
-            qDebug() << "[fenServer stdout]" << output;
-        }
-    });
-
     connect(fenServer, &QProcess::readyReadStandardError, this, [=]() {
         QString error = QString::fromUtf8(fenServer->readAllStandardError());
         qDebug() << "[fenServer stderr]" << error;
