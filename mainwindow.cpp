@@ -22,6 +22,7 @@
 #include "settingsdialog.h"
 #include <QSettings>
 #include <QStandardPaths>
+#include <QThread>
 #include <cmath>
 #include <algorithm>
 
@@ -439,6 +440,15 @@ void MainWindow::startStockfish() {
         return;
     }
 
+    // ----- one-time UCI handshake & options -----
+    stockfishProcess->write("uci\n");
+    stockfishProcess->waitForReadyRead(200);                    // read to “uciok”
+    stockfishProcess->write(QString("setoption name Threads value %1\n")
+                                .arg(QThread::idealThreadCount()).toUtf8());
+    stockfishProcess->write("setoption name Hash value 512\n");
+    stockfishProcess->write("ucinewgame\n");                    // fresh hash *once*
+
+
     connect(stockfishProcess, &QProcess::readyReadStandardOutput, this, [=]() {
         QStringList lines = QString::fromUtf8(stockfishProcess->readAllStandardOutput()).split("\n", Qt::SkipEmptyParts);
 
@@ -721,8 +731,6 @@ void MainWindow::evaluatePosition(const QString& fen) {
     evalElapsed.restart();
 
     QStringList commands = {
-        "uci",
-        "ucinewgame",
         QString("setoption name MultiPV value %1").arg(ui->stealthCheck->isChecked() ? 3 : 1),
         "position fen " + fen,
         QString("go depth %1").arg(stockfishDepth)
