@@ -13,6 +13,7 @@
 #include <QMap>
 #include <QPair>
 #include <QElapsedTimer>
+#include <QVariantAnimation>
 #include "globalhotkeymanager.h"
 
 
@@ -65,6 +66,9 @@ private:
     void updateStatusLabel(const QString& text);
     void startFenServer();
     QLabel* evalScoreLabel = nullptr;
+    QVariantAnimation* evalAnimation = nullptr;
+    void setEvalBarValue(int value);
+    int scaleEval(int cp) const;
     void updateEvalLabel();
 
     struct MoveChoice {

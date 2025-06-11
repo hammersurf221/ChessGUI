@@ -23,6 +23,7 @@
 #include <QSettings>
 #include <QStandardPaths>
 #include <QThread>
+#include <QEasingCurve>
 #include <cmath>
 #include <algorithm>
 
@@ -124,6 +125,13 @@ MainWindow::MainWindow(QWidget *parent)
 
 
     evalScoreLabel->show();
+    evalAnimation = new QVariantAnimation(this);
+    evalAnimation->setDuration(300);
+    evalAnimation->setEasingCurve(QEasingCurve::InOutQuad);
+    connect(evalAnimation, &QVariantAnimation::valueChanged, this, [=](const QVariant &v) {
+        ui->evalBar->setValue(v.toInt());
+    });
+    connect(evalAnimation, &QVariantAnimation::valueChanged, this, &MainWindow::updateEvalLabel);
     updateEvalLabel();
     connect(ui->evalBar, &QProgressBar::valueChanged, this, &MainWindow::updateEvalLabel);
     ui->fenDisplay->setPlainText("Waiting for FEN...");
@@ -574,11 +582,11 @@ void MainWindow::startStockfish() {
                         int barValue = signForMe * (mateScore > 0 ? 1000 : -1000);
                         ui->evalBar->setMaximum(1000);
                         ui->evalBar->setMinimum(-1000);
-                        ui->evalBar->setValue(barValue);
+                        setEvalBarValue(barValue);
                     } else if (cpMatch.hasMatch()) {
                         int score = cpMatch.captured(1).toInt();
-                        score = std::clamp(score, -1000, 1000);
-                        ui->evalBar->setValue(signForMe * score);
+                        int scaled = scaleEval(score);
+                        setEvalBarValue(signForMe * scaled);
                     }
                     if (evalScoreLabel) {
                         evalScoreLabel->setText(eval);
@@ -876,6 +884,24 @@ void MainWindow::updateEvalLabel() {
     int x = (ui->evalBar->width() - evalScoreLabel->width()) / 2;
 
     evalScoreLabel->move(x, y);
+}
+
+void MainWindow::setEvalBarValue(int value) {
+    if (!evalAnimation || !ui->evalBar) {
+        if (ui->evalBar)
+            ui->evalBar->setValue(value);
+        return;
+    }
+    if (evalAnimation->state() == QVariantAnimation::Running)
+        evalAnimation->stop();
+    evalAnimation->setStartValue(ui->evalBar->value());
+    evalAnimation->setEndValue(value);
+    evalAnimation->start();
+}
+
+int MainWindow::scaleEval(int cp) const {
+    double scaled = 1000.0 * std::tanh(cp / 600.0);
+    return static_cast<int>(scaled);
 }
 
 QString MainWindow::detectUciMove(const QString& prevFen, const QString& currFen) const {
