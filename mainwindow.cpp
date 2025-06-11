@@ -38,6 +38,7 @@ MainWindow::MainWindow(QWidget *parent)
     stockfishDepth = settings.value("stockfishDepth", 15).toInt();
     autoMoveDelayMs = settings.value("autoMoveDelay", 0).toInt();
     autoMoveWhenReady = settings.value("autoMoveWhenReady", false).toBool();
+    boardTurnColor = "w";
     useAutoBoardDetectionSetting = settings.value("autoBoardDetection", true).toBool();
     forceManualRegionSetting = settings.value("forceManualRegion", false).toBool();
     stockfishPath = settings.value("stockfishPath",
@@ -202,6 +203,7 @@ MainWindow::MainWindow(QWidget *parent)
                 QString fen = output.mid(6);  // Skip "[FEN] "
                 QString pieceLayout = fen.section(" ", 0, 0);
                 QString turnColor = fen.section(" ", 1, 1);
+                boardTurnColor = turnColor;
                 qDebug() << "[timing] FEN processing:" << fenElapsed.elapsed() << "ms";
 
                 isMyTurn = (getMyColor() == turnColor);
@@ -553,59 +555,37 @@ void MainWindow::startStockfish() {
             QRegularExpressionMatch mateMatch = matePattern.match(trimmed);
             QRegularExpressionMatch cpMatch = cpPattern.match(trimmed);
 
-            QString eval;
-            double numericEval = 0.0;
-            bool hasNumeric = false;
-            int signForMe = (getMyColor() == "w") ? 1 : -1;   // + = good for me
+            // 0. Who is the engine talking about?  + = good for White
+            int povSign = (boardTurnColor == "b") ? -1 : 1;
+
+            /* ---------- mate in N ---------- */
             if (mateMatch.hasMatch()) {
-                int mateMoves = mateMatch.captured(1).toInt();
-                int signedMate = signForMe >= 0 ? mateMoves : -mateMoves;
-                eval = QString("M%1").arg(signedMate);
-                numericEval = signForMe * (mateMoves > 0 ? 1000.0 : -1000.0);
-                hasNumeric = true;
-            } else if (cpMatch.hasMatch()) {
-                int scoreCp = cpMatch.captured(1).toInt();
-                int signedCp = signForMe * scoreCp;
-                eval = QString::number(signedCp / 100.0, 'f', 2);
-                numericEval = signForMe * (scoreCp / 100.0);
-                numericEval = std::clamp(numericEval, -1000.0, 1000.0);
-                hasNumeric = true;
+                int mateMoves = mateMatch.captured(1).toInt();     // Stockfish value
+                int whiteMate = povSign * mateMoves;               // re-oriented
+                QString txt   = QString("M%1").arg(whiteMate);
+
+                ui->evalBar->setRange(-1000, 1000);
+                ui->evalBar->setValue(whiteMate > 0 ? +1000 : -1000);
+
+                evalScoreLabel->setText(txt);
+                updateEvalLabel();
+                statusBar()->showMessage("Eval: " + txt);
+                updateStatusLabel("Eval: " + txt);
             }
 
-            if (!eval.isEmpty()) {
-                statusBar()->showMessage("Eval: " + eval);
-                updateStatusLabel("Eval: " + eval);
+            /* ---------- centipawn ---------- */
+            else if (cpMatch.hasMatch()) {
+                int rawCp   = cpMatch.captured(1).toInt();         // Stockfish value
+                int whiteCp = povSign * rawCp;                     // re-oriented
+                QString txt = QString::number(whiteCp / 100.0, 'f', 2);
 
-                if (ui->evalBar) {
-                    if (mateMatch.hasMatch()) {
-                        int mateScore = mateMatch.captured(1).toInt();
-                        int barValue = signForMe * (mateScore > 0 ? 1000 : -1000);
-                        ui->evalBar->setMaximum(1000);
-                        ui->evalBar->setMinimum(-1000);
-                        setEvalBarValue(barValue);
-                    } else if (cpMatch.hasMatch()) {
-                        int score = cpMatch.captured(1).toInt();
-                        int scaled = scaleEval(score);
-                        setEvalBarValue(signForMe * scaled);
-                    }
-                    if (evalScoreLabel) {
-                        evalScoreLabel->setText(eval);
-                        updateEvalLabel();
-                    }
-                }
+                ui->evalBar->setRange(-1000, 1000);
+                ui->evalBar->setValue(std::clamp(whiteCp, -1000, 1000));
 
-                if (hasNumeric) {
-                    double delta = 0.0;
-                    if (lastEvalValid) {
-                        delta = numericEval - lastEvalForMe;
-                    }
-                    if (pendingEvalLine != -1) {
-                        appendEvalChangeToHistory(pendingEvalLine, delta);
-                        pendingEvalLine = -1;
-                    }
-                    lastEvalForMe = numericEval;
-                    lastEvalValid = true;
-                }
+                evalScoreLabel->setText(txt);
+                updateEvalLabel();
+                statusBar()->showMessage("Eval: " + txt);
+                updateStatusLabel("Eval: " + txt);
             }
         }
     });
@@ -897,11 +877,6 @@ void MainWindow::setEvalBarValue(int value) {
     evalAnimation->setStartValue(ui->evalBar->value());
     evalAnimation->setEndValue(value);
     evalAnimation->start();
-}
-
-int MainWindow::scaleEval(int cp) const {
-    double scaled = 1000.0 * std::tanh(cp / 600.0);
-    return static_cast<int>(scaled);
 }
 
 QString MainWindow::detectUciMove(const QString& prevFen, const QString& currFen) const {

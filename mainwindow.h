@@ -70,6 +70,7 @@ private:
     void setEvalBarValue(int value);
     int scaleEval(int cp) const;
     void updateEvalLabel();
+    QString boardTurnColor;   // "w" or "b"
 
     struct MoveChoice {
         QString move;
