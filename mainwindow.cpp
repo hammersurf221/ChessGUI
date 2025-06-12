@@ -992,6 +992,44 @@ void MainWindow::openSettings()
     }
 }
 
+void MainWindow::on_resetGameButton_clicked()
+{
+    if (analysisRunning) {
+        screenshotTimer->stop();
+        analysisRunning = false;
+        ui->toggleAnalysisButton->setChecked(false);
+        ui->toggleAnalysisButton->setText("Start Analysis (Ctrl +A)");
+    }
+
+    lastFen.clear();
+    lastEvaluatedFen.clear();
+    lastPlayedFen.clear();
+    lastOwnMove.clear();
+    boardTurnColor.clear();
+    repetitionTable.clear();
+    multipvMoves.clear();
+    currentBestMove.clear();
+    pendingEvalLine = -1;
+    lastEvalForMe = 0.0;
+    lastEvalValid = false;
+    moveHistoryLines.clear();
+
+    if (board) {
+        board->setPositionFromFen("", getMyColor() == "b");
+        board->setArrows({});
+    }
+
+    ui->pgnDisplay->clear();
+    ui->fenDisplay->setPlainText("Waiting for FEN...");
+    ui->bestMoveDisplay->clear();
+    evalScoreLabel->clear();
+    setEvalBarValue(0);
+
+    updateStatusLabel("Idle");
+    setStatusLight("gray");
+    statusBar()->showMessage("Game reset");
+}
+
 MainWindow::MoveChoice MainWindow::pickBestMove(bool stealth)
 {
     MoveChoice choice;

@@ -228,27 +228,34 @@ border: 1px solid #444;
     <item>
      <widget class="QWidget" name="rightPanel" native="true">
       <layout class="QVBoxLayout" name="verticalLayout_2">
-       <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_5">
          <item>
-          <widget class="QPushButton" name="setRegionButton">
+          <layout class="QHBoxLayout" name="horizontalLayout_5">
+           <item>
+            <widget class="QPushButton" name="setRegionButton">
+             <property name="text">
+              <string>Set Region</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="toggleAnalysisButton">
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+             <property name="text">
+              <string>Start Analysis (Ctrl +A)</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QPushButton" name="resetGameButton">
            <property name="text">
-            <string>Set Region</string>
+            <string>Reset Game</string>
            </property>
           </widget>
          </item>
-         <item>
-          <widget class="QPushButton" name="toggleAnalysisButton">
-           <property name="checkable">
-            <bool>true</bool>
-           </property>
-           <property name="text">
-            <string>Start Analysis (Ctrl +A)</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
        <item>
         <widget class="QGroupBox" name="selectSide">
          <property name="title">
