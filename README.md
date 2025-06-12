@@ -58,6 +58,7 @@ This project uses a custom CNN (Convolutional Neural Network) to visually scan i
 - **🧠 Process real-time images:** Utilize neural networks for advanced gameplay tracking.
 - **🤫 Stealth mode with best-move randomization:** Stockfish now evaluates the top three moves and randomly picks among those within 30 centipawns of the best move, stopping randomization once the evaluation is clearly winning (about +3 pawns).
 - **♻️ Repetition avoidance:** Detects potential threefold repetition and excludes the immediate reversal move when necessary.
+- **🔄 Reset Game button:** Quickly clear the board and history to start a new game.
 
 ---
 

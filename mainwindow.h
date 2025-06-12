@@ -34,6 +34,7 @@ public:
 private slots:
     void on_setRegionButton_clicked();
     void on_toggleAnalysisButton_clicked();
+    void on_resetGameButton_clicked();
     void openSettings();
 
 private:
