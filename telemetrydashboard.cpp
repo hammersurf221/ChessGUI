@@ -37,7 +37,31 @@ TelemetryDashboard::TelemetryDashboard(QWidget *parent)
     setWindowTitle("Telemetry");
 }
 
-void TelemetryDashboard::refresh(TelemetryManager *manager)
+void TelemetryDashboard::attachManager(TelemetryManager *m)
+{
+    if (manager)
+        disconnect(manager, nullptr, this, nullptr);
+    manager = m;
+    if (manager) {
+        connect(manager, &TelemetryManager::entryLogged,
+                this, &TelemetryDashboard::onEntryLogged);
+        connect(manager, &TelemetryManager::logCleared,
+                this, &TelemetryDashboard::onLogCleared);
+        refresh();
+    }
+}
+
+void TelemetryDashboard::onEntryLogged(const TelemetryEntry &)
+{
+    refresh();
+}
+
+void TelemetryDashboard::onLogCleared()
+{
+    refresh();
+}
+
+void TelemetryDashboard::refresh()
 {
     if (!manager)
         return;

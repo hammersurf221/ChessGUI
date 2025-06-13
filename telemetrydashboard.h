@@ -12,9 +12,16 @@ class TelemetryDashboard : public QDockWidget {
 public:
     explicit TelemetryDashboard(QWidget *parent = nullptr);
 
-    void refresh(TelemetryManager *manager);
+    void attachManager(TelemetryManager *manager);
+
+private slots:
+    void onEntryLogged(const TelemetryEntry &entry);
+    void onLogCleared();
 
 private:
+    void refresh();
+
+    TelemetryManager *manager = nullptr;
     QLabel *bestMoveLabel;
     QLabel *avgDeltaLabel;
     QTableWidget *rankTable;

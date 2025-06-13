@@ -40,7 +40,7 @@ MainWindow::MainWindow(QWidget *parent)
     telemetryManager = new TelemetryManager(this);
     telemetryDock = new TelemetryDashboard(this);
     addDockWidget(Qt::RightDockWidgetArea, telemetryDock);
-    telemetryDock->refresh(telemetryManager);
+    telemetryDock->attachManager(telemetryManager);
     randomSeed = static_cast<quint32>(QDateTime::currentMSecsSinceEpoch());
     randomGenerator.seed(randomSeed);
     QSettings settings("ChessGUI", "ChessGUI");
@@ -876,7 +876,6 @@ void MainWindow::playBestMove() {
         pendingTelemetry.thinkTimeMs = delay;
         pendingTelemetry.timestamp = QDateTime::currentDateTime().toString(Qt::ISODate);
         telemetryManager->logEntry(pendingTelemetry);
-        telemetryDock->refresh(telemetryManager);
         pendingTelemetry = TelemetryEntry();
     }
 
@@ -1173,6 +1172,4 @@ void MainWindow::clearTelemetryLog()
 {
     if (telemetryManager)
         telemetryManager->clearLog();
-    if (telemetryDock)
-        telemetryDock->refresh(telemetryManager);
 }
