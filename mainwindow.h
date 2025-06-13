@@ -76,6 +76,7 @@ private:
     int scaleEval(int cp) const;
     void updateEvalLabel();
     QString boardTurnColor;   // "w" or "b"
+    QString weightsPath;
 
     struct MoveCandidate {
         QString move;

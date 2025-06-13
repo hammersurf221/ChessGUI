@@ -60,9 +60,9 @@ SettingsDialog::SettingsDialog(QWidget *parent)
     QWidget *miscTab = new QWidget(this);
     QFormLayout *miscLayout = new QFormLayout(miscTab);
     QHBoxLayout *stockfishLayout = new QHBoxLayout();
-    stockfishPathEdit = new QLineEdit(miscTab);
+    enginePathEdit = new QLineEdit(miscTab);
     stockfishBrowseButton = new QPushButton(tr("Browse"), miscTab);
-    stockfishLayout->addWidget(stockfishPathEdit);
+    stockfishLayout->addWidget(enginePathEdit);
     stockfishLayout->addWidget(stockfishBrowseButton);
     QWidget *stockfishWidget = new QWidget(miscTab);
     stockfishWidget->setLayout(stockfishLayout);
@@ -76,6 +76,16 @@ SettingsDialog::SettingsDialog(QWidget *parent)
     QWidget *fenWidget = new QWidget(miscTab);
     fenWidget->setLayout(fenLayout);
     miscLayout->addRow(tr("FEN Prediction Model Path"), fenWidget);
+
+    QHBoxLayout *weightsLayout = new QHBoxLayout();
+    weightsPathEdit = new QLineEdit(miscTab);
+    weightsBrowseButton = new QPushButton(tr("Browse"), miscTab);
+    weightsLayout->addWidget(weightsPathEdit);
+    weightsLayout->addWidget(weightsBrowseButton);
+    QWidget *weightsWidget = new QWidget(miscTab);
+    weightsWidget->setLayout(weightsLayout);
+    miscLayout->addRow(tr("Maia Weights File (.pb.gz)"), weightsWidget);
+
 
     colorComboBox = new QComboBox(miscTab);
     colorComboBox->addItems({tr("White"), tr("Black")});
@@ -102,6 +112,12 @@ SettingsDialog::SettingsDialog(QWidget *parent)
     connect(resetButton, &QPushButton::clicked, this, &SettingsDialog::resetDefaults);
     connect(stockfishBrowseButton, &QPushButton::clicked, this, &SettingsDialog::browseStockfish);
     connect(fenModelBrowseButton, &QPushButton::clicked, this, &SettingsDialog::browseFenModel);
+    connect(weightsBrowseButton, &QPushButton::clicked, this, [this]() {
+        QString file = QFileDialog::getOpenFileName(this, tr("Select Maia Weights (.pb.gz)"));
+        if (!file.isEmpty())
+            weightsPathEdit->setText(file);
+    });
+
 
     loadSettings();
 }
@@ -111,7 +127,7 @@ SettingsDialog::~SettingsDialog() = default;
 void SettingsDialog::loadSettings()
 {
     setAnalysisInterval(settings.value("analysisInterval", 1000).toInt());
-    setStockfishDepth(settings.value("stockfishDepth", 15).toInt());
+    setEngineDepth(settings.value("engineDepth", 15).toInt());
     setStealthModeEnabled(settings.value("stealthMode", false).toBool());
 
     setUseAutoBoardDetection(settings.value("autoBoardDetection", true).toBool());
@@ -125,7 +141,11 @@ void SettingsDialog::loadSettings()
     QString defaultStockfish = QCoreApplication::applicationDirPath() + "/lc0.exe";
     QString defaultFenModel = QCoreApplication::applicationDirPath() + "/python/fen_tracker/ccn_model_default.pth";
 
-    setStockfishPath(settings.value("stockfishPath", defaultStockfish).toString());
+    QString defaultWeights = QCoreApplication::applicationDirPath() + "/maia1900.pb.gz";
+    weightsPathEdit->setText(settings.value("weightsPath", defaultWeights).toString());
+
+
+    setEnginePath(settings.value("enginePath", defaultStockfish).toString());
     setFenModelPath(settings.value("fenModelPath", defaultFenModel).toString());
     setDefaultPlayerColor(settings.value("defaultColor", "White").toString());
 }
@@ -133,15 +153,17 @@ void SettingsDialog::loadSettings()
 void SettingsDialog::saveSettings()
 {
     settings.setValue("analysisInterval", analysisInterval());
-    settings.setValue("stockfishDepth", stockfishDepth());
+    settings.setValue("engineDepth", engineDepth());
     settings.setValue("stealthMode", stealthModeEnabled());
     settings.setValue("autoBoardDetection", useAutoBoardDetection());
     settings.setValue("forceManualRegion", forceManualRegion());
     settings.setValue("autoMoveWhenReady", autoMoveWhenReady());
     settings.setValue("autoMoveDelay", autoMoveDelay());
-    settings.setValue("stockfishPath", stockfishPath());
+    settings.setValue("enginePath", enginePath());
     settings.setValue("fenModelPath", fenModelPath());
     settings.setValue("defaultColor", defaultPlayerColor());
+    settings.setValue("weightsPath", weightsPathEdit->text());
+
 }
 
 void SettingsDialog::accept()
@@ -154,7 +176,7 @@ void SettingsDialog::browseStockfish()
 {
     QString file = QFileDialog::getOpenFileName(this, tr("Select Engine Executable"));
     if (!file.isEmpty())
-        stockfishPathEdit->setText(file);
+        enginePathEdit->setText(file);
 }
 
 void SettingsDialog::browseFenModel()
@@ -167,15 +189,17 @@ void SettingsDialog::browseFenModel()
 void SettingsDialog::resetDefaults()
 {
     setAnalysisInterval(1000);
-    setStockfishDepth(15);
+    setEngineDepth(15);
     setStealthModeEnabled(false);
     setUseAutoBoardDetection(true);
     setForceManualRegion(false);
     setAutoMoveWhenReady(false);
     setAutoMoveDelay(0);
-    setStockfishPath(QCoreApplication::applicationDirPath() + "/lc0.exe");
+    setEnginePath(QCoreApplication::applicationDirPath() + "/lc0.exe");
     setFenModelPath(QCoreApplication::applicationDirPath() + "/python/fen_tracker/ccn_model_default.pth");
     setDefaultPlayerColor("White");
+    weightsPathEdit->setText(QCoreApplication::applicationDirPath() + "/maia1900.pb.gz");
+
 }
 
 // Getter and setter implementations
@@ -189,12 +213,12 @@ int SettingsDialog::analysisInterval() const
     return intervalSpinBox->value();
 }
 
-void SettingsDialog::setStockfishDepth(int depth)
+void SettingsDialog::setEngineDepth(int depth)
 {
     depthSpinBox->setValue(depth);
 }
 
-int SettingsDialog::stockfishDepth() const
+int SettingsDialog::engineDepth() const
 {
     return depthSpinBox->value();
 }
@@ -251,14 +275,14 @@ int SettingsDialog::autoMoveDelay() const
 }
 
 
-void SettingsDialog::setStockfishPath(const QString &path)
+void SettingsDialog::setEnginePath(const QString &path)
 {
-    stockfishPathEdit->setText(path);
+    enginePathEdit->setText(path);
 }
 
-QString SettingsDialog::stockfishPath() const
+QString SettingsDialog::enginePath() const
 {
-    return stockfishPathEdit->text();
+    return enginePathEdit->text();
 }
 
 void SettingsDialog::setFenModelPath(const QString &path)

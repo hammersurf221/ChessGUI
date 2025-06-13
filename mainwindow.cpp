@@ -44,13 +44,13 @@ MainWindow::MainWindow(QWidget *parent)
     randomGenerator.seed(randomSeed);
     QSettings settings("ChessGUI", "ChessGUI");
     analysisInterval = settings.value("analysisInterval", 1000).toInt();
-    engineDepth = settings.value("stockfishDepth", 15).toInt();
+    engineDepth = settings.value("engineDepth", 15).toInt();
     autoMoveDelayMs = settings.value("autoMoveDelay", 0).toInt();
     autoMoveWhenReady = settings.value("autoMoveWhenReady", false).toBool();
     boardTurnColor = "w";
     useAutoBoardDetectionSetting = settings.value("autoBoardDetection", true).toBool();
     forceManualRegionSetting = settings.value("forceManualRegion", false).toBool();
-    enginePath = settings.value("stockfishPath",
+    enginePath = settings.value("enginePath",
         QCoreApplication::applicationDirPath() + "/lc0.exe").toString();
     fenModelPath = settings.value("fenModelPath",
         QCoreApplication::applicationDirPath() +
@@ -150,7 +150,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     settingsDialog = new SettingsDialog(this);
     settingsDialog->setAnalysisInterval(analysisInterval);
-    settingsDialog->setStockfishDepth(engineDepth);
+    settingsDialog->setEngineDepth(engineDepth);
     connect(settingsDialog, &SettingsDialog::resetPgnRequested, this, [=]() {
         moveHistoryLines.clear();
         ui->pgnDisplay->clear();
@@ -466,9 +466,12 @@ void MainWindow::startEngine() {
 #ifdef USE_GPU
     backend = "cudnn";
 #endif
-    QString weights = QCoreApplication::applicationDirPath() + "/maia1900.pb";
+    QSettings settings("ChessGUI", "ChessGUI");
+    weightsPath = settings.value("weightsPath",
+        QCoreApplication::applicationDirPath() + "/maia1900.pb").toString();
     engineProcess->write(QString("setoption name Backend value %1\n").arg(backend).toUtf8());
-    engineProcess->write(QString("setoption name WeightsFile value %1\n").arg(weights).toUtf8());
+    engineProcess->write(QString("setoption name WeightsFile value %1\n")
+        .arg(weightsPath).toUtf8());
     engineProcess->write("ucinewgame\n");
 
     connect(engineProcess, &QProcess::readyReadStandardOutput, this, [=]() {
@@ -724,6 +727,7 @@ void MainWindow::evaluatePosition(const QString& fen) {
 
     QStringList commands;
     commands << "position fen " + fen;
+    commands << "setoption name MultiPV value 3";  // ✅ ADD THIS LINE
     if (ui->stealthCheck->isChecked()) {
         commands << "go depth 6";
     } else {
@@ -990,24 +994,24 @@ void MainWindow::openSettings()
     if (!settingsDialog)
         return;
     settingsDialog->setAnalysisInterval(analysisInterval);
-    settingsDialog->setStockfishDepth(engineDepth);
+    settingsDialog->setEngineDepth(engineDepth);
     settingsDialog->setStealthModeEnabled(ui->stealthCheck->isChecked());
     settingsDialog->setUseAutoBoardDetection(useAutoBoardDetectionSetting);
     settingsDialog->setForceManualRegion(forceManualRegionSetting);
     settingsDialog->setAutoMoveWhenReady(ui->automoveCheck->isChecked());
     settingsDialog->setAutoMoveDelay(autoMoveDelayMs);
-    settingsDialog->setStockfishPath(enginePath);
+    settingsDialog->setEnginePath(enginePath);
     settingsDialog->setFenModelPath(fenModelPath);
     settingsDialog->setDefaultPlayerColor(ui->whiteRadioButton->isChecked() ? "White" : "Black");
     if (settingsDialog->exec() == QDialog::Accepted) {
         analysisInterval = settingsDialog->analysisInterval();
-        engineDepth = settingsDialog->stockfishDepth();
+        engineDepth = settingsDialog->engineDepth();
         ui->stealthCheck->setChecked(settingsDialog->stealthModeEnabled());
         useAutoBoardDetectionSetting = settingsDialog->useAutoBoardDetection();
         forceManualRegionSetting = settingsDialog->forceManualRegion();
         ui->automoveCheck->setChecked(settingsDialog->autoMoveWhenReady());
         autoMoveDelayMs = settingsDialog->autoMoveDelay();
-        enginePath = settingsDialog->stockfishPath();
+        enginePath = settingsDialog->enginePath();
         fenModelPath = settingsDialog->fenModelPath();
         if (settingsDialog->defaultPlayerColor() == "Black")
             ui->blackRadioButton->setChecked(true);

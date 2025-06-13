@@ -24,8 +24,8 @@ public:
     // Core settings
     void setAnalysisInterval(int interval);
     int analysisInterval() const;
-    void setStockfishDepth(int depth);
-    int stockfishDepth() const;
+    void setEngineDepth(int depth);
+    int engineDepth() const;
     void setStealthModeEnabled(bool enabled);
     bool stealthModeEnabled() const;
 
@@ -42,12 +42,16 @@ public:
     int autoMoveDelay() const;
 
     // Misc
-    void setStockfishPath(const QString &path);
-    QString stockfishPath() const;
+    void setEnginePath(const QString &path);
+    QString enginePath() const;
     void setFenModelPath(const QString &path);
     QString fenModelPath() const;
     void setDefaultPlayerColor(const QString &color);
     QString defaultPlayerColor() const;
+
+    QString weightsPath() const;
+    void setWeightsPath(const QString &path);
+
 
 signals:
     void resetPgnRequested();
@@ -62,6 +66,10 @@ private:
     void loadSettings();
     void saveSettings();
 
+    QLineEdit *weightsPathEdit;
+    QPushButton *weightsBrowseButton;
+
+
     QTabWidget *tabs;
     QSpinBox *intervalSpinBox;
     QSpinBox *depthSpinBox;
@@ -71,7 +79,7 @@ private:
     QCheckBox *forceManualRegionCheckBox;
     QCheckBox *autoMoveCheckBox;
     QSpinBox *autoMoveDelaySpinBox;
-    QLineEdit *stockfishPathEdit;
+    QLineEdit *enginePathEdit;
     QPushButton *stockfishBrowseButton;
     QLineEdit *fenModelPathEdit;
     QPushButton *fenModelBrowseButton;
