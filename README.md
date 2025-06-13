@@ -51,7 +51,6 @@ Use it for real-time tactics training, stream overlays, or hands-free auto-playi
 | **Engine Strength** | Choose from Maia-1100, 1500, 1900, or unrestricted weights. |
 | **Stealth Mode** | Uses shallow depth then samples by softmax (temperature configurable) with optional 2nd-line injection. |
 | **Auto-Move** | Uses `pyautogui` to click the recommended move on your chess site—works with Lichess/Chess.com & most GUI boards. Toggle on/off any time. |
-| **Telemetry Dashboard** | Redesigned dock widget showing a live table of recorded moves with summary statistics, all backed by `telemetry_log.json` (rotated at 5&nbsp;MB). |
 | **Region Auto-Detect + Manual Fallback** | Detects the chessboard rectangle via OpenCV; cancel to draw region manually. |
 | **Global Hotkeys** | Toggle analysis, stealth, auto-move, overlays without leaving your game. |
 | **Cross-Platform** | Builds on Windows, macOS, and Linux with Qt 5/6 + CMake; Python 3.8 + runtime bundled or system-wide. |

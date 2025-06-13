@@ -30,10 +30,6 @@ set(PROJECT_SOURCES
         chessboard_detector.cpp
         globalhotkeymanager.h
         globalhotkeymanager.cpp
-        telemetrymanager.h
-        telemetrymanager.cpp
-        telemetrydashboard.h
-        telemetrydashboard.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

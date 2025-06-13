@@ -374,19 +374,13 @@ border: 1px solid #444;
      <string>Settings</string>
     </property>
     <addaction name="actionOpen_Settings"/>
-    <addaction name="actionClear_Telemetry_Log"/>
-   </widget>
+    </widget>
    <addaction name="menusettingsTab"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionOpen_Settings">
    <property name="text">
     <string>Open Settings...</string>
-   </property>
-  </action>
-  <action name="actionClear_Telemetry_Log">
-   <property name="text">
-    <string>Clear Telemetry Log...</string>
    </property>
   </action>
  </widget>
