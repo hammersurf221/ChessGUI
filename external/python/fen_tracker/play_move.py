@@ -43,7 +43,9 @@ def human_like_drag(start, end, steps=30):
         pyautogui.moveTo(jx, jy, duration=0)
         time.sleep(0.01 + random.uniform(0, 0.01))
 
-    pyautogui.moveTo(x4, y4, duration=0)
+    jitter_x = random.choice([-2, -1, 1, 2])
+    jitter_y = random.choice([-2, -1, 1, 2])
+    pyautogui.moveTo(x4 + jitter_x, y4 + jitter_y, duration=0)
     time.sleep(random.uniform(0.1, 0.5))
     pyautogui.mouseUp()
 

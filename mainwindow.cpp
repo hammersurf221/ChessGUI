@@ -26,6 +26,8 @@
 #include <QEasingCurve>
 #include <cmath>
 #include <algorithm>
+#include <numeric>
+#include <random>
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -33,6 +35,8 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    randomSeed = static_cast<quint32>(QDateTime::currentMSecsSinceEpoch());
+    randomGenerator.seed(randomSeed);
     QSettings settings("ChessGUI", "ChessGUI");
     analysisInterval = settings.value("analysisInterval", 1000).toInt();
     stockfishDepth = settings.value("stockfishDepth", 15).toInt();
@@ -518,7 +522,7 @@ void MainWindow::startStockfish() {
                     return;
                 }
 
-                MoveChoice choice = pickBestMove(ui->stealthCheck->isChecked());
+                MoveCandidate choice = pickBestMove(ui->stealthCheck->isChecked());
                 if (choice.move.isEmpty()) {
                     choice.move = bestMove;
                     choice.rank = 1;
@@ -707,11 +711,18 @@ void MainWindow::evaluatePosition(const QString& fen) {
 
     evalElapsed.restart();
 
-    QStringList commands = {
-        QString("setoption name MultiPV value %1").arg(ui->stealthCheck->isChecked() ? 3 : 1),
-        "position fen " + fen,
-        QString("go depth %1").arg(stockfishDepth)
-    };
+    QStringList commands;
+    if (ui->stealthCheck->isChecked()) {
+        commands << "setoption name UCI_LimitStrength value true";
+        commands << "setoption name UCI_Elo value 2300";
+        commands << "setoption name MultiPV value 3";
+        commands << "position fen " + fen;
+        commands << "go depth 12";
+    } else {
+        commands << "setoption name MultiPV value 1";
+        commands << "position fen " + fen;
+        commands << QString("go depth %1").arg(stockfishDepth);
+    }
 
     multipvMoves.clear();
     selectedBestMoveRank = 1;
@@ -826,8 +837,18 @@ void MainWindow::playBestMove() {
         }
     };
 
-    if (autoMoveDelayMs > 0)
-        QTimer::singleShot(autoMoveDelayMs, this, execute);
+    int delay = autoMoveDelayMs;
+    if (stealth) {
+        const double mean = 1500.0;
+        const double stddev = 500.0;
+        double sigma = std::sqrt(std::log(1.0 + (stddev * stddev) / (mean * mean)));
+        double mu = std::log(mean) - 0.5 * sigma * sigma;
+        std::lognormal_distribution<double> dist(mu, sigma);
+        delay += static_cast<int>(dist(randomGenerator));
+    }
+
+    if (delay > 0)
+        QTimer::singleShot(delay, this, execute);
     else
         execute();
 }
@@ -1030,37 +1051,69 @@ void MainWindow::on_resetGameButton_clicked()
     statusBar()->showMessage("Game reset");
 }
 
-MainWindow::MoveChoice MainWindow::pickBestMove(bool stealth)
+MainWindow::MoveCandidate MainWindow::pickBestMove(bool stealth)
 {
-    MoveChoice choice;
-    if (multipvMoves.isEmpty())
-        return choice;
+    MoveCandidate result;
+    if (multipvMoves.isEmpty() || !multipvMoves.contains(1))
+        return result;
 
-    auto first = multipvMoves.value(1);
-    int baseScore = first.second;
-
-    QVector<MoveChoice> candidates;
-    MoveChoice best;
-    best.move = first.first;
-    best.score = first.second;
-    best.rank = 1;
-    candidates.append(best);
-
-    if (stealth) {
-        for (int i = 2; i <= 3; ++i) {
-            if (multipvMoves.contains(i)) {
-                auto pair = multipvMoves.value(i);
-                if (qAbs(baseScore - pair.second) < 30) {
-                    MoveChoice alt;
-                    alt.move = pair.first;
-                    alt.score = pair.second;
-                    alt.rank = i;
-                    candidates.append(alt);
-                }
-            }
+    // Collect up to the top 3 moves from Stockfish
+    QVector<MoveCandidate> all;
+    for (int i = 1; i <= 3; ++i) {
+        if (multipvMoves.contains(i)) {
+            auto pair = multipvMoves.value(i);
+            MoveCandidate cand;
+            cand.move = pair.first;
+            cand.rank = i;
+            cand.score = pair.second;
+            all.append(cand);
         }
     }
+    if (all.isEmpty())
+        return result;
 
-    int idx = QRandomGenerator::global()->bounded(candidates.size());
-    return candidates.at(idx);
+    MoveCandidate best = all[0];
+    int bestScore = best.score;
+
+    if (!stealth)
+        return best;
+
+    // Filter moves more than 60cp worse than the best
+    QVector<MoveCandidate> candidates;
+    for (const MoveCandidate &c : all) {
+        if (bestScore - c.score <= 60)
+            candidates.append(c);
+    }
+    if (candidates.isEmpty())
+        candidates.append(best);
+
+    // Softmax selection using temperature
+    const double T = 0.035;
+    QVector<double> weights;
+    for (const MoveCandidate &c : candidates) {
+        double val = (c.score - bestScore) / 100.0; // pawn units relative to best
+        weights.append(std::exp(val / T));
+    }
+    double sum = std::accumulate(weights.begin(), weights.end(), 0.0);
+    QVector<double> probs;
+    for (double w : weights)
+        probs.append(w / sum);
+
+    double r = randomGenerator.generateDouble();
+    int index = 0;
+    while (index < probs.size() && r > probs[index]) {
+        r -= probs[index];
+        ++index;
+    }
+    if (index >= candidates.size())
+        index = candidates.size() - 1;
+    MoveCandidate choice = candidates[index];
+
+    // 10% chance to inject 2nd best if within 60 cp
+    if (candidates.size() >= 2 && bestScore - candidates[1].score <= 60) {
+        if (randomGenerator.generateDouble() < 0.10)
+            choice = candidates[1];
+    }
+
+    return choice;
 }
