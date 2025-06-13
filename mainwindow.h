@@ -118,10 +118,6 @@ private:
     bool lastEvalValid = false;
     int pendingEvalLine = -1;
 
-    int stealthMoveCounter = 0;
-    int nextBlunderMove = 0;
-    bool blunderPending = false;
-
     bool restartStockfishOnCrash = true;
     bool restartFenServerOnCrash = true;
 
