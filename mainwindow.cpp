@@ -42,6 +42,7 @@ MainWindow::MainWindow(QWidget *parent)
     addDockWidget(Qt::RightDockWidgetArea, telemetryDock);
     randomSeed = static_cast<quint32>(QDateTime::currentMSecsSinceEpoch());
     randomGenerator.seed(randomSeed);
+    nextBlunderMove = 20 + randomGenerator.bounded(11);
     QSettings settings("ChessGUI", "ChessGUI");
     analysisInterval = settings.value("analysisInterval", 1000).toInt();
     stockfishDepth = settings.value("stockfishDepth", 15).toInt();
@@ -720,7 +721,7 @@ void MainWindow::evaluatePosition(const QString& fen) {
     if (ui->stealthCheck->isChecked()) {
         commands << "setoption name UCI_LimitStrength value true";
         commands << "setoption name UCI_Elo value 2300";
-        commands << "setoption name MultiPV value 3";
+        commands << "setoption name MultiPV value 5";
         commands << "position fen " + fen;
         commands << "go depth 12";
     } else {
@@ -844,12 +845,21 @@ void MainWindow::playBestMove() {
 
     int delay = autoMoveDelayMs;
     if (stealth) {
-        const double mean = 1500.0;
-        const double stddev = 500.0;
+        const double mean = 2500.0;
+        const double stddev = 1000.0;
         double sigma = std::sqrt(std::log(1.0 + (stddev * stddev) / (mean * mean)));
         double mu = std::log(mean) - 0.5 * sigma * sigma;
         std::lognormal_distribution<double> dist(mu, sigma);
-        delay += static_cast<int>(dist(randomGenerator));
+        int baseDelay = static_cast<int>(dist(randomGenerator));
+        int fullMoves = moveHistoryLines.size();
+        double factor = 1.0;
+        if (fullMoves < 6)
+            factor = 0.8;
+        else if (fullMoves > 20)
+            factor = 1.2;
+        baseDelay = static_cast<int>(baseDelay * factor);
+        baseDelay = qMax(baseDelay, 1500);
+        delay += baseDelay;
     }
 
     if (ui->stealthCheck->isChecked() && !pendingTelemetry.move.isEmpty()) {
@@ -1062,6 +1072,10 @@ void MainWindow::on_resetGameButton_clicked()
     updateStatusLabel("Idle");
     setStatusLight("gray");
     statusBar()->showMessage("Game reset");
+
+    stealthMoveCounter = 0;
+    blunderPending = false;
+    nextBlunderMove = 20 + randomGenerator.bounded(11);
 }
 
 MainWindow::MoveCandidate MainWindow::pickBestMove(bool stealth)
@@ -1071,9 +1085,9 @@ MainWindow::MoveCandidate MainWindow::pickBestMove(bool stealth)
     if (multipvMoves.isEmpty() || !multipvMoves.contains(1))
         return result;
 
-    // Collect up to the top 3 moves from Stockfish
+    // Collect up to the top 5 moves from Stockfish
     QVector<MoveCandidate> all;
-    for (int i = 1; i <= 3; ++i) {
+    for (int i = 1; i <= 5; ++i) {
         if (multipvMoves.contains(i)) {
             auto pair = multipvMoves.value(i);
             MoveCandidate cand;
@@ -1093,17 +1107,17 @@ MainWindow::MoveCandidate MainWindow::pickBestMove(bool stealth)
         return best;
     }
 
-    // Filter moves more than 60cp worse than the best
+    // Use top 3 moves for probabilistic selection
     QVector<MoveCandidate> candidates;
     for (const MoveCandidate &c : all) {
-        if (bestScore - c.score <= 60)
+        if (c.rank <= 3)
             candidates.append(c);
     }
     if (candidates.isEmpty())
         candidates.append(best);
 
     // Softmax selection using temperature
-    const double T = 0.035;
+    const double T = 0.06;
     QVector<double> weights;
     for (const MoveCandidate &c : candidates) {
         double val = (c.score - bestScore) / 100.0; // pawn units relative to best
@@ -1124,6 +1138,29 @@ MainWindow::MoveCandidate MainWindow::pickBestMove(bool stealth)
         index = candidates.size() - 1;
     MoveCandidate choice = candidates[index];
 
+    // Forced injection of 2nd/3rd lines
+    if (candidates.size() >= 2 && bestScore - candidates[1].score <= 100) {
+        if (randomGenerator.generateDouble() < 0.25)
+            choice = candidates[1];
+    }
+    if (candidates.size() >= 3 && bestScore - candidates[2].score <= 150) {
+        if (randomGenerator.generateDouble() < 0.10)
+            choice = candidates[2];
+    }
+
+    // Blunder injection every 20-30 moves
+    if (blunderPending && all.size() > 3 && bestScore > -50) {
+        QVector<MoveCandidate> mistakes;
+        for (int i = 3; i < all.size(); ++i) {
+            if (bestScore - all[i].score <= 200)
+                mistakes.append(all[i]);
+        }
+        if (!mistakes.isEmpty())
+            choice = mistakes[randomGenerator.bounded(mistakes.size())];
+        blunderPending = false;
+        nextBlunderMove = stealthMoveCounter + 20 + randomGenerator.bounded(11);
+    }
+
     pendingTelemetry.fen = lastEvaluatedFen;
     pendingTelemetry.move = choice.move;
     pendingTelemetry.rank = choice.rank;
@@ -1132,11 +1169,9 @@ MainWindow::MoveCandidate MainWindow::pickBestMove(bool stealth)
     pendingTelemetry.cpDelta = bestScore - choice.score;
     pendingTelemetry.thinkTimeMs = 0;
 
-    // 10% chance to inject 2nd best if within 60 cp
-    if (candidates.size() >= 2 && bestScore - candidates[1].score <= 60) {
-        if (randomGenerator.generateDouble() < 0.10)
-            choice = candidates[1];
-    }
+    ++stealthMoveCounter;
+    if (stealthMoveCounter >= nextBlunderMove)
+        blunderPending = true;
 
     return choice;
 }
