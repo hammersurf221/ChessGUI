@@ -20,6 +20,8 @@
 #include <QFile>
 #include "globalhotkeymanager.h"
 #include "settingsdialog.h"
+#include "telemetrymanager.h"
+#include "telemetrydashboardv2.h"
 #include <QSettings>
 #include <QStandardPaths>
 #include <QThread>
@@ -33,8 +35,14 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-{
+{ 
     ui->setupUi(this);
+    telemetryManager = new TelemetryManager(this);
+    telemetryDock = new TelemetryDashboardV2(this);
+    addDockWidget(Qt::RightDockWidgetArea, telemetryDock);
+    connect(telemetryDock, &TelemetryDashboardV2::clearTelemetryRequested,
+            this, &MainWindow::clearTelemetryLog);
+    telemetryDock->refresh(telemetryManager);
     randomSeed = static_cast<quint32>(QDateTime::currentMSecsSinceEpoch());
     randomGenerator.seed(randomSeed);
     QSettings settings("ChessGUI", "ChessGUI");
@@ -865,6 +873,13 @@ void MainWindow::playBestMove() {
         delay += static_cast<int>(dist(randomGenerator));
     }
 
+    if (ui->stealthCheck->isChecked() && !pendingTelemetry.move.isEmpty()) {
+        pendingTelemetry.thinkTimeMs = delay;
+        pendingTelemetry.timestamp = QDateTime::currentDateTime().toString(Qt::ISODate);
+        telemetryManager->logEntry(pendingTelemetry);
+        telemetryDock->refresh(telemetryManager);
+        pendingTelemetry = TelemetryEntry();
+    }
 
     if (delay > 0)
         QTimer::singleShot(delay, this, execute);
@@ -1081,6 +1096,7 @@ void MainWindow::on_resetGameButton_clicked()
 MainWindow::MoveCandidate MainWindow::pickBestMove(bool stealth, double temperature, int injectPct)
 {
     MoveCandidate result;
+    pendingTelemetry = TelemetryEntry();
     if (multipvMoves.isEmpty() || !multipvMoves.contains(1))
         return result;
 
@@ -1137,11 +1153,27 @@ MainWindow::MoveCandidate MainWindow::pickBestMove(bool stealth, double temperat
         index = candidates.size() - 1;
     MoveCandidate choice = candidates[index];
 
+    pendingTelemetry.fen = lastEvaluatedFen;
+    pendingTelemetry.move = choice.move;
+    pendingTelemetry.rank = choice.rank;
+    pendingTelemetry.evalPlayed = choice.score;
+    pendingTelemetry.evalBest = bestScore;
+    pendingTelemetry.cpDelta = bestScore - choice.score;
+    pendingTelemetry.thinkTimeMs = 0;
+
     if (candidates.size() >= 2 && bestScore - candidates[1].score <= 60) {
         if (randomGenerator.generateDouble() < injectPct / 100.0)
             choice = candidates[1];
     }
 
     return choice;
+}
+
+void MainWindow::clearTelemetryLog()
+{
+    if (telemetryManager)
+        telemetryManager->clearLog();
+    if (telemetryDock)
+        telemetryDock->refresh(telemetryManager);
 }
 

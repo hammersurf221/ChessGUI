@@ -17,6 +17,8 @@
 #include <QRandomGenerator>
 #include <QDateTime>
 #include "globalhotkeymanager.h"
+#include "telemetrymanager.h"
+#include "telemetrydashboardv2.h"
 
 
 QT_BEGIN_NAMESPACE
@@ -38,6 +40,7 @@ private slots:
     void on_toggleAnalysisButton_clicked();
     void on_resetGameButton_clicked();
     void openSettings();
+    void clearTelemetryLog();
 
 private:
     Ui::MainWindow *ui;
@@ -106,6 +109,10 @@ private:
     quint32 randomSeed = 0;
     QRandomGenerator randomGenerator;
     GlobalHotkeyManager* hotkeyManager = nullptr;
+
+    TelemetryManager* telemetryManager = nullptr;
+    TelemetryDashboardV2* telemetryDock = nullptr;
+    TelemetryEntry pendingTelemetry;
 
 
     QStringList moveHistoryLines;
