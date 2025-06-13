@@ -5,6 +5,12 @@
 
 TelemetryManager::TelemetryManager(QObject *parent) : QObject(parent) {
     QString path = QCoreApplication::applicationDirPath() + "/telemetry_log.json";
+    QFileInfo info(path);
+    if (info.exists() && info.size() > 5 * 1024 * 1024) {
+        QString rotated = QCoreApplication::applicationDirPath() +
+                          "/telemetry_log_" + QDate::currentDate().toString("yyyyMMdd") + ".json";
+        QFile::rename(path, rotated);
+    }
     logFile.setFileName(path);
     if (logFile.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
         logFile.write("[");
@@ -41,6 +47,19 @@ void TelemetryManager::logEntry(const TelemetryEntry &entry) {
     QJsonDocument doc(obj);
     logFile.write(doc.toJson(QJsonDocument::Compact));
     logFile.flush();
+}
+
+void TelemetryManager::clearLog() {
+    if (logFile.isOpen()) {
+        logFile.close();
+    }
+    QFile::remove(logFile.fileName());
+    entries.clear();
+    firstEntry = true;
+    if (logFile.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
+        logFile.write("[");
+        logFile.flush();
+    }
 }
 
 double TelemetryManager::bestMovePercent() const {

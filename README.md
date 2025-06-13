@@ -35,7 +35,7 @@ The GUI then:
 * Renders the position in its own board widget  
 * Draws an arrow for Maia’s best move
 * Shows evaluation, move history, and the raw FEN
-* Offers **Stealth Mode** that limits search depth and chooses moves with human-like randomness (optional)
+* Offers **Stealth Mode** with adjustable softmax temperature and optional second-line injection
 * Can **Auto-Move** the chosen move directly on the board (optional)  
 
 Use it for real-time tactics training, stream overlays, or hands-free auto-playing—completely client-side.
@@ -48,9 +48,10 @@ Use it for real-time tactics training, stream overlays, or hands-free auto-playi
 |----------|------------|
 | **Real-time Vision** | CCN predicts an 8 × 8 grid of piece classes from 256 × 256 RGB crops. Currently only works with specific themes. You can train your own weights at  https://github.com/hammersurf221/FENgine|
 | **Maia/Lc0 Integration** | UCI handshake with backend options and evaluation parsing. |
-| **Stealth Mode** | Uses shallow depth (e.g., 6 plies) then picks from the top line via softmax with human delays. |
+| **Engine Strength** | Choose from Maia-1100, 1500, 1900, or unrestricted weights. |
+| **Stealth Mode** | Uses shallow depth then samples by softmax (temperature configurable) with optional 2nd-line injection. |
 | **Auto-Move** | Uses `pyautogui` to click the recommended move on your chess site—works with Lichess/Chess.com & most GUI boards. Toggle on/off any time. |
-| **Telemetry Dashboard** | Records stealth moves to `telemetry_log.json` and shows real-time stats in a dockable widget. |
+| **Telemetry Dashboard** | Records stealth moves to `telemetry_log.json` (rotated at 5 MB; clearable) and shows real-time stats in a dockable widget. |
 | **Region Auto-Detect + Manual Fallback** | Detects the chessboard rectangle via OpenCV; cancel to draw region manually. |
 | **Global Hotkeys** | Toggle analysis, stealth, auto-move, overlays without leaving your game. |
 | **Cross-Platform** | Builds on Windows, macOS, and Linux with Qt 5/6 + CMake; Python 3.8 + runtime bundled or system-wide. |

@@ -40,6 +40,7 @@ private slots:
     void on_toggleAnalysisButton_clicked();
     void on_resetGameButton_clicked();
     void openSettings();
+    void clearTelemetryLog();
 
 private:
     Ui::MainWindow *ui;
@@ -77,13 +78,16 @@ private:
     void updateEvalLabel();
     QString boardTurnColor;   // "w" or "b"
     QString weightsPath;
+    double stealthTemperature = 0.035;
+    int stealthInjectPct = 10;
+    QString engineStrength = "Unrestricted";
 
     struct MoveCandidate {
         QString move;
         int rank = 1;
         int score = 0;
     };
-    MoveCandidate pickBestMove(bool stealth);
+    MoveCandidate pickBestMove(bool stealth, double temperature, int injectPct);
     SettingsDialog* settingsDialog = nullptr;
     QString currentBestMove;
     void playBestMove();

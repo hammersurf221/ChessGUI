@@ -25,6 +25,7 @@ public:
     ~TelemetryManager();
 
     void logEntry(const TelemetryEntry &entry);
+    void clearLog();
 
     double bestMovePercent() const;
     double averageCpDelta() const;

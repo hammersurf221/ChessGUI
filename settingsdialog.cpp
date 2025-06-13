@@ -2,6 +2,7 @@
 #include <QTabWidget>
 #include <QCheckBox>
 #include <QSpinBox>
+#include <QDoubleSpinBox>
 #include <QLineEdit>
 #include <QPushButton>
 #include <QComboBox>
@@ -30,6 +31,13 @@ SettingsDialog::SettingsDialog(QWidget *parent)
 
     stealthCheckBox = new QCheckBox(tr("Enable Stealth Mode"), coreTab);
     coreLayout->addRow(stealthCheckBox);
+    temperatureSpinBox = new QDoubleSpinBox(coreTab);
+    temperatureSpinBox->setRange(0.01, 0.10);
+    temperatureSpinBox->setSingleStep(0.005);
+    coreLayout->addRow(tr("Softmax Temperature"), temperatureSpinBox);
+    injectSpinBox = new QSpinBox(coreTab);
+    injectSpinBox->setRange(0, 30);
+    coreLayout->addRow(tr("Inject 2nd Line (%)"), injectSpinBox);
     coreTab->setLayout(coreLayout);
     tabs->addTab(coreTab, tr("Core"));
 
@@ -86,6 +94,10 @@ SettingsDialog::SettingsDialog(QWidget *parent)
     weightsWidget->setLayout(weightsLayout);
     miscLayout->addRow(tr("Maia Weights File (.pb.gz)"), weightsWidget);
 
+    strengthComboBox = new QComboBox(miscTab);
+    strengthComboBox->addItems({tr("Unrestricted"), tr("Maia-1100"), tr("Maia-1500"), tr("Maia-1900")});
+    miscLayout->addRow(tr("Engine Strength"), strengthComboBox);
+
 
     colorComboBox = new QComboBox(miscTab);
     colorComboBox->addItems({tr("White"), tr("Black")});
@@ -137,6 +149,9 @@ void SettingsDialog::loadSettings()
     setAutoMoveWhenReady(settings.value("autoMoveWhenReady", false).toBool());
     setAutoMoveDelay(settings.value("autoMoveDelay", 0).toInt());
 
+    setStealthTemperature(settings.value("stealthTemperature", 0.035).toDouble());
+    setInjectPercent(settings.value("stealthInjectPct", 10).toInt());
+
 
     QString defaultStockfish = QCoreApplication::applicationDirPath() + "/lc0.exe";
     QString defaultFenModel = QCoreApplication::applicationDirPath() + "/python/fen_tracker/ccn_model_default.pth";
@@ -148,6 +163,7 @@ void SettingsDialog::loadSettings()
     setEnginePath(settings.value("enginePath", defaultStockfish).toString());
     setFenModelPath(settings.value("fenModelPath", defaultFenModel).toString());
     setDefaultPlayerColor(settings.value("defaultColor", "White").toString());
+    setEngineStrength(settings.value("engineStrength", "Unrestricted").toString());
 }
 
 void SettingsDialog::saveSettings()
@@ -163,6 +179,9 @@ void SettingsDialog::saveSettings()
     settings.setValue("fenModelPath", fenModelPath());
     settings.setValue("defaultColor", defaultPlayerColor());
     settings.setValue("weightsPath", weightsPathEdit->text());
+    settings.setValue("stealthTemperature", stealthTemperature());
+    settings.setValue("stealthInjectPct", injectPercent());
+    settings.setValue("engineStrength", engineStrength());
 
 }
 
@@ -199,6 +218,9 @@ void SettingsDialog::resetDefaults()
     setFenModelPath(QCoreApplication::applicationDirPath() + "/python/fen_tracker/ccn_model_default.pth");
     setDefaultPlayerColor("White");
     weightsPathEdit->setText(QCoreApplication::applicationDirPath() + "/maia1900.pb.gz");
+    setStealthTemperature(0.035);
+    setInjectPercent(10);
+    setEngineStrength("Unrestricted");
 
 }
 
@@ -305,5 +327,37 @@ void SettingsDialog::setDefaultPlayerColor(const QString &color)
 QString SettingsDialog::defaultPlayerColor() const
 {
     return colorComboBox->currentText();
+}
+
+void SettingsDialog::setStealthTemperature(double temp)
+{
+    temperatureSpinBox->setValue(temp);
+}
+
+double SettingsDialog::stealthTemperature() const
+{
+    return temperatureSpinBox->value();
+}
+
+void SettingsDialog::setInjectPercent(int pct)
+{
+    injectSpinBox->setValue(pct);
+}
+
+int SettingsDialog::injectPercent() const
+{
+    return injectSpinBox->value();
+}
+
+void SettingsDialog::setEngineStrength(const QString &strength)
+{
+    int idx = strengthComboBox->findText(strength);
+    if (idx >= 0)
+        strengthComboBox->setCurrentIndex(idx);
+}
+
+QString SettingsDialog::engineStrength() const
+{
+    return strengthComboBox->currentText();
 }
 
