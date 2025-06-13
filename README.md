@@ -10,7 +10,7 @@
 </p>
 
 <h1 align="center">FENgineLive</h1>
-<p align="center"><em>Real-time chess-board recognition · Stockfish analysis · On-screen & in-game assistance</em></p>
+<p align="center"><em>Real-time chess-board recognition · Maia (Lc0) analysis · On-screen & in-game assistance</em></p>
 
 ---
 
@@ -28,14 +28,14 @@
 ---
 
 ## Overview
-**FENgineLive** is a hybrid **Qt (C++17)** + **Python** application that captures periodic screenshots of any chess interface, converts the current position to **FEN** with a custom [*Convolutional Chess Network*](https://github.com/hammersurf221/FENgine) (CCN), and feeds it to **Stockfish**.
+**FENgineLive** is a hybrid **Qt (C++17)** + **Python** application that captures periodic screenshots of any chess interface, converts the current position to **FEN** with a custom [*Convolutional Chess Network*](https://github.com/hammersurf221/FENgine) (CCN), and feeds it to **Maia** using the **Lc0** backend.
 
 The GUI then:
 
 * Renders the position in its own board widget  
-* Draws an arrow for Stockfish’s best move  
-* Shows evaluation, move history, and the raw FEN  
-* Offers **Stealth Mode** that limits Stockfish strength and chooses moves with human-like randomness (optional)
+* Draws an arrow for Maia’s best move
+* Shows evaluation, move history, and the raw FEN
+* Offers **Stealth Mode** that limits search depth and chooses moves with human-like randomness (optional)
 * Can **Auto-Move** the chosen move directly on the board (optional)  
 
 Use it for real-time tactics training, stream overlays, or hands-free auto-playing—completely client-side.
@@ -47,8 +47,8 @@ Use it for real-time tactics training, stream overlays, or hands-free auto-playi
 | Category | Highlights |
 |----------|------------|
 | **Real-time Vision** | CCN predicts an 8 × 8 grid of piece classes from 256 × 256 RGB crops. Currently only works with specific themes. You can train your own weights at  https://github.com/hammersurf221/FENgine|
-| **Stockfish Integration** | UCI handshake, multi-PV, centipawn / mate parsing, repetition avoidance. |
-| **Stealth Mode** | Limits Stockfish to 2300 Elo, then picks from the top lines via softmax with human delays. |
+| **Maia/Lc0 Integration** | UCI handshake with backend options and evaluation parsing. |
+| **Stealth Mode** | Uses shallow depth (e.g., 6 plies) then picks from the top line via softmax with human delays. |
 | **Auto-Move** | Uses `pyautogui` to click the recommended move on your chess site—works with Lichess/Chess.com & most GUI boards. Toggle on/off any time. |
 | **Telemetry Dashboard** | Records stealth moves to `telemetry_log.json` and shows real-time stats in a dockable widget. |
 | **Region Auto-Detect + Manual Fallback** | Detects the chessboard rectangle via OpenCV; cancel to draw region manually. |
@@ -63,7 +63,7 @@ Use it for real-time tactics training, stream overlays, or hands-free auto-playi
 
 | Component | Minimum Version |
 |-----------|-----------------|
-| **Stockfish** | 15 + |
+| **Lc0** | 0.29 + |
 | **Qt** (Widgets, GUI, Core) | 5.15 or 6.x |
 | **OpenCV** | 4.x |
 | **Python** | 3.8 + |
@@ -94,7 +94,7 @@ cmake --build build --parallel
 # 3. Install Python deps
 python -m pip install -r python/requirements.txt
 
-# 4. Copy or symlink your Stockfish executable,
+# 4. Copy or symlink your Lc0 executable and Maia network,
 #    then launch the GUI:
 ./build/FENgineLive            # Linux/macOS
 build\Release\FENgineLive.exe  # Windows
@@ -116,7 +116,7 @@ build\Release\FENgineLive.exe  # Windows
 1. **Open a chess site or GUI** and start a game.  
 2. Launch **FENgineLive** – a translucent overlay appears.  
 3. Press **`Ctrl + A`** (default) to start/stop analysis.  
-4. The app captures a screenshot every *N ms* (set in **Settings → Analysis Interval**), predicts the FEN, and queries Stockfish.  
+4. The app captures a screenshot every *N ms* (set in **Settings → Analysis Interval**), predicts the FEN, and queries Maia via Lc0.
 5. Watch the best-move arrow, evaluation bar, and PGN history update in real-time.  
 6. Toggle **Stealth Mode** (*`Ctrl + S`*) to enable the humanized move picker.
 7. Toggle **Auto-Move** (*`Ctrl + M`*) if you’d like the app to physically play the move on your board.  
@@ -132,7 +132,7 @@ build\Release\FENgineLive.exe  # Windows
 | **Predicted FEN is incorrect** | You may be using a model weight trained on a different theme than the one you are currently using. Simply use a basic chess.com board and the "Icy Sea" theme on Chess.com. |
 | **Board not detected or wrong size** | For now, manually set your board region. Board autodetection is in the process of being optimized. |
 | **Auto-Move clicks in the wrong place** | Ensure your browser window is the same scale when you captured the region; re-run **Capture Region**. |
-| **No Stockfish output** | Check **Settings → Engine Path** and make sure you are using the right path to **stockfish.exe**. |
+| **No engine output** | Check **Settings → Engine Path** and make sure you are using the correct path to **lc0.exe** and that the Maia network file exists. |
 | **Hotkeys do nothing on macOS/Linux** | Global hotkeys are Windows-only for now; use menu toggles instead. |
 
 A fuller FAQ lives in **docs/TROUBLESHOOTING.md** -> ***STILL BEING MADE***.
@@ -150,7 +150,7 @@ Currently placeholders.
 
 ## Learning Resources
 * **CCN architecture** – see <https://github.com/hammersurf221/FENgine> for model code and residual enhancements.    
-* **Stockfish UCI protocol** – <https://github.com/official-stockfish/Stockfish/wiki/UCI-Protocol>  
+* **Lc0 UCI options** – <https://github.com/LeelaChessZero/lc0/wiki/Parameters>
 * **Qt Widgets** – <https://doc.qt.io/>  
 * **OpenCV 4.x tutorials** – <https://docs.opencv.org/>  
 

@@ -26,7 +26,7 @@ SettingsDialog::SettingsDialog(QWidget *parent)
 
     depthSpinBox = new QSpinBox(coreTab);
     depthSpinBox->setRange(1, 30);
-    coreLayout->addRow(tr("Stockfish Depth"), depthSpinBox);
+    coreLayout->addRow(tr("Engine Depth"), depthSpinBox);
 
     stealthCheckBox = new QCheckBox(tr("Enable Stealth Mode"), coreTab);
     coreLayout->addRow(stealthCheckBox);
@@ -66,7 +66,7 @@ SettingsDialog::SettingsDialog(QWidget *parent)
     stockfishLayout->addWidget(stockfishBrowseButton);
     QWidget *stockfishWidget = new QWidget(miscTab);
     stockfishWidget->setLayout(stockfishLayout);
-    miscLayout->addRow(tr("Path to Stockfish Executable"), stockfishWidget);
+    miscLayout->addRow(tr("Path to Engine Executable"), stockfishWidget);
 
     QHBoxLayout *fenLayout = new QHBoxLayout();
     fenModelPathEdit = new QLineEdit(miscTab);
@@ -122,7 +122,7 @@ void SettingsDialog::loadSettings()
     setAutoMoveDelay(settings.value("autoMoveDelay", 0).toInt());
 
 
-    QString defaultStockfish = QCoreApplication::applicationDirPath() + "/stockfish.exe";
+    QString defaultStockfish = QCoreApplication::applicationDirPath() + "/lc0.exe";
     QString defaultFenModel = QCoreApplication::applicationDirPath() + "/python/fen_tracker/ccn_model_default.pth";
 
     setStockfishPath(settings.value("stockfishPath", defaultStockfish).toString());
@@ -152,7 +152,7 @@ void SettingsDialog::accept()
 
 void SettingsDialog::browseStockfish()
 {
-    QString file = QFileDialog::getOpenFileName(this, tr("Select Stockfish Executable"));
+    QString file = QFileDialog::getOpenFileName(this, tr("Select Engine Executable"));
     if (!file.isEmpty())
         stockfishPathEdit->setText(file);
 }
@@ -173,7 +173,7 @@ void SettingsDialog::resetDefaults()
     setForceManualRegion(false);
     setAutoMoveWhenReady(false);
     setAutoMoveDelay(0);
-    setStockfishPath(QCoreApplication::applicationDirPath() + "/stockfish.exe");
+    setStockfishPath(QCoreApplication::applicationDirPath() + "/lc0.exe");
     setFenModelPath(QCoreApplication::applicationDirPath() + "/python/fen_tracker/ccn_model_default.pth");
     setDefaultPlayerColor("White");
 }

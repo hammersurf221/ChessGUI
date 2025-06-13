@@ -44,14 +44,14 @@ MainWindow::MainWindow(QWidget *parent)
     randomGenerator.seed(randomSeed);
     QSettings settings("ChessGUI", "ChessGUI");
     analysisInterval = settings.value("analysisInterval", 1000).toInt();
-    stockfishDepth = settings.value("stockfishDepth", 15).toInt();
+    engineDepth = settings.value("stockfishDepth", 15).toInt();
     autoMoveDelayMs = settings.value("autoMoveDelay", 0).toInt();
     autoMoveWhenReady = settings.value("autoMoveWhenReady", false).toBool();
     boardTurnColor = "w";
     useAutoBoardDetectionSetting = settings.value("autoBoardDetection", true).toBool();
     forceManualRegionSetting = settings.value("forceManualRegion", false).toBool();
-    stockfishPath = settings.value("stockfishPath",
-        QCoreApplication::applicationDirPath() + "/stockfish.exe").toString();
+    enginePath = settings.value("stockfishPath",
+        QCoreApplication::applicationDirPath() + "/lc0.exe").toString();
     fenModelPath = settings.value("fenModelPath",
         QCoreApplication::applicationDirPath() +
         "/python/fen_tracker/ccn_model_default.pth").toString();
@@ -150,14 +150,14 @@ MainWindow::MainWindow(QWidget *parent)
 
     settingsDialog = new SettingsDialog(this);
     settingsDialog->setAnalysisInterval(analysisInterval);
-    settingsDialog->setStockfishDepth(stockfishDepth);
+    settingsDialog->setStockfishDepth(engineDepth);
     connect(settingsDialog, &SettingsDialog::resetPgnRequested, this, [=]() {
         moveHistoryLines.clear();
         ui->pgnDisplay->clear();
     });
     connect(ui->actionOpen_Settings, &QAction::triggered, this, &MainWindow::openSettings);
 
-    startStockfish();  // Launch Stockfish engine
+    startEngine();  // Launch Maia/Lc0 engine
 
 
     connect(ui->whiteRadioButton, &QRadioButton::toggled, this, [=](bool checked) {
@@ -279,9 +279,9 @@ MainWindow::~MainWindow()
         fenServer->kill();
         fenServer->waitForFinished(3000);
     }
-    if (stockfishProcess && stockfishProcess->state() != QProcess::NotRunning) {
-        stockfishProcess->kill();
-        stockfishProcess->waitForFinished(3000);
+    if (engineProcess && engineProcess->state() != QProcess::NotRunning) {
+        engineProcess->kill();
+        engineProcess->waitForFinished(3000);
     }
     delete ui;
 }
@@ -416,57 +416,63 @@ void MainWindow::captureScreenshot() {
 
 }
 
-void MainWindow::startStockfish() {
-    restartStockfishOnCrash = true;
-    stockfishProcess = new QProcess(this);
+void MainWindow::startEngine() {
+    restartEngineOnCrash = true;
+    engineProcess = new QProcess(this);
 
-    QProcess* proc = stockfishProcess;
+    QProcess* proc = engineProcess;
 
     connect(proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
             this, [this, proc](int, QProcess::ExitStatus exitStatus) {
-                bool shouldRestart = (proc == stockfishProcess) &&
-                                     restartStockfishOnCrash &&
+                bool shouldRestart = (proc == engineProcess) &&
+                                     restartEngineOnCrash &&
                                      exitStatus == QProcess::CrashExit;
                 proc->deleteLater();
-                if (proc == stockfishProcess)
-                    stockfishProcess = nullptr;
+                if (proc == engineProcess)
+                    engineProcess = nullptr;
                 if (shouldRestart) {
-                    statusBar()->showMessage("Stockfish crashed - restarting");
-                    updateStatusLabel("Stockfish crashed - restarting");
-                    QTimer::singleShot(0, this, &MainWindow::startStockfish);
+                    statusBar()->showMessage("Engine crashed - restarting");
+                    updateStatusLabel("Engine crashed - restarting");
+                    QTimer::singleShot(0, this, &MainWindow::startEngine);
                 }
             });
 
     connect(proc, &QProcess::errorOccurred, this,
             [this, proc](QProcess::ProcessError error) {
-                bool shouldRestart = (proc == stockfishProcess) &&
-                                     restartStockfishOnCrash &&
+                bool shouldRestart = (proc == engineProcess) &&
+                                     restartEngineOnCrash &&
                                      error == QProcess::Crashed;
                 if (shouldRestart) {
-                    statusBar()->showMessage("Stockfish crashed - restarting");
-                    updateStatusLabel("Stockfish crashed - restarting");
+                    statusBar()->showMessage("Engine crashed - restarting");
+                    updateStatusLabel("Engine crashed - restarting");
                     proc->deleteLater();
-                    stockfishProcess = nullptr;
-                    QTimer::singleShot(0, this, &MainWindow::startStockfish);
+                    engineProcess = nullptr;
+                    QTimer::singleShot(0, this, &MainWindow::startEngine);
                 }
             });
 
-    stockfishProcess->start(this->stockfishPath, QStringList{});
+    engineProcess->start(this->enginePath, QStringList{});
 
-
-    if (!stockfishProcess->waitForStarted()) {
-        qDebug() << "Failed to start Stockfish";
+    if (!engineProcess->waitForStarted()) {
+        qDebug() << "Failed to start engine";
+        updateStatusLabel("Engine failed to start");
         return;
     }
 
     // ----- one-time UCI handshake & options -----
-    stockfishProcess->write("uci\n");
-    stockfishProcess->waitForReadyRead(200);                    // read to “uciok”
-    stockfishProcess->write("ucinewgame\n");                    // fresh hash *once*
+    engineProcess->write("uci\n");
+    engineProcess->waitForReadyRead(200);
+    QString backend = "blas";
+#ifdef USE_GPU
+    backend = "cudnn";
+#endif
+    QString weights = QCoreApplication::applicationDirPath() + "/maia1900.pb";
+    engineProcess->write(QString("setoption name Backend value %1\n").arg(backend).toUtf8());
+    engineProcess->write(QString("setoption name WeightsFile value %1\n").arg(weights).toUtf8());
+    engineProcess->write("ucinewgame\n");
 
-
-    connect(stockfishProcess, &QProcess::readyReadStandardOutput, this, [=]() {
-        QStringList lines = QString::fromUtf8(stockfishProcess->readAllStandardOutput()).split("\n", Qt::SkipEmptyParts);
+    connect(engineProcess, &QProcess::readyReadStandardOutput, this, [=]() {
+        QStringList lines = QString::fromUtf8(engineProcess->readAllStandardOutput()).split("\n", Qt::SkipEmptyParts);
 
         QRegularExpression bestMovePattern("bestmove ([a-h][1-8][a-h][1-8])");
         QRegularExpression matePattern("score mate (-?\\d+)");
@@ -496,14 +502,14 @@ void MainWindow::startStockfish() {
 
                 if (!reverseMove.isEmpty() && bestMove == reverseMove &&
                     repetitionTable.value(lastFen) >= 2 &&
-                    stockfishProcess && stockfishProcess->state() == QProcess::Running) {
+                    engineProcess && engineProcess->state() == QProcess::Running) {
 
-                    stockfishProcess->write(QString("position fen %1\n").arg(lastFen).toUtf8());
-                    stockfishProcess->write("d\n");
+                    engineProcess->write(QString("position fen %1\n").arg(lastFen).toUtf8());
+                    engineProcess->write("d\n");
 
                     QString buffer;
-                    if (stockfishProcess->waitForReadyRead(150))
-                        buffer += QString::fromUtf8(stockfishProcess->readAllStandardOutput());
+                    if (engineProcess->waitForReadyRead(150))
+                        buffer += QString::fromUtf8(engineProcess->readAllStandardOutput());
                     int idx = buffer.indexOf("Legal moves:");
                     QStringList legalMoves;
                     if (idx != -1) {
@@ -522,8 +528,8 @@ void MainWindow::startStockfish() {
                     QString cmd = QStringLiteral("position fen %1\nsearchmoves %2\ngo depth %3\n")
                                        .arg(lastFen)
                                        .arg(legalMoves.join(' '))
-                                       .arg(stockfishDepth);
-                    stockfishProcess->write(cmd.toUtf8());
+                                       .arg(engineDepth);
+                    engineProcess->write(cmd.toUtf8());
                     return;
                 }
 
@@ -556,7 +562,7 @@ void MainWindow::startStockfish() {
                         }
                     }
                 } else {
-                    qDebug() << "[Stockfish] Ignoring best move for stale FEN";
+                    qDebug() << "[Engine] Ignoring best move for stale FEN";
                 }
             }
 
@@ -569,7 +575,7 @@ void MainWindow::startStockfish() {
 
             /* ---------- mate in N ---------- */
             if (mateMatch.hasMatch()) {
-                int mateMoves = mateMatch.captured(1).toInt();     // Stockfish value
+                int mateMoves = mateMatch.captured(1).toInt();     // engine value
                 int whiteMate = povSign * mateMoves;               // re-oriented
                 QString txt   = QString("M%1").arg(whiteMate);
 
@@ -584,7 +590,7 @@ void MainWindow::startStockfish() {
 
             /* ---------- centipawn ---------- */
             else if (cpMatch.hasMatch()) {
-                int rawCp   = cpMatch.captured(1).toInt();         // Stockfish value
+                int rawCp   = cpMatch.captured(1).toInt();         // engine value
                 int whiteCp = povSign * rawCp;                     // re-oriented
                 QString txt = QString::number(whiteCp / 100.0, 'f', 2);
 
@@ -711,29 +717,24 @@ void MainWindow::runFenPrediction(const QString& imagePath) {
 void MainWindow::evaluatePosition(const QString& fen) {
     lastEvaluatedFen = fen;
 
-    if (!stockfishProcess || stockfishProcess->state() != QProcess::Running)
+    if (!engineProcess || engineProcess->state() != QProcess::Running)
         return;
 
     evalElapsed.restart();
 
     QStringList commands;
+    commands << "position fen " + fen;
     if (ui->stealthCheck->isChecked()) {
-        commands << "setoption name UCI_LimitStrength value true";
-        commands << "setoption name UCI_Elo value 2300";
-        commands << "setoption name MultiPV value 3";
-        commands << "position fen " + fen;
-        commands << "go depth 12";
+        commands << "go depth 6";
     } else {
-        commands << "setoption name MultiPV value 1";
-        commands << "position fen " + fen;
-        commands << QString("go depth %1").arg(stockfishDepth);
+        commands << QString("go depth %1").arg(engineDepth);
     }
 
     multipvMoves.clear();
     selectedBestMoveRank = 1;
 
     for (const QString& cmd : commands) {
-        stockfishProcess->write((cmd + "\n").toUtf8());
+        engineProcess->write((cmd + "\n").toUtf8());
     }
 }
 
@@ -989,24 +990,24 @@ void MainWindow::openSettings()
     if (!settingsDialog)
         return;
     settingsDialog->setAnalysisInterval(analysisInterval);
-    settingsDialog->setStockfishDepth(stockfishDepth);
+    settingsDialog->setStockfishDepth(engineDepth);
     settingsDialog->setStealthModeEnabled(ui->stealthCheck->isChecked());
     settingsDialog->setUseAutoBoardDetection(useAutoBoardDetectionSetting);
     settingsDialog->setForceManualRegion(forceManualRegionSetting);
     settingsDialog->setAutoMoveWhenReady(ui->automoveCheck->isChecked());
     settingsDialog->setAutoMoveDelay(autoMoveDelayMs);
-    settingsDialog->setStockfishPath(stockfishPath);
+    settingsDialog->setStockfishPath(enginePath);
     settingsDialog->setFenModelPath(fenModelPath);
     settingsDialog->setDefaultPlayerColor(ui->whiteRadioButton->isChecked() ? "White" : "Black");
     if (settingsDialog->exec() == QDialog::Accepted) {
         analysisInterval = settingsDialog->analysisInterval();
-        stockfishDepth = settingsDialog->stockfishDepth();
+        engineDepth = settingsDialog->stockfishDepth();
         ui->stealthCheck->setChecked(settingsDialog->stealthModeEnabled());
         useAutoBoardDetectionSetting = settingsDialog->useAutoBoardDetection();
         forceManualRegionSetting = settingsDialog->forceManualRegion();
         ui->automoveCheck->setChecked(settingsDialog->autoMoveWhenReady());
         autoMoveDelayMs = settingsDialog->autoMoveDelay();
-        stockfishPath = settingsDialog->stockfishPath();
+        enginePath = settingsDialog->stockfishPath();
         fenModelPath = settingsDialog->fenModelPath();
         if (settingsDialog->defaultPlayerColor() == "Black")
             ui->blackRadioButton->setChecked(true);
@@ -1016,12 +1017,12 @@ void MainWindow::openSettings()
             screenshotTimer->stop();
             screenshotTimer->start(analysisInterval);
         }
-        if (stockfishProcess) {
-            restartStockfishOnCrash = false;
-            stockfishProcess->kill();
-            stockfishProcess->deleteLater();
-            stockfishProcess = nullptr;
-            startStockfish();
+        if (engineProcess) {
+            restartEngineOnCrash = false;
+            engineProcess->kill();
+            engineProcess->deleteLater();
+            engineProcess = nullptr;
+            startEngine();
         }
     }
 }

@@ -47,22 +47,22 @@ private:
     QTimer* screenshotTimer;
     bool analysisRunning = false;
     QProcess* pythonProcess = nullptr;
-    QProcess* stockfishProcess = nullptr;
+    QProcess* engineProcess = nullptr;
     QString lastFen;
     int analysisInterval = 1000;  // milliseconds
-    int stockfishDepth = 15;
+    int engineDepth = 15;
     int autoMoveDelayMs = 0;
     bool autoMoveWhenReady = false;
     bool useAutoBoardDetectionSetting = true;
     bool forceManualRegionSetting = false;
-    QString stockfishPath;
+    QString enginePath;
     QString fenModelPath;
     QString getMyColor() const;
     void captureScreenshot();
     void runFenPrediction(const QString& imagePath);
     QProcess* fenServer = nullptr;
     QString myColor = "w";
-    void startStockfish();
+    void startEngine();
     void evaluatePosition(const QString& fen);
     QRect autoDetectedRegion;
     QDialog* autoOverlay = nullptr;
@@ -118,7 +118,7 @@ private:
     bool lastEvalValid = false;
     int pendingEvalLine = -1;
 
-    bool restartStockfishOnCrash = true;
+    bool restartEngineOnCrash = true;
     bool restartFenServerOnCrash = true;
 
     void setRandomSeed(quint32 seed) { randomSeed = seed; randomGenerator.seed(seed); }
