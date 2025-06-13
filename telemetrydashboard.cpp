@@ -3,34 +3,20 @@
 #include <QHeaderView>
 
 TelemetryDashboard::TelemetryDashboard(QWidget *parent)
-    : QDockWidget(parent), bestMoveLabel(new QLabel(this)), avgDeltaLabel(new QLabel(this)),
-      rankTable(new QTableWidget(3, 2, this))
+    : QDockWidget(parent), summaryLabel(new QLabel(this)), entryTable(new QTableWidget(this))
 {
     QWidget *container = new QWidget(this);
     QVBoxLayout *layout = new QVBoxLayout(container);
-    layout->addWidget(bestMoveLabel);
-    layout->addWidget(avgDeltaLabel);
+    layout->addWidget(summaryLabel);
 
-    rankTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     QStringList headers;
-    headers << "Rank" << "Count";
-    rankTable->setHorizontalHeaderLabels(headers);
-    rankTable->verticalHeader()->setVisible(false);
-    rankTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    for (int i=0;i<3;++i) {
-        rankTable->setItem(i,0,new QTableWidgetItem(QString::number(i+1)));
-        rankTable->setItem(i,1,new QTableWidgetItem("0"));
-    }
-    layout->addWidget(rankTable);
-
-    // simple bars for think time
-    for (int i=0;i<5;++i) {
-        QProgressBar *bar = new QProgressBar(this);
-        bar->setRange(0,5000);
-        bar->setValue(0);
-        thinkBars.append(bar);
-        layout->addWidget(bar);
-    }
+    headers << "Time" << "Move" << "Rank" << "cpΔ" << "Think ms";
+    entryTable->setColumnCount(headers.size());
+    entryTable->setHorizontalHeaderLabels(headers);
+    entryTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    entryTable->verticalHeader()->setVisible(false);
+    entryTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    layout->addWidget(entryTable);
 
     container->setLayout(layout);
     setWidget(container);
@@ -43,48 +29,52 @@ void TelemetryDashboard::attachManager(TelemetryManager *m)
         disconnect(manager, nullptr, this, nullptr);
     manager = m;
     if (manager) {
-        connect(manager, &TelemetryManager::entryLogged,
-                this, &TelemetryDashboard::onEntryLogged);
-        connect(manager, &TelemetryManager::logCleared,
-                this, &TelemetryDashboard::onLogCleared);
-        refresh();
+        connect(manager, &TelemetryManager::entryLogged, this, &TelemetryDashboard::onEntryLogged);
+        connect(manager, &TelemetryManager::logCleared, this, &TelemetryDashboard::onLogCleared);
+        onLogCleared();
     }
 }
 
-void TelemetryDashboard::onEntryLogged(const TelemetryEntry &)
+void TelemetryDashboard::onEntryLogged(const TelemetryEntry &entry)
 {
-    refresh();
+    addEntry(entry);
+    updateSummary();
 }
 
 void TelemetryDashboard::onLogCleared()
 {
-    refresh();
+    entryTable->clearContents();
+    entryTable->setRowCount(0);
+    updateSummary();
 }
 
-void TelemetryDashboard::refresh()
+void TelemetryDashboard::addEntry(const TelemetryEntry &e)
 {
-    if (!manager)
+    int row = entryTable->rowCount();
+    entryTable->insertRow(row);
+    entryTable->setItem(row, 0, new QTableWidgetItem(e.timestamp));
+    entryTable->setItem(row, 1, new QTableWidgetItem(e.move));
+    entryTable->setItem(row, 2, new QTableWidgetItem(QString::number(e.rank)));
+    entryTable->setItem(row, 3, new QTableWidgetItem(QString::number(e.cpDelta)));
+    entryTable->setItem(row, 4, new QTableWidgetItem(QString::number(e.thinkTimeMs)));
+    entryTable->scrollToBottom();
+}
+
+void TelemetryDashboard::updateSummary()
+{
+    if (!manager) {
+        summaryLabel->setText("No telemetry");
         return;
-    bestMoveLabel->setText(QString("Best Move %%: %1")
-                           .arg(manager->bestMovePercent(),0,'f',1));
-    avgDeltaLabel->setText(QString("Avg cpDelta: %1")
-                           .arg(manager->averageCpDelta(),0,'f',1));
-
-    QMap<int,int> counts = manager->rankCounts();
-    for (int i=1;i<=3;++i) {
-        int val = counts.value(i,0);
-        if (!rankTable->item(i-1,1))
-            rankTable->setItem(i-1,1,new QTableWidgetItem(QString::number(val)));
-        else
-            rankTable->item(i-1,1)->setText(QString::number(val));
     }
-
-    QList<int> times = manager->recentThinkTimes(thinkBars.size());
-    for (int i=0;i<thinkBars.size(); ++i) {
-        int val = 0;
-        if (i < times.size())
-            val = times.at(times.size()-1-i); // show latest at bottom
-        thinkBars[i]->setValue(val);
-    }
+    double bestPct = manager->bestMovePercent();
+    double avgDelta = manager->averageCpDelta();
+    QMap<int, int> counts = manager->rankCounts();
+    QString summary = QString("Best %1% | Avg Δcp %2 | 1st %3 2nd %4 3rd %5")
+                           .arg(bestPct, 0, 'f', 1)
+                           .arg(avgDelta, 0, 'f', 1)
+                           .arg(counts.value(1))
+                           .arg(counts.value(2))
+                           .arg(counts.value(3));
+    summaryLabel->setText(summary);
 }
 

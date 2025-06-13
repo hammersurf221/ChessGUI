@@ -4,7 +4,6 @@
 #include <QDockWidget>
 #include <QLabel>
 #include <QTableWidget>
-#include <QProgressBar>
 #include "telemetrymanager.h"
 
 class TelemetryDashboard : public QDockWidget {
@@ -19,13 +18,12 @@ private slots:
     void onLogCleared();
 
 private:
-    void refresh();
+    void addEntry(const TelemetryEntry &entry);
+    void updateSummary();
 
     TelemetryManager *manager = nullptr;
-    QLabel *bestMoveLabel;
-    QLabel *avgDeltaLabel;
-    QTableWidget *rankTable;
-    QList<QProgressBar*> thinkBars;
+    QLabel *summaryLabel;
+    QTableWidget *entryTable;
 };
 
 #endif // TELEMETRYDASHBOARD_H
