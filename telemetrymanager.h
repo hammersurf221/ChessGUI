@@ -32,6 +32,10 @@ public:
     QMap<int,int> rankCounts() const;
     QList<int> recentThinkTimes(int max = 10) const;
 
+signals:
+    void entryLogged(const TelemetryEntry &entry);
+    void logCleared();
+
 private:
     QFile logFile;
     QVector<TelemetryEntry> entries;

@@ -38,8 +38,10 @@ TelemetryManager::~TelemetryManager() {
 
 void TelemetryManager::logEntry(const TelemetryEntry &entry) {
     entries.append(entry);
-    if (!logFile.isOpen())
+    if (!logFile.isOpen()) {
+        emit entryLogged(entry);
         return;
+    }
 
     if (!firstEntry)
         logFile.write(",\n");
@@ -58,6 +60,8 @@ void TelemetryManager::logEntry(const TelemetryEntry &entry) {
     QJsonDocument doc(obj);
     logFile.write(doc.toJson(QJsonDocument::Compact));
     logFile.flush();
+
+    emit entryLogged(entry);
 }
 
 void TelemetryManager::clearLog() {
@@ -71,6 +75,8 @@ void TelemetryManager::clearLog() {
         logFile.write("[");
         logFile.flush();
     }
+
+    emit logCleared();
 }
 
 double TelemetryManager::bestMovePercent() const {
