@@ -361,3 +361,13 @@ QString SettingsDialog::engineStrength() const
     return strengthComboBox->currentText();
 }
 
+void SettingsDialog::setWeightsPath(const QString &path)
+{
+    weightsPathEdit->setText(path);
+}
+
+QString SettingsDialog::weightsPath() const
+{
+    return weightsPathEdit->text();
+}
+

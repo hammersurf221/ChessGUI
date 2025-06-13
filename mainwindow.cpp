@@ -40,6 +40,7 @@ MainWindow::MainWindow(QWidget *parent)
     telemetryManager = new TelemetryManager(this);
     telemetryDock = new TelemetryDashboard(this);
     addDockWidget(Qt::RightDockWidgetArea, telemetryDock);
+    telemetryDock->refresh(telemetryManager);
     randomSeed = static_cast<quint32>(QDateTime::currentMSecsSinceEpoch());
     randomGenerator.seed(randomSeed);
     QSettings settings("ChessGUI", "ChessGUI");
@@ -472,7 +473,7 @@ void MainWindow::startEngine() {
 #endif
     QSettings settings("ChessGUI", "ChessGUI");
     weightsPath = settings.value("weightsPath",
-        QCoreApplication::applicationDirPath() + "/maia1900.pb").toString();
+        QCoreApplication::applicationDirPath() + "/maia1900.pb.gz").toString();
     QString strengthSetting = settings.value("engineStrength", "Unrestricted").toString();
     if (strengthSetting != "Unrestricted") {
         QString fname;
@@ -1016,6 +1017,7 @@ void MainWindow::openSettings()
     settingsDialog->setAutoMoveDelay(autoMoveDelayMs);
     settingsDialog->setEnginePath(enginePath);
     settingsDialog->setFenModelPath(fenModelPath);
+    settingsDialog->setWeightsPath(weightsPath);
     settingsDialog->setDefaultPlayerColor(ui->whiteRadioButton->isChecked() ? "White" : "Black");
     settingsDialog->setStealthTemperature(stealthTemperature);
     settingsDialog->setInjectPercent(stealthInjectPct);
@@ -1030,6 +1032,7 @@ void MainWindow::openSettings()
         autoMoveDelayMs = settingsDialog->autoMoveDelay();
         enginePath = settingsDialog->enginePath();
         fenModelPath = settingsDialog->fenModelPath();
+        weightsPath = settingsDialog->weightsPath();
         stealthTemperature = settingsDialog->stealthTemperature();
         stealthInjectPct = settingsDialog->injectPercent();
         engineStrength = settingsDialog->engineStrength();
