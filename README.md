@@ -35,7 +35,7 @@ The GUI then:
 * Renders the position in its own board widget  
 * Draws an arrow for Stockfish’s best move  
 * Shows evaluation, move history, and the raw FEN  
-* Offers **Stealth Mode** that limits Stockfish strength and picks moves probabilistically with occasional inaccuracies (optional)
+* Offers **Stealth Mode** that limits Stockfish strength and chooses moves with human-like randomness (optional)
 * Can **Auto-Move** the chosen move directly on the board (optional)  
 
 Use it for real-time tactics training, stream overlays, or hands-free auto-playing—completely client-side.
@@ -48,7 +48,7 @@ Use it for real-time tactics training, stream overlays, or hands-free auto-playi
 |----------|------------|
 | **Real-time Vision** | CCN predicts an 8 × 8 grid of piece classes from 256 × 256 RGB crops. Currently only works with specific themes. You can train your own weights at  https://github.com/hammersurf221/FENgine|
 | **Stockfish Integration** | UCI handshake, multi-PV, centipawn / mate parsing, repetition avoidance. |
-| **Stealth Mode** | Limits Stockfish to 2300 Elo and uses a softmax over the top moves with occasional second‑best choices and rare blunders. |
+| **Stealth Mode** | Limits Stockfish to 2300 Elo, then picks from the top lines via softmax with human delays. |
 | **Auto-Move** | Uses `pyautogui` to click the recommended move on your chess site—works with Lichess/Chess.com & most GUI boards. Toggle on/off any time. |
 | **Telemetry Dashboard** | Records stealth moves to `telemetry_log.json` and shows real-time stats in a dockable widget. |
 | **Region Auto-Detect + Manual Fallback** | Detects the chessboard rectangle via OpenCV; cancel to draw region manually. |
