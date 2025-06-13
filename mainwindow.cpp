@@ -28,6 +28,8 @@
 #include <algorithm>
 #include <numeric>
 #include <random>
+#include "telemetrymanager.h"
+#include "telemetrydashboard.h"
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -35,6 +37,9 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    telemetryManager = new TelemetryManager(this);
+    telemetryDock = new TelemetryDashboard(this);
+    addDockWidget(Qt::RightDockWidgetArea, telemetryDock);
     randomSeed = static_cast<quint32>(QDateTime::currentMSecsSinceEpoch());
     randomGenerator.seed(randomSeed);
     QSettings settings("ChessGUI", "ChessGUI");
@@ -847,6 +852,14 @@ void MainWindow::playBestMove() {
         delay += static_cast<int>(dist(randomGenerator));
     }
 
+    if (ui->stealthCheck->isChecked() && !pendingTelemetry.move.isEmpty()) {
+        pendingTelemetry.thinkTimeMs = delay;
+        pendingTelemetry.timestamp = QDateTime::currentDateTime().toString(Qt::ISODate);
+        telemetryManager->logEntry(pendingTelemetry);
+        telemetryDock->refresh(telemetryManager);
+        pendingTelemetry = TelemetryEntry();
+    }
+
     if (delay > 0)
         QTimer::singleShot(delay, this, execute);
     else
@@ -1054,6 +1067,7 @@ void MainWindow::on_resetGameButton_clicked()
 MainWindow::MoveCandidate MainWindow::pickBestMove(bool stealth)
 {
     MoveCandidate result;
+    pendingTelemetry = TelemetryEntry();
     if (multipvMoves.isEmpty() || !multipvMoves.contains(1))
         return result;
 
@@ -1075,8 +1089,9 @@ MainWindow::MoveCandidate MainWindow::pickBestMove(bool stealth)
     MoveCandidate best = all[0];
     int bestScore = best.score;
 
-    if (!stealth)
+    if (!stealth) {
         return best;
+    }
 
     // Filter moves more than 60cp worse than the best
     QVector<MoveCandidate> candidates;
@@ -1108,6 +1123,14 @@ MainWindow::MoveCandidate MainWindow::pickBestMove(bool stealth)
     if (index >= candidates.size())
         index = candidates.size() - 1;
     MoveCandidate choice = candidates[index];
+
+    pendingTelemetry.fen = lastEvaluatedFen;
+    pendingTelemetry.move = choice.move;
+    pendingTelemetry.rank = choice.rank;
+    pendingTelemetry.evalPlayed = choice.score;
+    pendingTelemetry.evalBest = bestScore;
+    pendingTelemetry.cpDelta = bestScore - choice.score;
+    pendingTelemetry.thinkTimeMs = 0;
 
     // 10% chance to inject 2nd best if within 60 cp
     if (candidates.size() >= 2 && bestScore - candidates[1].score <= 60) {
