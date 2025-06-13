@@ -14,6 +14,8 @@
 #include <QPair>
 #include <QElapsedTimer>
 #include <QVariantAnimation>
+#include <QRandomGenerator>
+#include <QDateTime>
 #include "globalhotkeymanager.h"
 
 
@@ -73,12 +75,12 @@ private:
     void updateEvalLabel();
     QString boardTurnColor;   // "w" or "b"
 
-    struct MoveChoice {
+    struct MoveCandidate {
         QString move;
         int rank = 1;
         int score = 0;
     };
-    MoveChoice pickBestMove(bool stealth);
+    MoveCandidate pickBestMove(bool stealth);
     SettingsDialog* settingsDialog = nullptr;
     QString currentBestMove;
     void playBestMove();
@@ -97,6 +99,8 @@ private:
     QElapsedTimer screenshotElapsed;
     QElapsedTimer fenElapsed;
     QElapsedTimer evalElapsed;
+    quint32 randomSeed = 0;
+    QRandomGenerator randomGenerator;
     GlobalHotkeyManager* hotkeyManager = nullptr;
 
     QStringList moveHistoryLines;
@@ -110,6 +114,8 @@ private:
 
     bool restartStockfishOnCrash = true;
     bool restartFenServerOnCrash = true;
+
+    void setRandomSeed(quint32 seed) { randomSeed = seed; randomGenerator.seed(seed); }
 
 
 

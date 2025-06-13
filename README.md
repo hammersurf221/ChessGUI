@@ -35,7 +35,7 @@ The GUI then:
 * Renders the position in its own board widget  
 * Draws an arrow for Stockfish’s best move  
 * Shows evaluation, move history, and the raw FEN  
-* Offers **Stealth Mode** that randomises among near-best moves so suggestions look human (optional)
+* Offers **Stealth Mode** that limits Stockfish strength and chooses moves with human-like randomness (optional)
 * Can **Auto-Move** the chosen move directly on the board (optional)  
 
 Use it for real-time tactics training, stream overlays, or hands-free auto-playing—completely client-side.
@@ -48,7 +48,7 @@ Use it for real-time tactics training, stream overlays, or hands-free auto-playi
 |----------|------------|
 | **Real-time Vision** | CCN predicts an 8 × 8 grid of piece classes from 256 × 256 RGB crops. Currently only works with specific themes. You can train your own weights at  https://github.com/hammersurf221/FENgine|
 | **Stockfish Integration** | UCI handshake, multi-PV, centipawn / mate parsing, repetition avoidance. |
-| **Stealth Mode** | Randomly chooses among top moves within ± 30 cp so hints feel natural. |
+| **Stealth Mode** | Limits Stockfish to 2300 Elo, then picks from the top lines via softmax with human delays. |
 | **Auto-Move** | Uses `pyautogui` to click the recommended move on your chess site—works with Lichess/Chess.com & most GUI boards. Toggle on/off any time. |
 | **Region Auto-Detect + Manual Fallback** | Detects the chessboard rectangle via OpenCV; cancel to draw region manually. |
 | **Global Hotkeys** | Toggle analysis, stealth, auto-move, overlays without leaving your game. |
@@ -117,7 +117,7 @@ build\Release\FENgineLive.exe  # Windows
 3. Press **`Ctrl + A`** (default) to start/stop analysis.  
 4. The app captures a screenshot every *N ms* (set in **Settings → Analysis Interval**), predicts the FEN, and queries Stockfish.  
 5. Watch the best-move arrow, evaluation bar, and PGN history update in real-time.  
-6. Toggle **Stealth Mode** (*`Ctrl + S`*) to randomise among near-best moves.  
+6. Toggle **Stealth Mode** (*`Ctrl + S`*) to enable the humanized move picker.
 7. Toggle **Auto-Move** (*`Ctrl + M`*) if you’d like the app to physically play the move on your board.  
 8. Use **Reset Game** when starting a new game.
 
