@@ -1,9 +1,19 @@
 #include "telemetrymanager.h"
 #include <QCoreApplication>
 #include <QJsonDocument>
+#include <QJsonObject>
 #include <QDateTime>
+#include <QDate>
+#include <QFile>
+#include <QFileInfo>
+#include <QDir>
+#include <QStandardPaths>
 
-TelemetryManager::TelemetryManager(QObject *parent) : QObject(parent) {
+
+TelemetryManager::TelemetryManager(QObject *parent)
+    : QObject(parent),
+    firstEntry(true)
+{
     QString path = QCoreApplication::applicationDirPath() + "/telemetry_log.json";
     QFileInfo info(path);
     if (info.exists() && info.size() > 5 * 1024 * 1024) {
@@ -11,6 +21,7 @@ TelemetryManager::TelemetryManager(QObject *parent) : QObject(parent) {
                           "/telemetry_log_" + QDate::currentDate().toString("yyyyMMdd") + ".json";
         QFile::rename(path, rotated);
     }
+
     logFile.setFileName(path);
     if (logFile.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
         logFile.write("[");
