@@ -4,6 +4,8 @@
 #include "chessboard_detector.h"
 #include "boardwidget.h"
 #include "settingsdialog.h"
+#include "telemetrymanager.h"
+#include "telemetrydashboard.h"
 #include <QLabel>
 #include <QMainWindow>
 #include <QTimer>
@@ -102,6 +104,10 @@ private:
     quint32 randomSeed = 0;
     QRandomGenerator randomGenerator;
     GlobalHotkeyManager* hotkeyManager = nullptr;
+
+    TelemetryManager* telemetryManager = nullptr;
+    TelemetryDashboard* telemetryDock = nullptr;
+    TelemetryEntry pendingTelemetry;
 
     QStringList moveHistoryLines;
     QString detectUciMove(const QString& prevFen, const QString& currFen) const;

@@ -50,6 +50,7 @@ Use it for real-time tactics training, stream overlays, or hands-free auto-playi
 | **Stockfish Integration** | UCI handshake, multi-PV, centipawn / mate parsing, repetition avoidance. |
 | **Stealth Mode** | Limits Stockfish to 2300 Elo, then picks from the top lines via softmax with human delays. |
 | **Auto-Move** | Uses `pyautogui` to click the recommended move on your chess site—works with Lichess/Chess.com & most GUI boards. Toggle on/off any time. |
+| **Telemetry Dashboard** | Records stealth moves to `telemetry_log.json` and shows real-time stats in a dockable widget. |
 | **Region Auto-Detect + Manual Fallback** | Detects the chessboard rectangle via OpenCV; cancel to draw region manually. |
 | **Global Hotkeys** | Toggle analysis, stealth, auto-move, overlays without leaving your game. |
 | **Cross-Platform** | Builds on Windows, macOS, and Linux with Qt 5/6 + CMake; Python 3.8 + runtime bundled or system-wide. |
