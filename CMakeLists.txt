@@ -83,7 +83,7 @@ install(TARGETS ChessGUI
 )
 
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/assets DESTINATION .)
-install(FILES ${CMAKE_SOURCE_DIR}/stockfish.exe DESTINATION .)
+install(FILES ${CMAKE_SOURCE_DIR}/lc0.exe DESTINATION .)
 
 # Install OpenCV DLL (adjust filename if needed)
 install(FILES "C:/opencv/build/x64/vc16/bin/opencv_world4110.dll" DESTINATION .)
@@ -116,7 +116,7 @@ install(DIRECTORY "${CMAKE_SOURCE_DIR}/external/python/"
 install(FILES ${CPACK_INSTALL_SYSTEM_RUNTIME_LIBS}
         DESTINATION python)
 
-file(COPY ${CMAKE_SOURCE_DIR}/stockfish.exe DESTINATION ${CMAKE_BINARY_DIR})
+file(COPY ${CMAKE_SOURCE_DIR}/lc0.exe DESTINATION ${CMAKE_BINARY_DIR})
 
 # Copy assets folder to build directory
 add_custom_command(
