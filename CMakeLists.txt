@@ -83,12 +83,21 @@ install(TARGETS ChessGUI
 )
 
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/assets DESTINATION .)
-install(FILES ${CMAKE_SOURCE_DIR}/lc0.exe DESTINATION .)
 
-# Install OpenCV DLL (adjust filename if needed)
-install(FILES "C:/opencv/build/x64/vc16/bin/opencv_world4110.dll" DESTINATION .)
+# Bundle Lc0 engine
+set(LC0_DIR ${CMAKE_SOURCE_DIR}/external/lc0)
+if(EXISTS "${LC0_DIR}/lc0.exe")
+    install(DIRECTORY ${LC0_DIR}/ DESTINATION lc0)
+else()
+    message(WARNING "Lc0 engine not found: ${LC0_DIR}")
+endif()
 
-# Install all Qt DLLs copied by windeployqt into staging/
+# Bundle Python scripts
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/external/python/
+        DESTINATION python
+        PATTERN "__pycache__" EXCLUDE)
+
+# Install runtime libraries from Qt deployment
 install(DIRECTORY "${CMAKE_BINARY_DIR}/staging/"
         DESTINATION .
         FILES_MATCHING PATTERN "*.dll")
@@ -97,34 +106,18 @@ if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(ChessGUI)
 endif()
 
-# Copy python to build output
-add_custom_command(
-    TARGET ${PROJECT_NAME} POST_BUILD
+# Add post-build copy of runtime folders
+add_custom_command(TARGET ChessGUI POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${CMAKE_SOURCE_DIR}/external/python"
-            "$<TARGET_FILE_DIR:${PROJECT_NAME}>/python"
-    COMMENT "Copying Python folder to build output..."
-)
-
-# Install into package
-# Install Python scripts without preserving the top-level directory
-install(DIRECTORY "${CMAKE_SOURCE_DIR}/external/python/"
-        DESTINATION python
-        PATTERN "__pycache__" EXCLUDE)
-
-
-install(FILES ${CPACK_INSTALL_SYSTEM_RUNTIME_LIBS}
-        DESTINATION python)
-
-file(COPY ${CMAKE_SOURCE_DIR}/lc0.exe DESTINATION ${CMAKE_BINARY_DIR})
-
-# Copy assets folder to build directory
-add_custom_command(
-    TARGET ${PROJECT_NAME} POST_BUILD
+            ${CMAKE_SOURCE_DIR}/assets
+            $<TARGET_FILE_DIR:ChessGUI>/assets
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${CMAKE_SOURCE_DIR}/assets"
-            "$<TARGET_FILE_DIR:${PROJECT_NAME}>/assets"
-    COMMENT "Copying assets folder to build output..."
+            ${LC0_DIR}
+            $<TARGET_FILE_DIR:ChessGUI>/lc0
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${CMAKE_SOURCE_DIR}/external/python
+            $<TARGET_FILE_DIR:ChessGUI>/python
+    COMMENT "Copying runtime folders: assets/, lc0/, python/"
 )
 
 # Find OpenCV - assumes OpenCV_DIR is passed at configure time

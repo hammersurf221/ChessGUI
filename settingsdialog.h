@@ -8,6 +8,7 @@
 class QTabWidget;
 class QCheckBox;
 class QSpinBox;
+class QDoubleSpinBox;
 class QLineEdit;
 class QPushButton;
 class QComboBox;
@@ -28,6 +29,10 @@ public:
     int engineDepth() const;
     void setStealthModeEnabled(bool enabled);
     bool stealthModeEnabled() const;
+    void setStealthTemperature(double temp);
+    double stealthTemperature() const;
+    void setInjectPercent(int pct);
+    int injectPercent() const;
 
     // Board detection
     void setUseAutoBoardDetection(bool use);
@@ -48,6 +53,8 @@ public:
     QString fenModelPath() const;
     void setDefaultPlayerColor(const QString &color);
     QString defaultPlayerColor() const;
+    void setEngineStrength(const QString &strength);
+    QString engineStrength() const;
 
     QString weightsPath() const;
     void setWeightsPath(const QString &path);
@@ -84,6 +91,9 @@ private:
     QLineEdit *fenModelPathEdit;
     QPushButton *fenModelBrowseButton;
     QComboBox *colorComboBox;
+    QDoubleSpinBox *temperatureSpinBox;
+    QSpinBox *injectSpinBox;
+    QComboBox *strengthComboBox;
 
     QPushButton *resetButton;
     QDialogButtonBox *buttonBox;

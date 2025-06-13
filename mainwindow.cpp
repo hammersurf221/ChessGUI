@@ -47,6 +47,9 @@ MainWindow::MainWindow(QWidget *parent)
     engineDepth = settings.value("engineDepth", 15).toInt();
     autoMoveDelayMs = settings.value("autoMoveDelay", 0).toInt();
     autoMoveWhenReady = settings.value("autoMoveWhenReady", false).toBool();
+    stealthTemperature = settings.value("stealthTemperature", 0.035).toDouble();
+    stealthInjectPct = settings.value("stealthInjectPct", 10).toInt();
+    engineStrength = settings.value("engineStrength", "Unrestricted").toString();
     boardTurnColor = "w";
     useAutoBoardDetectionSetting = settings.value("autoBoardDetection", true).toBool();
     forceManualRegionSetting = settings.value("forceManualRegion", false).toBool();
@@ -156,6 +159,7 @@ MainWindow::MainWindow(QWidget *parent)
         ui->pgnDisplay->clear();
     });
     connect(ui->actionOpen_Settings, &QAction::triggered, this, &MainWindow::openSettings);
+    connect(ui->actionClear_Telemetry_Log, &QAction::triggered, this, &MainWindow::clearTelemetryLog);
 
     startEngine();  // Launch Maia/Lc0 engine
 
@@ -469,6 +473,16 @@ void MainWindow::startEngine() {
     QSettings settings("ChessGUI", "ChessGUI");
     weightsPath = settings.value("weightsPath",
         QCoreApplication::applicationDirPath() + "/maia1900.pb").toString();
+    QString strengthSetting = settings.value("engineStrength", "Unrestricted").toString();
+    if (strengthSetting != "Unrestricted") {
+        QString fname;
+        if (strengthSetting == "Maia-1100") fname = "maia1100.pb.gz";
+        else if (strengthSetting == "Maia-1500") fname = "maia1500.pb.gz";
+        else if (strengthSetting == "Maia-1900") fname = "maia1900.pb.gz";
+        QString candidate = QCoreApplication::applicationDirPath() + "/" + fname;
+        if (QFile::exists(candidate))
+            weightsPath = candidate;
+    }
     engineProcess->write(QString("setoption name Backend value %1\n").arg(backend).toUtf8());
     engineProcess->write(QString("setoption name WeightsFile value %1\n")
         .arg(weightsPath).toUtf8());
@@ -536,7 +550,7 @@ void MainWindow::startEngine() {
                     return;
                 }
 
-                MoveCandidate choice = pickBestMove(ui->stealthCheck->isChecked());
+                MoveCandidate choice = pickBestMove(ui->stealthCheck->isChecked(), stealthTemperature, stealthInjectPct);
                 if (choice.move.isEmpty()) {
                     choice.move = bestMove;
                     choice.rank = 1;
@@ -727,7 +741,7 @@ void MainWindow::evaluatePosition(const QString& fen) {
 
     QStringList commands;
     commands << "position fen " + fen;
-    commands << "setoption name MultiPV value 3";  // ✅ ADD THIS LINE
+    commands << "setoption name Multipv value 3";
     if (ui->stealthCheck->isChecked()) {
         commands << "go depth 6";
     } else {
@@ -1003,6 +1017,9 @@ void MainWindow::openSettings()
     settingsDialog->setEnginePath(enginePath);
     settingsDialog->setFenModelPath(fenModelPath);
     settingsDialog->setDefaultPlayerColor(ui->whiteRadioButton->isChecked() ? "White" : "Black");
+    settingsDialog->setStealthTemperature(stealthTemperature);
+    settingsDialog->setInjectPercent(stealthInjectPct);
+    settingsDialog->setEngineStrength(engineStrength);
     if (settingsDialog->exec() == QDialog::Accepted) {
         analysisInterval = settingsDialog->analysisInterval();
         engineDepth = settingsDialog->engineDepth();
@@ -1013,6 +1030,9 @@ void MainWindow::openSettings()
         autoMoveDelayMs = settingsDialog->autoMoveDelay();
         enginePath = settingsDialog->enginePath();
         fenModelPath = settingsDialog->fenModelPath();
+        stealthTemperature = settingsDialog->stealthTemperature();
+        stealthInjectPct = settingsDialog->injectPercent();
+        engineStrength = settingsDialog->engineStrength();
         if (settingsDialog->defaultPlayerColor() == "Black")
             ui->blackRadioButton->setChecked(true);
         else
@@ -1069,7 +1089,7 @@ void MainWindow::on_resetGameButton_clicked()
     statusBar()->showMessage("Game reset");
 }
 
-MainWindow::MoveCandidate MainWindow::pickBestMove(bool stealth)
+MainWindow::MoveCandidate MainWindow::pickBestMove(bool stealth, double temperature, int injectPct)
 {
     MoveCandidate result;
     pendingTelemetry = TelemetryEntry();
@@ -1108,7 +1128,7 @@ MainWindow::MoveCandidate MainWindow::pickBestMove(bool stealth)
         candidates.append(best);
 
     // Softmax selection using temperature
-    const double T = 0.035;
+    double T = temperature;
     QVector<double> weights;
     for (const MoveCandidate &c : candidates) {
         double val = (c.score - bestScore) / 100.0; // pawn units relative to best
@@ -1137,11 +1157,19 @@ MainWindow::MoveCandidate MainWindow::pickBestMove(bool stealth)
     pendingTelemetry.cpDelta = bestScore - choice.score;
     pendingTelemetry.thinkTimeMs = 0;
 
-    // 10% chance to inject 2nd best if within 60 cp
+    // Chance to inject 2nd best if within 60 cp
     if (candidates.size() >= 2 && bestScore - candidates[1].score <= 60) {
-        if (randomGenerator.generateDouble() < 0.10)
+        if (randomGenerator.generateDouble() < injectPct / 100.0)
             choice = candidates[1];
     }
 
     return choice;
+}
+
+void MainWindow::clearTelemetryLog()
+{
+    if (telemetryManager)
+        telemetryManager->clearLog();
+    if (telemetryDock)
+        telemetryDock->refresh(telemetryManager);
 }
