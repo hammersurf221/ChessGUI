@@ -23,7 +23,6 @@
 #include "telemetrymanager.h"
 #include "telemetrydashboardv2.h"
 #include <QSettings>
-#include <QStandardPaths>
 #include <QThread>
 #include <QEasingCurve>
 #include <cmath>
@@ -894,7 +893,15 @@ void MainWindow::playBestMove() {
         delay += static_cast<int>(dist(randomGenerator));
     }
 
-    if (ui->stealthCheck->isChecked() && !pendingTelemetry.move.isEmpty()) {
+    if (ui->stealthCheck->isChecked()) {
+        // If pendingTelemetry.move is empty (Lc0/Maia), fill with current move.
+        if (pendingTelemetry.move.isEmpty() && !currentBestMove.isEmpty()) {
+            pendingTelemetry.move = currentBestMove;
+            pendingTelemetry.rank = 1;
+            pendingTelemetry.evalPlayed = 0; // You could try to parse a value if you want
+            pendingTelemetry.evalBest = 0;
+            pendingTelemetry.cpDelta = 0;
+        }
         pendingTelemetry.thinkTimeMs = delay;
         pendingTelemetry.timestamp = QDateTime::currentDateTime().toString(Qt::ISODate);
         telemetryManager->logEntry(pendingTelemetry);

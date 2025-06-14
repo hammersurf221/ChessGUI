@@ -1,5 +1,6 @@
 #include "telemetrydashboardv2.h"
 #include <QLabel>
+#include <QLabel>
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QWidget>
@@ -9,6 +10,7 @@
 #include <QtGraphs/qbarseries.h>
 #include <QtGraphs/qbarcategoryaxis.h>
 #include <QtGraphs/qvalueaxis.h>
+#include "telemetrymanager.h"
 
 TelemetryDashboardV2::TelemetryDashboardV2(QWidget *parent)
     : QDockWidget(parent)
