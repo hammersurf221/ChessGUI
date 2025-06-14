@@ -1,6 +1,5 @@
 #include "telemetrydashboardv2.h"
 #include <QLabel>
-#include <QLabel>
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QWidget>

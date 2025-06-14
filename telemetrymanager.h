@@ -13,6 +13,10 @@ struct TelemetryEntry {
     QString move;
     double policyProb = 0.0; // [0,1]
     int thinkTimeMs = 0;
+    int rank = 0;
+    int evalPlayed = 0;
+    int evalBest = 0;
+    int cpDelta = 0;
 };
 
 class TelemetryManager : public QObject

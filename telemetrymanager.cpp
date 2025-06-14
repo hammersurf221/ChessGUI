@@ -53,6 +53,10 @@ void TelemetryManager::logEntry(const TelemetryEntry &entry)
     obj["move"] = entry.move;
     obj["policyProb"] = entry.policyProb;
     obj["thinkTimeMs"] = entry.thinkTimeMs;
+    obj["rank"] = entry.rank;
+    obj["evalPlayed"] = entry.evalPlayed;
+    obj["evalBest"] = entry.evalBest;
+    obj["cpDelta"] = entry.cpDelta;
 
     QJsonDocument doc(obj);
     logFile.write(doc.toJson(QJsonDocument::Compact));
