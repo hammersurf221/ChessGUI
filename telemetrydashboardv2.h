@@ -3,14 +3,12 @@
 
 #include <QDockWidget>
 #include <QList>
+#include <QtCharts/QChartView>
+#include <QtCharts/QBarSeries>
+#include <QtCharts/QBarSet>
+#include <QtCharts/QBarCategoryAxis>
+#include <QtCharts/QValueAxis>
 
-namespace QtCharts {
-class QChartView;
-class QBarSeries;
-class QBarSet;
-class QBarCategoryAxis;
-class QValueAxis;
-}
 
 class QLabel;
 class QPushButton;
