@@ -1,13 +1,14 @@
 #include "telemetrydashboardv2.h"
 #include <QLabel>
 #include <QTableWidget>
+#include <QTableWidgetItem>
 #include <QHeaderView>
 #include <QProgressBar>
 #include <QPushButton>
 #include <QMap>
-#include <QVector>
 #include <QVBoxLayout>
 #include <QWidget>
+#include "telemetrymanager.h"
 
 TelemetryDashboardV2::TelemetryDashboardV2(QWidget *parent)
     : QDockWidget(parent)
@@ -68,7 +69,7 @@ void TelemetryDashboardV2::refresh(TelemetryManager *manager)
                            new QTableWidgetItem(QString::number(it.value())));
     }
 
-    QVector<int> times = manager->recentThinkTimes(thinkBars.size());
+    QList<int> times = manager->recentThinkTimes(thinkBars.size());
     for (int i = 0; i < thinkBars.size() && i < times.size(); ++i)
         thinkBars[i]->setValue(times[i]);
 }
