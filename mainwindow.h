@@ -101,6 +101,7 @@ private:
     QHash<QString, int> repetitionTable;
     bool automoveInProgress = false;
     QMap<int, QPair<QString, int>> multipvMoves;
+    QMap<QString, double> policyProbMap;
     int selectedBestMoveRank = 1;
     double accuracy = 0.9;
     QElapsedTimer screenshotElapsed;
