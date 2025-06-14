@@ -3,12 +3,8 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QWidget>
-#include <QtCharts/QChartView>
-#include <QtCharts/QChart>
-#include <QtCharts/QBarSet>
-#include <QtCharts/QBarSeries>
-#include <QtCharts/QBarCategoryAxis>
-#include <QtCharts/QValueAxis>
+#include <QProgressBar>
+#include <QHBoxLayout>
 #include "telemetrymanager.h"
 
 TelemetryDashboardV2::TelemetryDashboardV2(QWidget *parent)
@@ -19,31 +15,34 @@ TelemetryDashboardV2::TelemetryDashboardV2(QWidget *parent)
 
     averageLabel = new QLabel(tr("Average Human-likeness: N/A"), container);
 
-    barSet = new QtCharts::QBarSet(tr("Moves"));
-    series = new QtCharts::QBarSeries();
-    series->append(barSet);
-
     QStringList categories;
     categories << "<0.2" << "0.2–0.4" << "0.4–0.6" << "0.6–0.8" << ">=0.8";
-    QtCharts::QBarCategoryAxis *axisX = new QtCharts::QBarCategoryAxis();
-    axisX->append(categories);
-    axisY = new QtCharts::QValueAxis();
-    axisY->setRange(0, 1);
 
-    QtCharts::QChart *chart = new QtCharts::QChart();
-    chart->addSeries(series);
-    chart->addAxis(axisX, Qt::AlignBottom);
-    chart->addAxis(axisY, Qt::AlignLeft);
-    series->attachAxis(axisX);
-    series->attachAxis(axisY);
+    QWidget *histWidget = new QWidget(container);
+    QHBoxLayout *histLayout = new QHBoxLayout(histWidget);
+    histLayout->setSpacing(4);
 
-    chartView = new QtCharts::QChartView(chart, container);
-    chartView->setRenderHint(QPainter::Antialiasing);
+    for (const QString &cat : categories) {
+        QVBoxLayout *binLayout = new QVBoxLayout();
+        QProgressBar *bar = new QProgressBar(histWidget);
+        bar->setOrientation(Qt::Vertical);
+        bar->setRange(0, 1);
+        bar->setValue(0);
+        bar->setTextVisible(false);
+        QLabel *label = new QLabel(cat, histWidget);
+        label->setAlignment(Qt::AlignHCenter);
+        binLayout->addWidget(bar, 1);
+        binLayout->addWidget(label);
+        histLayout->addLayout(binLayout);
+        bars.append(bar);
+    }
+
+    histWidget->setLayout(histLayout);
 
     clearButton = new QPushButton(tr("Clear Telemetry"), container);
 
     layout->addWidget(averageLabel);
-    layout->addWidget(chartView);
+    layout->addWidget(histWidget);
     layout->addStretch();
     layout->addWidget(clearButton);
 
@@ -65,10 +64,11 @@ void TelemetryDashboardV2::refresh(TelemetryManager *manager)
 
     QVector<int> counts = manager->policyHistogram();
     int maxVal = 1;
-    for (int i = 0; i < counts.size(); ++i) {
-        barSet->replace(i, counts[i]);
+    for (int i = 0; i < counts.size() && i < bars.size(); ++i) {
+        bars[i]->setValue(counts[i]);
         if (counts[i] > maxVal)
             maxVal = counts[i];
     }
-    axisY->setMax(maxVal);
+    for (QProgressBar *bar : bars)
+        bar->setMaximum(maxVal);
 }

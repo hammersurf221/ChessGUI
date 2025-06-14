@@ -2,12 +2,8 @@
 #define TELEMETRYDASHBOARDV2_H
 
 #include <QDockWidget>
-#include <QList>
-#include <QtCharts/QChartView>
-#include <QtCharts/QBarSeries>
-#include <QtCharts/QBarSet>
-#include <QtCharts/QBarCategoryAxis>
-#include <QtCharts/QValueAxis>
+#include <QVector>
+#include <QProgressBar>
 
 
 class QLabel;
@@ -27,10 +23,7 @@ signals:
 
 private:
     QLabel *averageLabel;
-    QtCharts::QChartView *chartView;
-    QtCharts::QBarSeries *series;
-    QtCharts::QBarSet *barSet;
-    QtCharts::QValueAxis *axisY;
+    QVector<QProgressBar*> bars;
     QPushButton *clearButton;
 };
 
