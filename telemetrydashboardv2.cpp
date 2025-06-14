@@ -3,12 +3,12 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QWidget>
-#include <QtGraphs/qchartview.h>
-#include <QtGraphs/qchart.h>
-#include <QtGraphs/qbarset.h>
-#include <QtGraphs/qbarseries.h>
-#include <QtGraphs/qbarcategoryaxis.h>
-#include <QtGraphs/qvalueaxis.h>
+#include <QtCharts/QChartView>
+#include <QtCharts/QChart>
+#include <QtCharts/QBarSet>
+#include <QtCharts/QBarSeries>
+#include <QtCharts/QBarCategoryAxis>
+#include <QtCharts/QValueAxis>
 #include "telemetrymanager.h"
 
 TelemetryDashboardV2::TelemetryDashboardV2(QWidget *parent)
@@ -19,25 +19,25 @@ TelemetryDashboardV2::TelemetryDashboardV2(QWidget *parent)
 
     averageLabel = new QLabel(tr("Average Human-likeness: N/A"), container);
 
-    barSet = new QtGraphs::QBarSet(tr("Moves"));
-    series = new QtGraphs::QBarSeries();
+    barSet = new QtCharts::QBarSet(tr("Moves"));
+    series = new QtCharts::QBarSeries();
     series->append(barSet);
 
     QStringList categories;
     categories << "<0.2" << "0.2–0.4" << "0.4–0.6" << "0.6–0.8" << ">=0.8";
-    QtGraphs::QBarCategoryAxis *axisX = new QtGraphs::QBarCategoryAxis();
+    QtCharts::QBarCategoryAxis *axisX = new QtCharts::QBarCategoryAxis();
     axisX->append(categories);
-    axisY = new QtGraphs::QValueAxis();
+    axisY = new QtCharts::QValueAxis();
     axisY->setRange(0, 1);
 
-    QtGraphs::QChart *chart = new QtGraphs::QChart();
+    QtCharts::QChart *chart = new QtCharts::QChart();
     chart->addSeries(series);
     chart->addAxis(axisX, Qt::AlignBottom);
     chart->addAxis(axisY, Qt::AlignLeft);
     series->attachAxis(axisX);
     series->attachAxis(axisY);
 
-    chartView = new QtGraphs::QChartView(chart, container);
+    chartView = new QtCharts::QChartView(chart, container);
     chartView->setRenderHint(QPainter::Antialiasing);
 
     clearButton = new QPushButton(tr("Clear Telemetry"), container);

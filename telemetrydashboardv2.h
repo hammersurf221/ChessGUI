@@ -4,7 +4,7 @@
 #include <QDockWidget>
 #include <QList>
 
-namespace QtGraphs {
+namespace QtCharts {
 class QChartView;
 class QBarSeries;
 class QBarSet;
@@ -29,10 +29,10 @@ signals:
 
 private:
     QLabel *averageLabel;
-    QtGraphs::QChartView *chartView;
-    QtGraphs::QBarSeries *series;
-    QtGraphs::QBarSet *barSet;
-    QtGraphs::QValueAxis *axisY;
+    QtCharts::QChartView *chartView;
+    QtCharts::QBarSeries *series;
+    QtCharts::QBarSet *barSet;
+    QtCharts::QValueAxis *axisY;
     QPushButton *clearButton;
 };
 
