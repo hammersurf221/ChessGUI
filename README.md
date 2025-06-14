@@ -65,7 +65,7 @@ Use it for real-time tactics training, stream overlays, or hands-free auto-playi
 | Component | Minimum Version |
 |-----------|-----------------|
 | **Lc0** | 0.29 + |
-| **Qt** (Widgets, GUI, Core) | 5.15 or 6.x |
+| **Qt** (Widgets, GUI, Core, Charts) | 5.15 or 6.x |
 | **OpenCV** | 4.x |
 | **Python** | 3.8 + |
 | Python libs | `torch >= 2.0`, `torchvision`, `numpy`, `Pillow`, `scikit-image`, `pyautogui` |
@@ -152,7 +152,7 @@ Currently placeholders.
 ## Learning Resources
 * **CCN architecture** – see <https://github.com/hammersurf221/FENgine> for model code and residual enhancements.    
 * **Lc0 UCI options** – <https://github.com/LeelaChessZero/lc0/wiki/Parameters>
-* **Qt Widgets** – <https://doc.qt.io/>  
+* **Qt Widgets/Charts** – <https://doc.qt.io/>
 * **OpenCV 4.x tutorials** – <https://docs.opencv.org/>  
 
 ---
