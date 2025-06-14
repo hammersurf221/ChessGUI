@@ -4,9 +4,15 @@
 #include <QDockWidget>
 #include <QList>
 
+namespace QtGraphs {
+class QChartView;
+class QBarSeries;
+class QBarSet;
+class QBarCategoryAxis;
+class QValueAxis;
+}
+
 class QLabel;
-class QTableWidget;
-class QProgressBar;
 class QPushButton;
 class TelemetryManager;
 
@@ -22,10 +28,11 @@ signals:
     void clearTelemetryRequested();
 
 private:
-    QLabel *bestMoveLabel;
-    QLabel *averageCpLabel;
-    QTableWidget *rankTable;
-    QList<QProgressBar *> thinkBars;
+    QLabel *averageLabel;
+    QtGraphs::QChartView *chartView;
+    QtGraphs::QBarSeries *series;
+    QtGraphs::QBarSet *barSet;
+    QtGraphs::QValueAxis *axisY;
     QPushButton *clearButton;
 };
 

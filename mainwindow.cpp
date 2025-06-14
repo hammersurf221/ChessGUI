@@ -497,6 +497,10 @@ void MainWindow::startEngine() {
         QRegularExpression cpPattern("score cp (-?\\d+)");
         QRegularExpression pvPattern(
             "multipv\\s+(\\d+)\\s+.*score\\s+cp\\s+(-?\\d+)\\s+.*pv\\s+([a-h][1-8][a-h][1-8])");
+        QRegularExpression policyPattern1(
+            "info string\\s+([a-h][1-8][a-h][1-8]).*\\(P:\\s*([0-9.]+)%\\)");
+        QRegularExpression policyPattern2(
+            "info move\\s+([a-h][1-8][a-h][1-8]).*policy\\s+([0-9.]+)");
 
         for (const QString& line : lines) {
             QString trimmed = line.trimmed();
@@ -507,6 +511,22 @@ void MainWindow::startEngine() {
                 int cp = pvMatch.captured(2).toInt();
                 QString mv = pvMatch.captured(3);
                 multipvMoves[idx] = qMakePair(mv, cp);
+            }
+
+            QRegularExpressionMatch pol1 = policyPattern1.match(trimmed);
+            if (pol1.hasMatch()) {
+                QString mv = pol1.captured(1);
+                double prob = pol1.captured(2).toDouble() / 100.0;
+                policyProbMap[mv] = prob;
+            } else {
+                QRegularExpressionMatch pol2 = policyPattern2.match(trimmed);
+                if (pol2.hasMatch()) {
+                    QString mv = pol2.captured(1);
+                    double prob = pol2.captured(2).toDouble();
+                    if (prob > 1.0)
+                        prob /= 100.0;
+                    policyProbMap[mv] = prob;
+                }
             }
 
             QRegularExpressionMatch bestMoveMatch = bestMovePattern.match(trimmed);
@@ -750,6 +770,7 @@ void MainWindow::evaluatePosition(const QString& fen) {
     }
 
     multipvMoves.clear();
+    policyProbMap.clear();
     selectedBestMoveRank = 1;
 
     for (const QString& cmd : commands) {
@@ -1162,10 +1183,7 @@ MainWindow::MoveCandidate MainWindow::pickBestMove(bool stealth, double temperat
 
     pendingTelemetry.fen = lastEvaluatedFen;
     pendingTelemetry.move = choice.move;
-    pendingTelemetry.rank = choice.rank;
-    pendingTelemetry.evalPlayed = choice.score;
-    pendingTelemetry.evalBest = bestScore;
-    pendingTelemetry.cpDelta = bestScore - choice.score;
+    pendingTelemetry.policyProb = policyProbMap.value(choice.move, 0.0);
     pendingTelemetry.thinkTimeMs = 0;
 
     if (candidates.size() >= 2 && bestScore - candidates[1].score <= 60) {

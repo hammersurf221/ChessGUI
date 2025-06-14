@@ -11,10 +11,7 @@ struct TelemetryEntry {
     QString timestamp;
     QString fen;
     QString move;
-    int rank = 0;
-    int evalPlayed = 0;
-    int evalBest = 0;
-    int cpDelta = 0;
+    double policyProb = 0.0; // [0,1]
     int thinkTimeMs = 0;
 };
 
@@ -28,10 +25,8 @@ public:
     void logEntry(const TelemetryEntry &entry);
     void clearLog();
 
-    double bestMovePercent() const;
-    double averageCpDelta() const;
-    QMap<int,int> rankCounts() const;
-    QList<int> recentThinkTimes(int max = 10) const;
+    double averagePolicyProb() const; // average over [0,1]
+    QVector<int> policyHistogram() const; // 5 bins
 
 signals:
     void entryLogged(const TelemetryEntry &entry);

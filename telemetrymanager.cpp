@@ -51,10 +51,7 @@ void TelemetryManager::logEntry(const TelemetryEntry &entry)
     obj["timestamp"] = entry.timestamp;
     obj["fen"] = entry.fen;
     obj["move"] = entry.move;
-    obj["rank"] = entry.rank;
-    obj["evalPlayed"] = entry.evalPlayed;
-    obj["evalBest"] = entry.evalBest;
-    obj["cpDelta"] = entry.cpDelta;
+    obj["policyProb"] = entry.policyProb;
     obj["thinkTimeMs"] = entry.thinkTimeMs;
 
     QJsonDocument doc(obj);
@@ -80,42 +77,34 @@ void TelemetryManager::clearLog()
     emit logCleared();
 }
 
-double TelemetryManager::bestMovePercent() const
+double TelemetryManager::averagePolicyProb() const
 {
     if (entries.isEmpty())
         return 0.0;
-    int best = 0;
+    double sum = 0.0;
+    for (const TelemetryEntry &e : entries)
+        sum += e.policyProb;
+    return sum / entries.size();
+}
+
+QVector<int> TelemetryManager::policyHistogram() const
+{
+    QVector<int> bins(5, 0);
     for (const TelemetryEntry &e : entries) {
-        if (e.rank == 1)
-            ++best;
+        double p = e.policyProb;
+        int idx = 0;
+        if (p < 0.2)
+            idx = 0;
+        else if (p < 0.4)
+            idx = 1;
+        else if (p < 0.6)
+            idx = 2;
+        else if (p < 0.8)
+            idx = 3;
+        else
+            idx = 4;
+        bins[idx] += 1;
     }
-    return 100.0 * best / entries.size();
-}
-
-double TelemetryManager::averageCpDelta() const
-{
-    if (entries.isEmpty())
-        return 0.0;
-    long long sum = 0;
-    for (const TelemetryEntry &e : entries)
-        sum += e.cpDelta;
-    return double(sum) / entries.size();
-}
-
-QMap<int,int> TelemetryManager::rankCounts() const
-{
-    QMap<int,int> counts;
-    for (const TelemetryEntry &e : entries)
-        counts[e.rank] = counts.value(e.rank,0) + 1;
-    return counts;
-}
-
-QList<int> TelemetryManager::recentThinkTimes(int max) const
-{
-    QList<int> times;
-    int start = qMax(0, entries.size() - max);
-    for (int i=start; i<entries.size(); ++i)
-        times.append(entries[i].thinkTimeMs);
-    return times;
+    return bins;
 }
 
