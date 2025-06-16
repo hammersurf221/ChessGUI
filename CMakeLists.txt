@@ -33,6 +33,8 @@ set(PROJECT_SOURCES
         telemetrymanager.cpp
         telemetrydashboardv2.h
         telemetrydashboardv2.cpp
+        stealthmoveselector.h
+        stealthmoveselector.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

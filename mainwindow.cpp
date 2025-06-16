@@ -22,6 +22,7 @@
 #include "settingsdialog.h"
 #include "telemetrymanager.h"
 #include "telemetrydashboardv2.h"
+#include "stealthmoveselector.h"
 #include <QSettings>
 #include <QThread>
 #include <QEasingCurve>
@@ -571,7 +572,34 @@ void MainWindow::startEngine() {
                     return;
                 }
 
-                MoveCandidate choice = pickBestMove(ui->stealthCheck->isChecked(), stealthTemperature, stealthInjectPct);
+                QVector<MoveCandidate> mvList;
+                int bestCp = 0;
+                for (int i = 1; i <= multipvMoves.size(); ++i) {
+                    if (multipvMoves.contains(i)) {
+                        auto p = multipvMoves.value(i);
+                        MoveCandidate c;
+                        c.move = p.first;
+                        c.rank = i;
+                        c.score = p.second;
+                        c.policyProb = policyProbMap.value(c.move, 0.0);
+                        mvList.append(c);
+                        if (i == 1)
+                            bestCp = c.score;
+                    }
+                }
+
+                StealthMoveSelector selector;
+                selector.setStealthParams(stealthTemperature, 100);
+                selector.setTargetACPL(60.0);
+                selector.setInjectFrequency(15);
+
+                int moveNum = lastFen.section(' ', 5, 5).toInt();
+                MoveCandidate choice;
+                if (ui->stealthCheck->isChecked())
+                    choice = selector.pickMove(mvList, bestCp, moveNum, lastFen);
+                else if (!mvList.isEmpty())
+                    choice = mvList.first();
+
                 if (choice.move.isEmpty()) {
                     choice.move = bestMove;
                     choice.rank = 1;
@@ -581,6 +609,12 @@ void MainWindow::startEngine() {
 
                 if (ui->stealthCheck->isChecked())
                     qDebug() << "[stealth] Move" << choice.move << "score" << choice.score;
+
+                pendingTelemetry.fen = lastEvaluatedFen;
+                pendingTelemetry.move = choice.move;
+                pendingTelemetry.policyProb = policyProbMap.value(choice.move, 0.0);
+                pendingTelemetry.thinkTimeMs = 0;
+                pendingTelemetry.rank = choice.rank;
 
                 if (lastEvaluatedFen == lastFen) {  // ✅ Ensures best move matches current board
                     currentBestMove = choice.move;
