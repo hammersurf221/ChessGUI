@@ -862,25 +862,22 @@ void MainWindow::playBestMove() {
          << (flipped ? "true" : "false")
          << (stealth ? "true" : "false");
 
+    if (stealth) {
+        args << "--phase" << currentPhase
+             << "--complexity" << QString::number(moveComplexity)
+             << "--eval" << QString::number(evalCp / 100.0, 'f', 2);
+    }
+
+    qDebug() << "[play_move] args:" << args;
+
     auto execute = [=]() {
-        QProcess* moveProcess = new QProcess(this);
-        connect(moveProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
-                this, [=](int exitCode, QProcess::ExitStatus exitStatus) {
-                    qDebug() << "[automove] Move script finished with code" << exitCode;
-                    automoveInProgress = false;
-                    moveProcess->deleteLater();
-                    captureScreenshot();
-                });
-
         QString embeddedPython = QCoreApplication::applicationDirPath() + "/python/python.exe";
-        moveProcess->start(embeddedPython, args);
-
-
-        if (!moveProcess->waitForStarted()) {
+        qDebug() << "[play_move] startDetached" << embeddedPython << args;
+        if (!QProcess::startDetached(embeddedPython, args)) {
             qDebug() << "[automove] Failed to start move process";
-            automoveInProgress = false;
-            moveProcess->deleteLater();
         }
+        automoveInProgress = false;
+        QTimer::singleShot(1000, this, &MainWindow::captureScreenshot);
     };
 
     int delay = autoMoveDelayMs;
