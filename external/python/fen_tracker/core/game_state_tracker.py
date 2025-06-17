@@ -2,6 +2,8 @@
 
 from utils.board_utils import matrix_to_fen, square_name, PIECE_TO_IDX, IDX_TO_PIECE
 from core.move_detector import detect_move
+from core.fen_counters import FenCounters
+
 
 class GameStateTracker:
     def __init__(self):
@@ -9,6 +11,8 @@ class GameStateTracker:
         self.turn = 'w'
         self.castling_rights = {'K': True, 'Q': True, 'k': True, 'q': True}
         self.en_passant = '-'
+        self.fen_counters = FenCounters(starting_turn='w')
+
 
     def update_castling_rights(self, prev, curr):
         if prev[7][4] == PIECE_TO_IDX['K'] and curr[7][4] != PIECE_TO_IDX['K']:
@@ -55,6 +59,25 @@ class GameStateTracker:
             return self.generate_fen(curr_board)
 
         from_sq, to_sq = detect_move(self.prev_board, curr_board)
+        moved_color = self.detect_moved_color(self.prev_board, from_sq, to_sq)
+        moved_piece = None
+        was_capture = False
+        was_pawn = False
+
+        if from_sq:
+            piece_idx = self.prev_board[from_sq[0]][from_sq[1]]
+            moved_piece = IDX_TO_PIECE[piece_idx]
+            was_pawn = moved_piece.lower() == 'p'
+
+        if to_sq:
+            target_piece = curr_board[to_sq[0]][to_sq[1]]
+            was_capture = target_piece != 0
+
+        # Update the counters
+        if moved_color:
+            self.fen_counters.update(moved_color, moved_piece, was_capture, was_pawn)
+            self.turn = 'b' if moved_color == 'w' else 'w'
+
         self.update_castling_rights(self.prev_board, curr_board)
         self.en_passant = self.detect_en_passant(self.prev_board, from_sq, to_sq)
 
@@ -68,4 +91,6 @@ class GameStateTracker:
     def generate_fen(self, board):
         piece_placement = matrix_to_fen(board)
         castling = ''.join(k for k, v in self.castling_rights.items() if v) or '-'
-        return f"{piece_placement} {self.turn} {castling} {self.en_passant} 0 1"
+        hmc, fmn = self.fen_counters.get_counts()
+        return f"{piece_placement} {self.turn} {castling} {self.en_passant} {hmc} {fmn}"
+
