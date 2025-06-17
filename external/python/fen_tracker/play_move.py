@@ -4,7 +4,7 @@ import math
 import random
 import argparse
 import pyautogui
-from human_mouse import simulate_human_hover, bezier, simulate_micro_adjustments
+from human_mouse import simulate_human_hover, bezier
 
 random.seed(time.time())
 
@@ -57,14 +57,8 @@ def drag_from_current(end, steps=40):
         jx = bx + random.uniform(-2.5, 2.5)
         jy = by + random.uniform(-2.5, 2.5)
         pyautogui.moveTo(jx, jy, duration=0)
-        if random.random() < 0.07 and i > 5:
-            back_x = jx - random.uniform(2, 4)
-            back_y = jy - random.uniform(2, 4)
-            pyautogui.moveTo(back_x, back_y, duration=0.02)
-            time.sleep(random.uniform(0.02, 0.04))
         time.sleep(random.uniform(0.004, 0.010))
 
-    simulate_micro_adjustments(end)
     pyautogui.moveTo(x4 + random.uniform(-3, 3), y4 + random.uniform(-3, 3), duration=0)
     pyautogui.mouseUp()
     if random.random() < 0.8:
