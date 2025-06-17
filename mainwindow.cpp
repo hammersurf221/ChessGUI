@@ -252,7 +252,6 @@ MainWindow::MainWindow(QWidget *parent)
                     if (weMoved) {
                         lastOwnMove = uci;
                         lastPlayedFen = fen;
-                        lastAutoMove.clear();
                     }
                 }
 
@@ -898,10 +897,7 @@ void MainWindow::updateStatusLabel(const QString& text) {
 void MainWindow::playBestMove() {
     if (currentBestMove.length() != 4 || automoveInProgress)
         return;
-    if (currentBestMove == lastAutoMove)
-        return;
     automoveInProgress = true;
-    lastAutoMove = currentBestMove;
     qDebug() << "[automove] Starting move execution";
 
     QString from = currentBestMove.mid(0, 2);
@@ -1179,7 +1175,6 @@ void MainWindow::on_resetGameButton_clicked()
     lastEvaluatedFen.clear();
     lastPlayedFen.clear();
     lastOwnMove.clear();
-    lastAutoMove.clear();
     boardTurnColor.clear();
     repetitionTable.clear();
     multipvMoves.clear();
