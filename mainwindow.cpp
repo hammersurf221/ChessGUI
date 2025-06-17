@@ -31,11 +31,31 @@
 #include <numeric>
 #include <random>
 
+QString determinePhaseFromFEN(const QString& fen) {
+    QStringList parts = fen.split(' ');
+    if (parts.size() >= 6) {
+        bool ok = false;
+        int fullMoveNum = parts[5].toInt(&ok);
+        if (ok) {
+            if (fullMoveNum <= 10) return "opening";
+            if (fullMoveNum <= 30) return "mid";
+            return "end";
+        }
+    }
+    return "mid";
+}
+
+int computeMoveComplexity(const QVector<MoveCandidate>& multipv) {
+    if (multipv.size() < 3) return 0;
+    double spread = std::abs(multipv[0].score - multipv[2].score);
+    return std::clamp(int(spread / 30), 0, 5);
+}
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-{ 
+{
     ui->setupUi(this);
     telemetryManager = new TelemetryManager(this);
     telemetryDock = new TelemetryDashboardV2(this);
