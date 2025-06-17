@@ -120,7 +120,7 @@ build\Release\FENgineLive.exe  # Windows
 4. The app captures a screenshot every *N ms* (set in **Settings → Analysis Interval**), predicts the FEN, and queries Maia via Lc0.
 5. Watch the best-move arrow, evaluation bar, and PGN history update in real-time.  
 6. Toggle **Stealth Mode** (*`Ctrl + S`*) to enable the humanized move picker.
-7. Toggle **Auto-Move** (*`Ctrl + M`*) if you’d like the app to physically play the move on your board.  
+7. Toggle **Auto-Move** (*`Ctrl + M`*) if you’d like the app to physically play the move on your board. The GUI waits for each move to finish before analyzing again.
 8. Use **Reset Game** when starting a new game.
 
 ---
