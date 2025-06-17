@@ -19,6 +19,7 @@
 #include "globalhotkeymanager.h"
 #include "telemetrymanager.h"
 #include "telemetrydashboardv2.h"
+#include "stealthmoveselector.h"
 
 
 QT_BEGIN_NAMESPACE
@@ -82,11 +83,6 @@ private:
     int stealthInjectPct = 10;
     QString engineStrength = "Unrestricted";
 
-    struct MoveCandidate {
-        QString move;
-        int rank = 1;
-        int score = 0;
-    };
     MoveCandidate pickBestMove(bool stealth, double temperature, int injectPct);
     SettingsDialog* settingsDialog = nullptr;
     QString currentBestMove;

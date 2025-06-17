@@ -896,12 +896,6 @@ void MainWindow::playBestMove() {
          << (flipped ? "true" : "false")
          << (stealth ? "true" : "false");
 
-    if (stealth) {
-        args << "--phase" << currentPhase
-             << "--complexity" << QString::number(moveComplexity)
-             << "--eval" << QString::number(evalCp / 100.0, 'f', 2);
-    }
-
     qDebug() << "[play_move] args:" << args;
 
     auto execute = [=]() {
@@ -1152,7 +1146,7 @@ void MainWindow::on_resetGameButton_clicked()
     statusBar()->showMessage("Game reset");
 }
 
-MainWindow::MoveCandidate MainWindow::pickBestMove(bool stealth, double temperature, int injectPct)
+MoveCandidate MainWindow::pickBestMove(bool stealth, double temperature, int injectPct)
 {
     MoveCandidate result;
     pendingTelemetry = TelemetryEntry();
