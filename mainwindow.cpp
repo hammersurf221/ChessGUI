@@ -608,6 +608,9 @@ void MainWindow::startEngine() {
                     }
                 }
 
+                lastBestScore = bestCp;
+                lastMoveComplexity = computeMoveComplexity(mvList);
+
                 StealthMoveSelector selector;
                 selector.setStealthParams(stealthTemperature, 100);
                 selector.setTargetACPL(60.0);
@@ -906,6 +909,11 @@ void MainWindow::playBestMove() {
     bool flipped = (getMyColor() == "b");
     bool stealth = ui->stealthCheck->isChecked();
 
+    QString phase = determinePhaseFromFEN(lastFen);
+    double evalScore = lastBestScore;
+    if (std::abs(evalScore) <= 1.5)
+        evalScore *= 100.0;
+
     QStringList args;
     args << scriptPath
          << from
@@ -914,7 +922,10 @@ void MainWindow::playBestMove() {
          << QString::number(originY)
          << QString::number(tileSize)
          << (flipped ? "true" : "false")
-         << (stealth ? "true" : "false");
+         << (stealth ? "true" : "false")
+         << "--phase" << phase
+         << "--complexity" << QString::number(lastMoveComplexity)
+         << "--eval" << QString::number(evalScore);
 
     qDebug() << "[play_move] args:" << args;
 

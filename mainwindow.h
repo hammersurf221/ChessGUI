@@ -103,6 +103,8 @@ private:
     QElapsedTimer screenshotElapsed;
     QElapsedTimer fenElapsed;
     QElapsedTimer evalElapsed;
+    int lastBestScore = 0;
+    int lastMoveComplexity = 0;
     quint32 randomSeed = 0;
     QRandomGenerator randomGenerator;
     GlobalHotkeyManager* hotkeyManager = nullptr;
