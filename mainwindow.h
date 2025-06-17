@@ -48,7 +48,7 @@ private:
     QRect captureRegion;
     QTimer* screenshotTimer;
     bool analysisRunning = false;
-    QProcess* pythonProcess = nullptr;
+    QProcess* moveProcess = nullptr;
     QProcess* engineProcess = nullptr;
     QString lastFen;
     int analysisInterval = 1000;  // milliseconds

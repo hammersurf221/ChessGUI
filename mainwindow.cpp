@@ -310,6 +310,10 @@ MainWindow::~MainWindow()
         engineProcess->kill();
         engineProcess->waitForFinished(3000);
     }
+    if (moveProcess && moveProcess->state() != QProcess::NotRunning) {
+        moveProcess->kill();
+        moveProcess->waitForFinished(3000);
+    }
     delete ui;
 }
 
@@ -934,13 +938,27 @@ void MainWindow::playBestMove() {
     qDebug() << "[play_move] args:" << args;
 
     auto execute = [=]() {
+        if (moveProcess)
+            moveProcess->deleteLater();
+        moveProcess = new QProcess(this);
+        connect(moveProcess,
+                QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+                this, [this](int, QProcess::ExitStatus) {
+                    automoveInProgress = false;
+                    QTimer::singleShot(1000, this, &MainWindow::captureScreenshot);
+                    moveProcess->deleteLater();
+                    moveProcess = nullptr;
+                });
+
         QString embeddedPython = QCoreApplication::applicationDirPath() + "/python/python.exe";
-        qDebug() << "[play_move] startDetached" << embeddedPython << args;
-        if (!QProcess::startDetached(embeddedPython, args)) {
+        qDebug() << "[play_move] start" << embeddedPython << args;
+        moveProcess->start(embeddedPython, args);
+        if (!moveProcess->waitForStarted()) {
             qDebug() << "[automove] Failed to start move process";
+            moveProcess->deleteLater();
+            moveProcess = nullptr;
+            automoveInProgress = false;
         }
-        automoveInProgress = false;
-        QTimer::singleShot(1000, this, &MainWindow::captureScreenshot);
     };
 
     int delay = autoMoveDelayMs;
@@ -1150,6 +1168,11 @@ void MainWindow::on_resetGameButton_clicked()
         analysisRunning = false;
         ui->toggleAnalysisButton->setChecked(false);
         ui->toggleAnalysisButton->setText("Start Analysis (Ctrl +A)");
+    }
+
+    if (moveProcess && moveProcess->state() != QProcess::NotRunning) {
+        moveProcess->kill();
+        moveProcess->waitForFinished(3000);
     }
 
     lastFen.clear();
