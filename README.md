@@ -36,7 +36,7 @@ The GUI then:
 * Draws an arrow for Maia’s best move
 * Shows evaluation, move history, and the raw FEN
 * Offers **Stealth Mode** with adjustable softmax temperature and optional second-line injection
-* Can **Auto-Move** the chosen move directly on the board (optional)  
+* Can **Auto-Move** the chosen move with human-like delays and cursor paths (optional)
 
 Use it for real-time tactics training, stream overlays, or hands-free auto-playing—completely client-side.
 
@@ -50,7 +50,7 @@ Use it for real-time tactics training, stream overlays, or hands-free auto-playi
 | **Maia/Lc0 Integration** | UCI handshake with backend options and evaluation parsing. |
 | **Engine Strength** | Choose from Maia-1100, 1500, 1900, or unrestricted weights. |
 | **Stealth Mode** | Uses shallow depth then samples by softmax (temperature configurable) with optional 2nd-line injection. |
-| **Auto-Move** | Uses `pyautogui` to click the recommended move on your chess site—works with Lichess/Chess.com & most GUI boards. Toggle on/off any time. |
+| **Auto-Move** | Human-like drag and hover with misclick correction. Delay adjusts by phase, complexity and evaluation. |
 | **Telemetry Dashboard** | Records stealth moves to `telemetry_log.json` (rotated at 5 MB; clearable) and displays real-time stats in a dockable widget. |
 | **Region Auto-Detect + Manual Fallback** | Detects the chessboard rectangle via OpenCV; cancel to draw region manually. |
 | **Global Hotkeys** | Toggle analysis, stealth, auto-move, overlays without leaving your game. |

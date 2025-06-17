@@ -17,6 +17,9 @@ struct TelemetryEntry {
     int evalPlayed = 0;
     int evalBest = 0;
     int cpDelta = 0;
+    QString phase;
+    int complexity = 0;
+    double evalScore = 0.0;
 };
 
 class TelemetryManager : public QObject

@@ -643,6 +643,9 @@ void MainWindow::startEngine() {
                 pendingTelemetry.policyProb = policyProbMap.value(choice.move, 0.0);
                 pendingTelemetry.thinkTimeMs = 0;
                 pendingTelemetry.rank = choice.rank;
+                pendingTelemetry.phase = determinePhaseFromFEN(lastFen);
+                pendingTelemetry.complexity = lastMoveComplexity;
+                pendingTelemetry.evalScore = lastBestScore;
 
                 if (lastEvaluatedFen == lastFen) {  // ✅ Ensures best move matches current board
                     currentBestMove = choice.move;
@@ -1269,6 +1272,9 @@ MoveCandidate MainWindow::pickBestMove(bool stealth, double temperature, int inj
     pendingTelemetry.move = choice.move;
     pendingTelemetry.policyProb = policyProbMap.value(choice.move, 0.0);
     pendingTelemetry.thinkTimeMs = 0;
+    pendingTelemetry.phase = determinePhaseFromFEN(lastFen);
+    pendingTelemetry.complexity = lastMoveComplexity;
+    pendingTelemetry.evalScore = lastBestScore;
 
     if (candidates.size() >= 2 && bestScore - candidates[1].score <= 60) {
         if (randomGenerator.generateDouble() < injectPct / 100.0)
