@@ -3,7 +3,8 @@ import time
 import math
 import random
 import argparse
-from human_mouse import simulate_human_hover, human_like_drag
+import pyautogui
+from human_mouse import simulate_human_hover, bezier, simulate_micro_adjustments
 
 random.seed(time.time())
 
@@ -26,6 +27,49 @@ def generate_human_delay(phase, complexity, eval_score):
         delay += 400
     delay += random.randint(-100, 250)
     return max(300, delay)
+
+
+def human_like_move(start, end, steps=30):
+    x1, y1 = start
+    x4, y4 = end
+    ctrl1 = (x1 + random.randint(-40, 40), y1 + random.randint(-40, 40))
+    ctrl2 = (x4 + random.randint(-40, 40), y4 + random.randint(-40, 40))
+
+    for i in range(steps + 1):
+        t = i / steps
+        ease_t = t ** 0.4 if t < 0.5 else 1 - (1 - t) ** 0.4
+        bx, by = bezier((x1, y1), ctrl1, ctrl2, (x4, y4), ease_t)
+        pyautogui.moveTo(bx, by, duration=0)
+        time.sleep(random.uniform(0.004, 0.010))
+
+
+def drag_from_current(end, steps=40):
+    x1, y1 = pyautogui.position()
+    x4, y4 = end
+    ctrl1 = (x1 + random.randint(-60, 60), y1 + random.randint(-60, 60))
+    ctrl2 = (x4 + random.randint(-60, 60), y4 + random.randint(-60, 60))
+
+    pyautogui.mouseDown()
+    for i in range(steps + 1):
+        t = i / steps
+        ease_t = t ** 0.4 if t < 0.5 else 1 - (1 - t) ** 0.4
+        bx, by = bezier((x1, y1), ctrl1, ctrl2, (x4, y4), ease_t)
+        jx = bx + random.uniform(-2.5, 2.5)
+        jy = by + random.uniform(-2.5, 2.5)
+        pyautogui.moveTo(jx, jy, duration=0)
+        if random.random() < 0.07 and i > 5:
+            back_x = jx - random.uniform(2, 4)
+            back_y = jy - random.uniform(2, 4)
+            pyautogui.moveTo(back_x, back_y, duration=0.02)
+            time.sleep(random.uniform(0.02, 0.04))
+        time.sleep(random.uniform(0.004, 0.010))
+
+    simulate_micro_adjustments(end)
+    pyautogui.moveTo(x4 + random.uniform(-3, 3), y4 + random.uniform(-3, 3), duration=0)
+    pyautogui.mouseUp()
+    if random.random() < 0.8:
+        time.sleep(0.1)
+        pyautogui.moveRel(random.choice([-1, 1]), random.choice([-1, 1]), duration=0.03)
 
 def main():
     parser = argparse.ArgumentParser()
@@ -68,21 +112,21 @@ def main():
     delay_ms = generate_human_delay(args.phase, args.complexity, args.eval)
     misclick = False
 
-    # Simulate hover
+    current_pos = pyautogui.position()
+    if (abs(current_pos[0] - from_px[0]) > 3 or
+            abs(current_pos[1] - from_px[1]) > 3):
+        human_like_move(current_pos, from_px)
+
     simulate_human_hover(from_px)
 
-    # Fake misclick
     if random.random() < 0.25:
-        import pyautogui
         pyautogui.click()
         misclick = True
         time.sleep(random.uniform(0.2, 0.4))
 
-    # Wait before real move
     time.sleep(delay_ms / 1000)
 
-    # Final drag
-    human_like_drag(from_px, to_px)
+    drag_from_current(to_px)
 
     print(f"[human] Moving {from_sq} to {to_sq}: delay={delay_ms}ms, misclick={misclick}, from={from_px}, to={to_px}")
 
