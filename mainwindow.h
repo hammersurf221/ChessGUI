@@ -94,6 +94,7 @@ private:
     QQueue<QString> recentBestMoves;
     QString lastPlayedFen;
     QString lastOwnMove;
+    QString lastAutoMove;
     QHash<QString, int> repetitionTable;
     bool automoveInProgress = false;
     QMap<int, QPair<QString, int>> multipvMoves;
