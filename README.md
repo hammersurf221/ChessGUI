@@ -5,169 +5,365 @@
 
 
 <!-- PROJECT HEADER -->
-<p align="center">
+<div align="center">
   <img src="readme/assets/logos/FENgineLive_Logo.png" width="240" alt="FENgineLive Logo">
-</p>
-
-<h1 align="center">FENgineLive</h1>
-<p align="center"><em>Real-time chess-board recognition · Maia (Lc0) analysis · On-screen & in-game assistance</em></p>
-
----
-
-## Table of Contents
-1. [Overview](#overview)  
-2. [Features](#features)  
-3. [Requirements](#requirements)  
-4. [Installation](#installation)  
-5. [Usage](#usage)  
-6. [Troubleshooting & Debugging](#troubleshooting--debugging)  
-7. [Screenshots & GIFs](#screenshots--gifs)  
-8. [Learning Resources](#learning-resources)  
-9. [License](#license)  
+  <h1>FENgineLive</h1>
+  <p><em>Real-time chess analysis with AI assistance</em></p>
+  
+  [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+  [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-blue.svg)]()
+  [![Qt](https://img.shields.io/badge/Qt-5.15%2B%20%7C%206.x-blue.svg)]()
+</div>
 
 ---
 
-## Overview
-**FENgineLive** is a hybrid **Qt (C++17)** + **Python** application that captures periodic screenshots of any chess interface, converts the current position to **FEN** with a custom [*Convolutional Chess Network*](https://github.com/hammersurf221/FENgine) (CCN), and feeds it to **Maia** using the **Lc0** backend.
+## ⚠️ Important Disclaimer
 
-The GUI then:
+**This software is provided for educational and analytical purposes only.**
 
-* Renders the position in its own board widget  
-* Draws an arrow for Maia’s best move
-* Shows evaluation, move history, and the raw FEN
-* Offers **Stealth Mode** with adjustable softmax temperature and optional second-line injection
-* Can **Auto-Move** the chosen move directly on the board (optional)  
+The authors do not condone, encourage, or support using FENgineLive in any manner that violates:
+- Terms of Service of online chess platforms
+- Fair-play policies
+- Tournament rules
+- Federation regulations
 
-Use it for real-time tactics training, stream overlays, or hands-free auto-playing—completely client-side.
-
----
-
-## Features
-
-| Category | Highlights |
-|----------|------------|
-| **Real-time Vision** | CCN predicts an 8 × 8 grid of piece classes from 256 × 256 RGB crops. Currently only works with specific themes. You can train your own weights at  https://github.com/hammersurf221/FENgine|
-| **Maia/Lc0 Integration** | UCI handshake with backend options and evaluation parsing. |
-| **Engine Strength** | Choose from Maia-1100, 1500, 1900, or unrestricted weights. |
-| **Stealth Mode** | Uses shallow depth then samples by softmax (temperature configurable) with optional 2nd-line injection. |
-| **Auto-Move** | Uses `pyautogui` to click the recommended move on your chess site—works with Lichess/Chess.com & most GUI boards. Toggle on/off any time. |
-| **Telemetry Dashboard** | Records stealth moves to `telemetry_log.json` (rotated at 5 MB; clearable) and displays real-time stats in a dockable widget. |
-| **Region Auto-Detect + Manual Fallback** | Detects the chessboard rectangle via OpenCV; cancel to draw region manually. |
-| **Global Hotkeys** | Toggle analysis, stealth, auto-move, overlays without leaving your game. |
-| **Cross-Platform** | Builds on Windows, macOS, and Linux with Qt 5/6 + CMake; Python 3.8 + runtime bundled or system-wide. |
+**Always respect the regulations of the site or event you are playing on.** Using Auto-Move, Stealth Mode, or any other feature to gain an unfair competitive advantage may result in account suspension or other penalties.
 
 ---
 
-## Requirements
+## 📋 Table of Contents
 
-### Runtime
-
-| Component | Minimum Version |
-|-----------|-----------------|
-| **Lc0** | 0.29 + |
-| **Qt** (Widgets, GUI, Core) | 5.15 or 6.x |
-| **OpenCV** | 4.x |
-| **Python** | 3.8 + |
-| Python libs | `torch >= 2.0`, `torchvision`, `numpy`, `Pillow`, `scikit-image`, `pyautogui` |
-| **GPU** | *Optional* – CCN runs on CPU |
-
-> **Security note for Auto-Move:**  
-> Auto-Move uses `pyautogui` to control your mouse and keyboard. Only enable it when you trust the app’s window focus and are comfortable with automated clicks.
-
-### Build-time
-
-* CMake ≥ 3.16  
-* C++17-compliant compiler (MSVC 2022 / Clang 15 / GCC 11 +)  
-* Ninja (optional but faster)
+1. [Overview](#overview)
+2. [Features](#features)
+3. [System Requirements](#system-requirements)
+4. [Installation](#installation)
+5. [Usage](#usage)
+6. [Configuration](#configuration)
+7. [Troubleshooting](#troubleshooting)
+8. [Development](#development)
+9. [License](#license)
 
 ---
 
-## Installation
-~~~bash
-# 1. Clone
-git clone https://github.com/<your-org>/FENgineLive.git
-cd FENgineLive
+## 🎯 Overview
 
-# 2. Build the Qt/C++ binary
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build --parallel
+FENgineLive is a hybrid **Qt (C++17)** + **Python** application that provides real-time chess analysis using computer vision and AI engines. It captures screenshots of chess interfaces, converts positions to FEN notation using a Convolutional Chess Network (CCN), and analyzes them with the Maia engine via Lc0.
 
-# 3. Install Python deps
-python -m pip install -r python/requirements.txt
+### Key Capabilities
 
-# 4. Copy or symlink your Lc0 executable and Maia network,
-#    then launch the GUI:
-./build/FENgineLive            # Linux/macOS
-build\Release\FENgineLive.exe  # Windows
-~~~
-
-> **First run:** FENgineLive prompts to auto-detect the board.  
-> Accept, or cancel to draw a region manually.  
-> You can re-run detection any time via **Capture Region**.
->
-> **Disclaimer:** Requirements.txt is in the process of being made. For now, the project uses the following dependencies:
-> torch
-> Pillow
-> numpy
-> 
+- **Real-time Vision**: CCN predicts 8×8 grid of piece classes from 256×256 RGB crops
+- **AI Analysis**: Integration with Maia/Lc0 engines for position evaluation
+- **Human-like Automation**: Advanced mouse movement simulation with transformer models
+- **Stealth Mode**: Configurable move selection with temperature-based randomization
+- **Cross-platform**: Windows, macOS, and Linux support
 
 ---
 
-## Usage
-1. **Open a chess site or GUI** and start a game.  
-2. Launch **FENgineLive** – a translucent overlay appears.  
-3. Press **`Ctrl + A`** (default) to start/stop analysis.  
-4. The app captures a screenshot every *N ms* (set in **Settings → Analysis Interval**), predicts the FEN, and queries Maia via Lc0.
-5. Watch the best-move arrow, evaluation bar, and PGN history update in real-time.  
-6. Toggle **Stealth Mode** (*`Ctrl + S`*) to enable the humanized move picker.
-7. Toggle **Auto-Move** (*`Ctrl + M`*) if you’d like the app to physically play the move on your board. The GUI waits for each move to finish before analyzing again.
-8. Use **Reset Game** when starting a new game.
+## ✨ Features
+
+| Category | Features |
+|----------|----------|
+| **Computer Vision** | • Real-time board detection<br>• FEN position recognition<br>• Multiple theme support<br>• Auto-detection with manual fallback |
+| **Engine Integration** | • Maia engine support (1100-1900 ELO)<br>• Lc0 backend integration<br>• UCI protocol handling<br>• Multi-PV analysis |
+| **Automation** | • Human-like mouse movement<br>• Transformer-based path generation<br>• Drag-and-drop simulation<br>• Configurable delays |
+| **Stealth Features** | • Temperature-based move selection<br>• Second-line injection<br>• Telemetry logging<br>• Move history tracking |
+| **User Interface** | • Modern Qt-based GUI<br>• Real-time evaluation display<br>• Move history visualization<br>• Global hotkey support |
+| **Performance** | • Optimized screenshot capture<br>• Efficient FEN processing<br>• Memory management<br>• Crash recovery |
 
 ---
 
-## Troubleshooting & Debugging
+## 💻 System Requirements
 
-| Symptom | Fix |
-|---------|-----|
-| **“Waiting for FEN” never disappears** | Verify `ccn_model_default.pth` is present and its correct path is set in **Settings → Model Path** |
-| **Predicted FEN is incorrect** | You may be using a model weight trained on a different theme than the one you are currently using. Simply use a basic chess.com board and the "Icy Sea" theme on Chess.com. |
-| **Board not detected or wrong size** | For now, manually set your board region. Board autodetection is in the process of being optimized. |
-| **Auto-Move clicks in the wrong place** | Ensure your browser window is the same scale when you captured the region; re-run **Capture Region**. |
-| **No engine output** | Check **Settings → Engine Path** and make sure you are using the correct path to **lc0.exe** and that the Maia network file exists. |
-| **Hotkeys do nothing on macOS/Linux** | Global hotkeys are Windows-only for now; use menu toggles instead. |
+### Minimum Requirements
 
-A fuller FAQ lives in **docs/TROUBLESHOOTING.md** -> ***STILL BEING MADE***.
+| Component | Version |
+|-----------|---------|
+| **OS** | Windows 10, macOS 10.15+, Ubuntu 18.04+ |
+| **CPU** | Intel i5 / AMD Ryzen 5 or equivalent |
+| **RAM** | 4 GB |
+| **GPU** | Integrated graphics (CPU mode) |
+| **Storage** | 2 GB free space |
 
----
+### Recommended Requirements
 
-## Screenshots & GIFs
-Currently placeholders.
+| Component | Version |
+|-----------|---------|
+| **OS** | Windows 11, macOS 12+, Ubuntu 20.04+ |
+| **CPU** | Intel i7 / AMD Ryzen 7 or equivalent |
+| **RAM** | 8 GB |
+| **GPU** | NVIDIA GTX 1060+ / AMD RX 580+ (CUDA support) |
+| **Storage** | 5 GB free space (SSD recommended) |
 
-| Auto-Detected Board | Best-Move Arrow | Stealth Randomisation | Auto-Move Click | Move History & Eval |
-|---------------------|-----------------|-----------------------|-----------------|---------------------|
-| `assets/screenshots/auto_detect.png` | `assets/gifs/arrow.gif` | `assets/gifs/stealth.gif` | `assets/gifs/automove.gif` | `assets/screenshots/history_eval.png` |
+### Software Dependencies
 
----
-
-## Learning Resources
-* **CCN architecture** – see <https://github.com/hammersurf221/FENgine> for model code and residual enhancements.    
-* **Lc0 UCI options** – <https://github.com/LeelaChessZero/lc0/wiki/Parameters>
-* **Qt Widgets** – <https://doc.qt.io/>
-* **OpenCV 4.x tutorials** – <https://docs.opencv.org/>  
-
----
-
-## Disclaimer  
-This project is provided **for educational and analytical purposes only**.  
-The author(s) **do not condone, encourage, or support** using FENgineLive in any manner that violates the Terms of Service, fair-play policies, or rules of any online chess platform, tournament, or federation.  
-**Always respect the regulations of the site or event you are playing on.**  
-Using Auto-Move, Stealth Mode, or any other feature to gain an unfair competitive advantage is strictly discouraged and may result in account suspension or other penalties.
+| Component | Version | Notes |
+|-----------|---------|-------|
+| **Qt** | 5.15+ or 6.x | Core GUI framework |
+| **OpenCV** | 4.x | Computer vision |
+| **Python** | 3.8+ | ML and automation |
+| **Lc0** | 0.29+ | Chess engine backend |
 
 ---
 
+## 🚀 Installation
 
-## License
-FENgineLive is released under the **GNU General Public License v3.0**.  
+### Prerequisites
+
+1. **Install Qt Development Environment**
+   ```bash
+   # Windows: Download Qt installer from qt.io
+   # macOS: brew install qt
+   # Linux: sudo apt install qt6-base-dev
+   ```
+
+2. **Install OpenCV**
+   ```bash
+   # Windows: Download from opencv.org or use vcpkg
+   # macOS: brew install opencv
+   # Linux: sudo apt install libopencv-dev
+   ```
+
+3. **Install Python Dependencies**
+   ```bash
+   cd external/python
+   pip install -r requirements.txt
+   ```
+
+### Building from Source
+
+1. **Clone the Repository**
+   ```bash
+   git clone https://github.com/your-org/FENgineLive.git
+   cd FENgineLive
+   ```
+
+2. **Configure Build**
+   ```bash
+   # Create build directory
+   mkdir build && cd build
+   
+   # Configure with CMake
+   cmake .. -DCMAKE_BUILD_TYPE=Release
+   ```
+
+3. **Build the Application**
+   ```bash
+   # Build with multiple cores
+   cmake --build . --parallel $(nproc)
+   
+   # Or on Windows with Visual Studio
+   cmake --build . --config Release
+   ```
+
+4. **Install Dependencies**
+   ```bash
+   # Copy Lc0 engine files
+   cp -r ../external/lc0/* ./lc0/
+   
+   # Copy Python scripts
+   cp -r ../external/python/fen_tracker/* ./python/
+   ```
+
+### Quick Start
+
+1. **Launch the Application**
+   ```bash
+   # Linux/macOS
+   ./ChessGUI
+   
+   # Windows
+   ChessGUI.exe
+   ```
+
+2. **First Run Setup**
+   - Accept board auto-detection or manually select region
+   - Configure engine path in Settings
+   - Set analysis interval and other preferences
+
+---
+
+## 🎮 Usage
+
+### Basic Operation
+
+1. **Start Analysis**
+   - Press `Ctrl+A` (default) to toggle analysis
+   - The app captures screenshots at configured intervals
+   - FEN prediction and engine analysis run automatically
+
+2. **View Results**
+   - Best move arrow appears on the board
+   - Evaluation bar shows position strength
+   - Move history displays recent analysis
+
+3. **Stealth Mode**
+   - Press `Ctrl+S` to enable stealth mode
+   - Moves are selected with configurable randomness
+   - Telemetry logs track move selections
+
+4. **Auto-Move**
+   - Press `Ctrl+M` to enable auto-move
+   - Human-like mouse movements execute moves
+   - Works with most chess interfaces
+
+### Advanced Features
+
+- **Global Hotkeys**: Configure system-wide shortcuts
+- **Telemetry Dashboard**: Monitor stealth mode statistics
+- **Engine Strength**: Choose from Maia-1100 to unrestricted
+- **Board Detection**: Auto-detect or manual region selection
+
+---
+
+## ⚙️ Configuration
+
+### Settings Dialog
+
+Access via **Settings** menu or `Ctrl+,`:
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| **Analysis Interval** | Screenshot capture frequency | 1000ms |
+| **Engine Path** | Path to Lc0 executable | `./lc0/lc0.exe` |
+| **Engine Depth** | Analysis depth | 15 |
+| **Stealth Temperature** | Move randomness (0.0-1.0) | 0.035 |
+| **Second-line Injection** | Percentage of second-best moves | 10% |
+
+### Configuration Files
+
+- **Settings**: Stored in user preferences
+- **Telemetry**: `telemetry_log.json` (rotated at 5MB)
+- **Hotkeys**: Configurable via Settings dialog
+
+---
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+| Problem | Solution |
+|---------|----------|
+| **"Waiting for FEN" never disappears** | Check model path in Settings → Model Path |
+| **Incorrect FEN prediction** | Use compatible chess theme (Icy Sea on Chess.com) |
+| **Board not detected** | Manually set board region via Capture Region |
+| **Auto-Move clicks wrong place** | Re-run Capture Region after window scaling changes |
+| **No engine output** | Verify Lc0 path and network file existence |
+| **Hotkeys not working** | Global hotkeys are Windows-only; use menu toggles |
+
+### Debug Mode
+
+Enable debug output:
+```bash
+# Set environment variable
+export CHESSGUI_DEBUG=1
+
+# Or on Windows
+set CHESSGUI_DEBUG=1
+```
+
+### Performance Optimization
+
+- **Reduce analysis interval** for faster response
+- **Lower engine depth** for quicker analysis
+- **Use GPU acceleration** if available
+- **Close unnecessary applications** to free resources
+
+---
+
+## 🛠️ Development
+
+### Project Structure
+
+```
+ChessGUI/
+├── src/                    # C++ source files
+│   ├── main.cpp           # Application entry point
+│   ├── mainwindow.cpp     # Main GUI implementation
+│   ├── boardwidget.cpp    # Chess board rendering
+│   └── ...
+├── external/              # External dependencies
+│   ├── python/           # Python scripts
+│   ├── lc0/              # Chess engine
+│   └── chess_mouse_mover/ # ML models
+├── assets/               # Resources
+│   ├── pieces/           # Chess piece SVGs
+│   ├── fonts/            # Custom fonts
+│   └── style.qss         # Qt stylesheet
+└── docs/                 # Documentation
+```
+
+### Building for Development
+
+```bash
+# Debug build
+cmake .. -DCMAKE_BUILD_TYPE=Debug
+cmake --build . --parallel
+
+# With sanitizers
+cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined"
+```
+
+### Code Style
+
+- **C++**: Follow Qt coding conventions
+- **Python**: PEP 8 with 4-space indentation
+- **Comments**: Use Doxygen-style for C++ classes
+- **Error Handling**: Comprehensive error checking and logging
+
+### Testing
+
+```bash
+# Run unit tests (when implemented)
+ctest --output-on-failure
+
+# Run Python tests
+cd external/python/fen_tracker
+python -m pytest tests/
+```
+
+---
+
+## 📄 License
+
+FENgineLive is released under the **GNU General Public License v3.0**.
+
 See [LICENSE](https://www.gnu.org/licenses/gpl-3.0.en.html) for details.
 
+### Third-party Licenses
+
+- **Qt**: LGPL v3 / GPL v3
+- **OpenCV**: Apache 2.0
+- **PyTorch**: BSD 3-Clause
+- **Lc0**: GPL v3
+- **Maia**: MIT
+
 ---
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+### Development Guidelines
+
+- Follow existing code style and conventions
+- Add tests for new features
+- Update documentation as needed
+- Ensure cross-platform compatibility
+
+---
+
+## 📞 Support
+
+- **Issues**: [GitHub Issues](https://github.com/your-org/FENgineLive/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/your-org/FENgineLive/discussions)
+- **Email**: williamsamiri011@gmail.com
+
+---
+
+<div align="center">
+  <p><em>Built with ❤️ for the chess community</em></p>
+</div>

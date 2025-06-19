@@ -1,0 +1,6 @@
+python310.zip
+.
+Lib
+Lib\site-packages
+fen_tracker
+import site

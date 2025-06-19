@@ -1,42 +1,199 @@
-# Ignore Python cache
-__pycache__/
-*.pyc
-
-# Ignore virtual environments
-venv/
-
-# Ignore system files
-.DS_Store
-
-# Ignore build folders
+# Build directories
 build/
 dist/
+out/
+cmake-build-*/
 
-# Ignore logs
-*.log
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+!CMakeLists.txt
 
-python/**             # ignore everything in python/
-# Ignore Python cache
+# Qt generated files
+moc_*.cpp
+moc_*.h
+qrc_*.cpp
+ui_*.h
+*.qm
+
+# IDE files
+.vscode/
+.idea/
+*.user
+*.user.*
+*.pro.user
+*.pro.user.*
+*.vcxproj.user
+*.vcxproj.user.*
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Python
 __pycache__/
-*.pyc
-
-# Ignore virtual environments
-venv/
-
-# Ignore system files
-.DS_Store
-
-# Ignore build folders
+*.py[cod]
+*$py.class
+*.so
+.Python
 build/
+develop-eggs/
 dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-# Ignore logs
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# System files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Logs
 *.log
+logs/
+telemetry_log.json
 
-# ─── Ignore EVERYTHING that lives directly under external/python ──
-external/python/*
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
 
-# ─── …but keep the fen_tracker directory and all of its contents ──
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows
+*.lnk
+
+# External dependencies (keep only source)
+external/lc0/*.exe
+external/lc0/*.dll
+external/lc0/*.pb.gz
+external/python/python*.exe
+external/python/python*.dll
+external/python/*.pyd
+external/python/*.zip
+external/python/Lib/
+external/python/Scripts/
+external/python/Include/
+external/python/share/
+external/python/*.cat
+external/python/*.txt
+!external/python/requirements.txt
 !external/python/fen_tracker/
-!external/python/fen_tracker/**
+
+# Keep chess_mouse_mover source but exclude models
+external/chess_mouse_mover/*.pth
+external/chess_mouse_mover/checkpoints/
+!external/chess_mouse_mover/models/
+!external/chess_mouse_mover/*.py
+
+# Test files
+*.png
+*.jpg
+*.jpeg
+!assets/pieces/*.svg
+!assets/fonts/*.ttf
+!assets/style.qss
+!readme/assets/logos/*.png
 
