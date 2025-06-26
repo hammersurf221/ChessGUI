@@ -197,3 +197,6 @@ external/chess_mouse_mover/checkpoints/
 !assets/style.qss
 !readme/assets/logos/*.png
 
+
+# SABLE transformer model
+external/python/sable/sable_model.pth

@@ -116,20 +116,16 @@ install(DIRECTORY ${CMAKE_SOURCE_DIR}/assets
     FILES_MATCHING PATTERN "*.svg" PATTERN "*.ttf" PATTERN "*.qss"
 )
 
-# Bundle Lc0 engine
-set(LC0_DIR ${CMAKE_SOURCE_DIR}/external/lc0)
-if(EXISTS "${LC0_DIR}/lc0.exe")
-    install(DIRECTORY ${LC0_DIR}/ 
-        DESTINATION ${CMAKE_INSTALL_DATADIR}/chessgui/lc0
-        FILES_MATCHING PATTERN "*.exe" PATTERN "*.dll" PATTERN "*.pb.gz"
-    )
-else()
-    message(WARNING "Lc0 engine not found: ${LC0_DIR}")
-endif()
+
 
 # Bundle Python scripts
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/external/python/fen_tracker/
         DESTINATION ${CMAKE_INSTALL_DATADIR}/chessgui/python
+        PATTERN "__pycache__" EXCLUDE
+        PATTERN "*.pyc" EXCLUDE)
+
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/external/python/sable/
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/chessgui/python/sable
         PATTERN "__pycache__" EXCLUDE
         PATTERN "*.pyc" EXCLUDE)
 
@@ -144,12 +140,12 @@ add_custom_command(TARGET ChessGUI POST_BUILD
             ${CMAKE_SOURCE_DIR}/assets
             $<TARGET_FILE_DIR:ChessGUI>/assets
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-            ${LC0_DIR}
-            $<TARGET_FILE_DIR:ChessGUI>/lc0
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
             ${CMAKE_SOURCE_DIR}/external/python/fen_tracker
             $<TARGET_FILE_DIR:ChessGUI>/python
-    COMMENT "Copying runtime folders: assets/, lc0/, python/"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${CMAKE_SOURCE_DIR}/external/python/sable
+            $<TARGET_FILE_DIR:ChessGUI>/python/sable
+    COMMENT "Copying runtime folders: assets/, python/"
 )
 
 # CPack configuration for installer

@@ -9,7 +9,7 @@ struct MoveCandidate {
     QString move;   // e.g. "e2e4"
     int rank;       // 1 = best, 2 = second-best, etc.
     int score;      // evaluation in centipawns
-    double policyProb = 0.0; // optional (for Lc0/Maia)
+    double policyProb = 0.0; // optional (for SABLE)
 };
 
 class StealthMoveSelector

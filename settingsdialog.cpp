@@ -92,11 +92,11 @@ SettingsDialog::SettingsDialog(QWidget *parent)
     weightsLayout->addWidget(weightsBrowseButton);
     QWidget *weightsWidget = new QWidget(miscTab);
     weightsWidget->setLayout(weightsLayout);
-    miscLayout->addRow(tr("Maia Weights File (.pb.gz)"), weightsWidget);
+    miscLayout->addRow(tr("SABLE Model File (.pth)"), weightsWidget);
 
     strengthComboBox = new QComboBox(miscTab);
-    strengthComboBox->addItems({tr("Unrestricted"), tr("Maia-1100"), tr("Maia-1500"), tr("Maia-1900")});
-    miscLayout->addRow(tr("Engine Strength"), strengthComboBox);
+    strengthComboBox->addItems({tr("Default")});
+    miscLayout->addRow(tr("Engine Profile"), strengthComboBox);
 
 
     colorComboBox = new QComboBox(miscTab);
@@ -125,7 +125,7 @@ SettingsDialog::SettingsDialog(QWidget *parent)
     connect(stockfishBrowseButton, &QPushButton::clicked, this, &SettingsDialog::browseStockfish);
     connect(fenModelBrowseButton, &QPushButton::clicked, this, &SettingsDialog::browseFenModel);
     connect(weightsBrowseButton, &QPushButton::clicked, this, [this]() {
-        QString file = QFileDialog::getOpenFileName(this, tr("Select Maia Weights (.pb.gz)"));
+        QString file = QFileDialog::getOpenFileName(this, tr("Select SABLE Model (.pth)"));
         if (!file.isEmpty())
             weightsPathEdit->setText(file);
     });
@@ -153,10 +153,10 @@ void SettingsDialog::loadSettings()
     setInjectPercent(settings.value("stealthInjectPct", 10).toInt());
 
 
-    QString defaultStockfish = QCoreApplication::applicationDirPath() + "/lc0.exe";
+    QString defaultStockfish = QCoreApplication::applicationDirPath() + "/python/sable/engine.py";
     QString defaultFenModel = QCoreApplication::applicationDirPath() + "/python/fen_tracker/ccn_model_default.pth";
 
-    QString defaultWeights = QCoreApplication::applicationDirPath() + "/maia1900.pb.gz";
+    QString defaultWeights = QCoreApplication::applicationDirPath() + "/python/sable/sable_model.pth";
     weightsPathEdit->setText(settings.value("weightsPath", defaultWeights).toString());
 
 
@@ -214,10 +214,10 @@ void SettingsDialog::resetDefaults()
     setForceManualRegion(false);
     setAutoMoveWhenReady(false);
     setAutoMoveDelay(0);
-    setEnginePath(QCoreApplication::applicationDirPath() + "/lc0.exe");
+    setEnginePath(QCoreApplication::applicationDirPath() + "/python/sable/engine.py");
     setFenModelPath(QCoreApplication::applicationDirPath() + "/python/fen_tracker/ccn_model_default.pth");
     setDefaultPlayerColor("White");
-    weightsPathEdit->setText(QCoreApplication::applicationDirPath() + "/maia1900.pb.gz");
+    weightsPathEdit->setText(QCoreApplication::applicationDirPath() + "/python/sable/sable_model.pth");
     setStealthTemperature(0.035);
     setInjectPercent(10);
     setEngineStrength("Unrestricted");

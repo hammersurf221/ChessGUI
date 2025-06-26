@@ -80,6 +80,11 @@ if [ -d "../external/python/fen_tracker" ]; then
     cp -r ../external/python/fen_tracker/* python/ 2>/dev/null || true
 fi
 
+if [ -d "../external/python/sable" ]; then
+    mkdir -p python/sable
+    cp -r ../external/python/sable/* python/sable/ 2>/dev/null || true
+fi
+
 if [ -d "../assets" ]; then
     mkdir -p assets
     cp -r ../assets/* assets/ 2>/dev/null || true

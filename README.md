@@ -47,12 +47,12 @@ The authors do not condone, encourage, or support using FENgineLive in any manne
 
 ## 🎯 Overview
 
-FENgineLive is a hybrid **Qt (C++17)** + **Python** application that provides real-time chess analysis using computer vision and AI engines. It captures screenshots of chess interfaces, converts positions to FEN notation using a Convolutional Chess Network (CCN), and analyzes them with the Maia engine via Lc0.
+FENgineLive is a hybrid **Qt (C++17)** + **Python** application that provides real-time chess analysis using computer vision and AI engines. It captures screenshots of chess interfaces, converts positions to FEN notation using a Convolutional Chess Network (CCN), and analyzes them with the SABLE transformer engine.
 
 ### Key Capabilities
 
 - **Real-time Vision**: CCN predicts 8×8 grid of piece classes from 256×256 RGB crops
-- **AI Analysis**: Integration with Maia/Lc0 engines for position evaluation
+- **AI Analysis**: Integration with the SABLE transformer engine for position evaluation
 - **Human-like Automation**: Advanced mouse movement simulation with transformer models
 - **Stealth Mode**: Configurable move selection with temperature-based randomization
 - **Cross-platform**: Windows, macOS, and Linux support
@@ -64,7 +64,7 @@ FENgineLive is a hybrid **Qt (C++17)** + **Python** application that provides re
 | Category | Features |
 |----------|----------|
 | **Computer Vision** | • Real-time board detection<br>• FEN position recognition<br>• Multiple theme support<br>• Auto-detection with manual fallback |
-| **Engine Integration** | • Maia engine support (1100-1900 ELO)<br>• Lc0 backend integration<br>• UCI protocol handling<br>• Multi-PV analysis |
+| **Engine Integration** | • SABLE transformer backend<br>• UCI-like text protocol<br>• Multi-PV analysis |
 | **Automation** | • Human-like mouse movement<br>• Transformer-based path generation<br>• Drag-and-drop simulation<br>• Configurable delays |
 | **Stealth Features** | • Temperature-based move selection<br>• Second-line injection<br>• Telemetry logging<br>• Move history tracking |
 | **User Interface** | • Modern Qt-based GUI<br>• Real-time evaluation display<br>• Move history visualization<br>• Global hotkey support |
@@ -101,7 +101,7 @@ FENgineLive is a hybrid **Qt (C++17)** + **Python** application that provides re
 | **Qt** | 5.15+ or 6.x | Core GUI framework |
 | **OpenCV** | 4.x | Computer vision |
 | **Python** | 3.8+ | ML and automation |
-| **Lc0** | 0.29+ | Chess engine backend |
+| **SABLE** | 1.0+ | Transformer engine |
 
 ---
 
@@ -157,10 +157,10 @@ FENgineLive is a hybrid **Qt (C++17)** + **Python** application that provides re
 
 4. **Install Dependencies**
    ```bash
-   # Copy Lc0 engine files
-   cp -r ../external/lc0/* ./lc0/
-   
-   # Copy Python scripts
+   # Copy SABLE engine scripts
+   cp -r ../external/python/sable ./python/
+
+   # Copy FEN tracker scripts
    cp -r ../external/python/fen_tracker/* ./python/
    ```
 
@@ -210,7 +210,7 @@ FENgineLive is a hybrid **Qt (C++17)** + **Python** application that provides re
 
 - **Global Hotkeys**: Configure system-wide shortcuts
 - **Telemetry Dashboard**: Monitor stealth mode statistics
-- **Engine Strength**: Choose from Maia-1100 to unrestricted
+- **Engine Strength**: Transformer-based move prediction
 - **Board Detection**: Auto-detect or manual region selection
 
 ---
@@ -224,7 +224,7 @@ Access via **Settings** menu or `Ctrl+,`:
 | Setting | Description | Default |
 |---------|-------------|---------|
 | **Analysis Interval** | Screenshot capture frequency | 1000ms |
-| **Engine Path** | Path to Lc0 executable | `./lc0/lc0.exe` |
+| **Engine Path** | Path to SABLE engine script | `./python/sable/engine.py` |
 | **Engine Depth** | Analysis depth | 15 |
 | **Stealth Temperature** | Move randomness (0.0-1.0) | 0.035 |
 | **Second-line Injection** | Percentage of second-best moves | 10% |
@@ -247,7 +247,7 @@ Access via **Settings** menu or `Ctrl+,`:
 | **Incorrect FEN prediction** | Use compatible chess theme (Icy Sea on Chess.com) |
 | **Board not detected** | Manually set board region via Capture Region |
 | **Auto-Move clicks wrong place** | Re-run Capture Region after window scaling changes |
-| **No engine output** | Verify Lc0 path and network file existence |
+| **No engine output** | Verify SABLE script path and model file |
 | **Hotkeys not working** | Global hotkeys are Windows-only; use menu toggles |
 
 ### Debug Mode
@@ -334,8 +334,7 @@ See [LICENSE](https://www.gnu.org/licenses/gpl-3.0.en.html) for details.
 - **Qt**: LGPL v3 / GPL v3
 - **OpenCV**: Apache 2.0
 - **PyTorch**: BSD 3-Clause
-- **Lc0**: GPL v3
-- **Maia**: MIT
+ - **SABLE**: Proprietary
 
 ---
 
