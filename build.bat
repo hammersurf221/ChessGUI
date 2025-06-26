@@ -53,6 +53,12 @@ if exist "..\external\python\fen_tracker" (
     xcopy "..\external\python\fen_tracker\*" "python\" /Y /Q
 )
 
+if exist "..\external\python\sable" (
+    if not exist "python" mkdir python
+    if not exist "python\sable" mkdir python\sable
+    xcopy "..\external\python\sable\*" "python\sable\" /Y /Q
+)
+
 if exist "..\assets" (
     if not exist "assets" mkdir assets
     xcopy "..\assets\*" "assets\" /Y /Q /E
