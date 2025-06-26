@@ -482,10 +482,7 @@ void MainWindow::startEngine() {
             });
 
     QString python = QCoreApplication::applicationDirPath() + "/python/python.exe";
-    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-    env.insert("PYTHONUTF8", "1");
-    proc->setProcessEnvironment(env);
-    proc->start(python, QStringList{this->enginePath});
+    engineProcess->start(python, QStringList{this->enginePath});
 
     if (!engineProcess->waitForStarted()) {
         qDebug() << "Failed to start engine";
@@ -735,9 +732,6 @@ void MainWindow::startFenServer() {
     qDebug() << "[fenServer] Launching python with arguments:" << arguments;
 
     QString embeddedPython = QCoreApplication::applicationDirPath() + "/python/python.exe";
-    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-    env.insert("PYTHONUTF8", "1");
-    proc->setProcessEnvironment(env);
     proc->start(embeddedPython, arguments);
 
     if (!proc->waitForStarted()) {
@@ -921,9 +915,6 @@ void MainWindow::playBestMove() {
 
         QString embeddedPython = QCoreApplication::applicationDirPath() + "/python/python.exe";
         qDebug() << "[play_move] start" << embeddedPython << args;
-        QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-        env.insert("PYTHONUTF8", "1");
-        moveProcess->setProcessEnvironment(env);
         moveProcess->start(embeddedPython, args);
         if (!moveProcess->waitForStarted()) {
             qDebug() << "[automove] Failed to start move process";
