@@ -9,7 +9,7 @@
 #include "mainwindow.h"
 
 // Define logging categories
-Q_LOGGING_CATEGORY(lcMain, "main")
+Q_LOGGING_CATEGORY(main, "main")
 Q_LOGGING_CATEGORY(ui, "ui")
 
 int main(int argc, char *argv[])
@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
                                     "*.warning=true\n"
                                     "*.critical=true");
 
-    qCInfo(lcMain) << "Starting FENgineLive v" << app.applicationVersion();
+    qCInfo(main) << "Starting FENgineLive v" << app.applicationVersion();
 
     // Style and palette setup
     QApplication::setStyle(QStyleFactory::create("Fusion"));
@@ -66,12 +66,12 @@ int main(int argc, char *argv[])
             QString family = QFontDatabase::applicationFontFamilies(fontId).at(0);
             QFont font(family, 10);
             app.setFont(font);
-            qCInfo(lcMain) << "Loaded custom font:" << family;
+            qCInfo(main) << "Loaded custom font:" << family;
         } else {
-            qCWarning(lcMain) << "Failed to load custom font:" << fontPath;
+            qCWarning(main) << "Failed to load custom font:" << fontPath;
         }
     } else {
-        qCWarning(lcMain) << "Custom font not found:" << fontPath;
+        qCWarning(main) << "Custom font not found:" << fontPath;
     }
 
     // Load QSS stylesheet
@@ -81,12 +81,12 @@ int main(int argc, char *argv[])
         if (styleFile.open(QFile::ReadOnly)) {
             QString style = QLatin1String(styleFile.readAll());
             app.setStyleSheet(style);
-            qCInfo(lcMain) << "Loaded custom stylesheet:" << stylePath;
+            qCInfo(main) << "Loaded custom stylesheet:" << stylePath;
         } else {
-            qCWarning(lcMain) << "Failed to open stylesheet:" << stylePath;
+            qCWarning(main) << "Failed to open stylesheet:" << stylePath;
         }
     } else {
-        qCWarning(lcMain) << "Stylesheet not found:" << stylePath;
+        qCWarning(main) << "Stylesheet not found:" << stylePath;
     }
 
     // Create and show main window
@@ -94,15 +94,15 @@ int main(int argc, char *argv[])
         MainWindow w;
         w.show();
         
-        qCInfo(lcMain) << "Application started successfully";
+        qCInfo(main) << "Application started successfully";
         return app.exec();
     } catch (const std::exception& e) {
-        qCCritical(lcMain) << "Fatal error:" << e.what();
+        qCCritical(main) << "Fatal error:" << e.what();
         QMessageBox::critical(nullptr, "Fatal Error", 
                              QString("Application failed to start: %1").arg(e.what()));
         return 1;
     } catch (...) {
-        qCCritical(lcMain) << "Unknown fatal error occurred";
+        qCCritical(main) << "Unknown fatal error occurred";
         QMessageBox::critical(nullptr, "Fatal Error", 
                              "Application failed to start due to an unknown error.");
         return 1;
