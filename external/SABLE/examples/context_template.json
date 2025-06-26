@@ -1,0 +1,21 @@
+{
+  "eval_score": 0,
+  "eval_delta": 0,
+  "blunder_potential": 0.0,
+  "complexity": 20,
+  "material_balance": 0.0,
+  "move_number": 1,
+  "game_phase": "opening",
+  "time_control": "rapid",
+  "white_elo": 1500,
+  "black_elo": 1500,
+  "per_move_time": 30.0,
+  "center_control": 0,
+  "king_safety": 0.0,
+  "pawn_structure": 0,
+  "is_capture": false,
+  "is_check": false,
+  "is_checkmate": false,
+  "is_stalemate": false,
+  "move_quality": "normal"
+} 
