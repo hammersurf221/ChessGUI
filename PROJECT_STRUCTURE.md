@@ -66,13 +66,9 @@ external/
 │   │   └── 📄 transformer_model.py # Transformer architecture
 │   ├── 📄 mouse_path_generator.py # Path generation utilities
 │   └── 📄 requirements.txt    # Python dependencies
-├── 📁 lc0/                    # Leela Chess Zero engine
-│   ├── 📄 lc0.exe            # Windows executable
-│   ├── 📄 lc0.exe.uci_options # UCI configuration
-│   ├── 📄 libopenblas.dll    # BLAS library
-│   ├── 📄 maia-*.pb.gz       # Maia neural network weights
-│   ├── 📄 mimalloc-*.dll     # Memory allocator
-│   └── 📄 COPYING            # License information
+├── 📁 python/sable/          # SABLE transformer engine
+│   ├── 📄 engine.py          # Best move predictor
+│   └── 📄 README.md          # Model description
 └── 📁 python/                 # Python runtime and scripts
     ├── 📄 python.exe         # Bundled Python interpreter
     ├── 📄 requirements.txt   # Python dependencies
@@ -155,7 +151,7 @@ The main CMake configuration handles:
 ```
 Screenshot Capture → FEN Prediction → Engine Analysis → Move Selection → Automation
        ↓                    ↓              ↓              ↓              ↓
-   OpenCV Processing → CCN Model → Lc0 Engine → Stealth Logic → PyAutoGUI
+   OpenCV Processing → CCN Model → SABLE Engine → Stealth Logic → PyAutoGUI
 ```
 
 ## 📊 Telemetry System

@@ -77,7 +77,7 @@ MainWindow::MainWindow(QWidget *parent)
     useAutoBoardDetectionSetting = settings.value("autoBoardDetection", true).toBool();
     forceManualRegionSetting = settings.value("forceManualRegion", false).toBool();
     enginePath = settings.value("enginePath",
-        QCoreApplication::applicationDirPath() + "/lc0.exe").toString();
+        QCoreApplication::applicationDirPath() + "/python/sable/engine.py").toString();
     fenModelPath = settings.value("fenModelPath",
         QCoreApplication::applicationDirPath() +
         "/python/fen_tracker/ccn_model_default.pth").toString();
@@ -183,7 +183,7 @@ MainWindow::MainWindow(QWidget *parent)
     });
     connect(ui->actionOpen_Settings, &QAction::triggered, this, &MainWindow::openSettings);
 
-    startEngine();  // Launch Maia/Lc0 engine
+    startEngine();  // Launch SABLE engine
 
 
     connect(ui->whiteRadioButton, &QRadioButton::toggled, this, [=](bool checked) {
@@ -481,7 +481,8 @@ void MainWindow::startEngine() {
                 }
             });
 
-    engineProcess->start(this->enginePath, QStringList{});
+    QString python = QCoreApplication::applicationDirPath() + "/python/python.exe";
+    engineProcess->start(python, QStringList{this->enginePath});
 
     if (!engineProcess->waitForStarted()) {
         qDebug() << "Failed to start engine";
@@ -489,30 +490,7 @@ void MainWindow::startEngine() {
         return;
     }
 
-    // ----- one-time UCI handshake & options -----
-    engineProcess->write("uci\n");
     engineProcess->waitForReadyRead(200);
-    QString backend = "blas";
-#ifdef USE_GPU
-    backend = "cudnn";
-#endif
-    QSettings settings("ChessGUI", "ChessGUI");
-    weightsPath = settings.value("weightsPath",
-        QCoreApplication::applicationDirPath() + "/maia1900.pb.gz").toString();
-    QString strengthSetting = settings.value("engineStrength", "Unrestricted").toString();
-    if (strengthSetting != "Unrestricted") {
-        QString fname;
-        if (strengthSetting == "Maia-1100") fname = "maia1100.pb.gz";
-        else if (strengthSetting == "Maia-1500") fname = "maia1500.pb.gz";
-        else if (strengthSetting == "Maia-1900") fname = "maia1900.pb.gz";
-        QString candidate = QCoreApplication::applicationDirPath() + "/" + fname;
-        if (QFile::exists(candidate))
-            weightsPath = candidate;
-    }
-    engineProcess->write(QString("setoption name Backend value %1\n").arg(backend).toUtf8());
-    engineProcess->write(QString("setoption name WeightsFile value %1\n")
-        .arg(weightsPath).toUtf8());
-    engineProcess->write("ucinewgame\n");
 
     connect(engineProcess, &QProcess::readyReadStandardOutput, this, [=]() {
         QStringList lines = QString::fromUtf8(engineProcess->readAllStandardOutput()).split("\n", Qt::SkipEmptyParts);
@@ -821,22 +799,11 @@ void MainWindow::evaluatePosition(const QString& fen) {
 
     evalElapsed.restart();
 
-    QStringList commands;
-    commands << "position fen " + fen;
-    commands << "setoption name Multipv value 3";
-    if (ui->stealthCheck->isChecked()) {
-        commands << "go depth 6";
-    } else {
-        commands << QString("go depth %1").arg(engineDepth);
-    }
-
     multipvMoves.clear();
     policyProbMap.clear();
     selectedBestMoveRank = 1;
 
-    for (const QString& cmd : commands) {
-        engineProcess->write((cmd + "\n").toUtf8());
-    }
+    engineProcess->write((fen + "\n").toUtf8());
 }
 
 QString MainWindow::getMyColor() const {
@@ -968,7 +935,7 @@ void MainWindow::playBestMove() {
     }
 
     if (ui->stealthCheck->isChecked()) {
-        // If pendingTelemetry.move is empty (Lc0/Maia), fill with current move.
+        // If pendingTelemetry.move is empty (SABLE), fill with current move.
         if (pendingTelemetry.move.isEmpty() && !currentBestMove.isEmpty()) {
             pendingTelemetry.move = currentBestMove;
             pendingTelemetry.rank = 1;
